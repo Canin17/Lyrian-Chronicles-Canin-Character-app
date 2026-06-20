@@ -282,7 +282,6 @@ body {
    INTRO SCREEN
    =========================================================================== */
 #step-intro {
-  display: flex;
   justify-content: center;
   align-items: center;
 }
