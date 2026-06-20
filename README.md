@@ -7,7 +7,8 @@ Welcome to the **Lyrian Chronicles Character Creator**, the ultimate digital com
 
 🚀 **[Launch the Live Character Companion App Here!](https://canin17.github.io/Lyrian-Chronicles-Canin-Character-app/)**
 
-> **⚠️ Work in Progress** — Class abilities, descriptions, derived-stat formulas, and skill calculations are still being refined and are not yet guaranteed to match the official ruleset. Use at your own discretion and verify against the [official Angel's Sword docs](https://rpg.angelssword.com/).
+> **⚠️ Work in Progress** — Class abilities, descriptions, derived-stat formulas, and skill calculations are still being refined and are not yet guaranteed to match the official ruleset. Use at your own discretion and verify against the [official Angel's Sword docs](https://rpg.angelssword.com/).⚠️
+> ⚠️SLOP ALERT: This has been made with pure AI slop, no human eyes has seen or understands this mess.⚠️
 
 ---
 
