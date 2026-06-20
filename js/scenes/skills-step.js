@@ -51,48 +51,60 @@ const SkillsStepScene = (function() {
     // Reset
     sourceAllocations = { base: {}, race: {}, class: {}, breakthrough: {} };
 
+    // Track remaining capacity per source to avoid over-counting
+    const remaining = {
+      base: availablePoints.base || 0,
+      race: availablePoints.race || 0,
+      class: availablePoints.class || 0,
+      breakthrough: availablePoints.breakthrough || 0
+    };
+
     // For each skill that has points, distribute across sources
     // Priority: base first (unrestricted), then race, class, breakthrough
     skillGroups.forEach(group => {
       group.skills.forEach(skill => {
         if (skill.pts <= 0) return;
 
-        let remaining = skill.pts;
+        let ptsLeft = skill.pts;
 
         // Try to fill from base first (unrestricted)
-        const baseCap = Math.min(availablePoints.base, remaining);
+        const baseCap = Math.min(remaining.base, ptsLeft);
         if (baseCap > 0) {
           sourceAllocations.base[skill.name] = (sourceAllocations.base[skill.name] || 0) + baseCap;
-          remaining -= baseCap;
+          remaining.base -= baseCap;
+          ptsLeft -= baseCap;
         }
 
         // Then race (if eligible)
-        if (remaining > 0 && availablePoints.race > 0) {
+        if (ptsLeft > 0 && remaining.race > 0) {
           const raceEligible = availablePoints.eligibleSkills?.race || [];
           if (raceEligible.includes(skill.name)) {
-            const raceCap = Math.min(availablePoints.race, remaining);
+            const raceCap = Math.min(remaining.race, ptsLeft);
             sourceAllocations.race[skill.name] = (sourceAllocations.race[skill.name] || 0) + raceCap;
-            remaining -= raceCap;
+            remaining.race -= raceCap;
+            ptsLeft -= raceCap;
           }
         }
 
         // Then class (if eligible)
-        if (remaining > 0 && availablePoints.class > 0) {
+        if (ptsLeft > 0 && remaining.class > 0) {
           const classEligible = availablePoints.eligibleSkills?.class || [];
           if (classEligible.includes(skill.name)) {
-            const classCap = Math.min(availablePoints.class, remaining);
+            const classCap = Math.min(remaining.class, ptsLeft);
             sourceAllocations.class[skill.name] = (sourceAllocations.class[skill.name] || 0) + classCap;
-            remaining -= classCap;
+            remaining.class -= classCap;
+            ptsLeft -= classCap;
           }
         }
 
         // Then breakthrough (if eligible)
-        if (remaining > 0 && availablePoints.breakthrough > 0) {
+        if (ptsLeft > 0 && remaining.breakthrough > 0) {
           const btEligible = availablePoints.eligibleSkills?.breakthrough || [];
           if (btEligible.includes(skill.name)) {
-            const btCap = Math.min(availablePoints.breakthrough, remaining);
+            const btCap = Math.min(remaining.breakthrough, ptsLeft);
             sourceAllocations.breakthrough[skill.name] = (sourceAllocations.breakthrough[skill.name] || 0) + btCap;
-            remaining -= btCap;
+            remaining.breakthrough -= btCap;
+            ptsLeft -= btCap;
           }
         }
       });
@@ -136,25 +148,25 @@ const SkillsStepScene = (function() {
       .map(bt => bt.name || bt);
 
     breakdown.innerHTML = `
-      <div class="skill-source-row ${activeSource === 'base' ? 'active' : ''}" data-source="base" onclick="SkillsStepScene.toggleSource('base')">
+      <div class="skill-source-row ${activeSource === 'base' ? 'active' : ''}" data-source="base" role="button" tabindex="0" aria-pressed="${activeSource === 'base'}">
         <span class="skill-source-label">Base (Character Creation)</span>
         <span class="skill-source-value">${availablePoints.base}</span>
         <span class="skill-source-hint">Any skill</span>
       </div>
       ${availablePoints.race > 0 ? `
-      <div class="skill-source-row ${activeSource === 'race' ? 'active' : ''}" data-source="race" onclick="SkillsStepScene.toggleSource('race')">
+      <div class="skill-source-row ${activeSource === 'race' ? 'active' : ''}" data-source="race" role="button" tabindex="0" aria-pressed="${activeSource === 'race'}">
         <span class="skill-source-label">Race: ${raceName}</span>
         <span class="skill-source-value skill-bonus">+${availablePoints.race}</span>
         <span class="skill-source-hint">${availablePoints.eligibleSkills?.race?.length || 0} eligible</span>
       </div>` : ''}
       ${availablePoints.class > 0 ? `
-      <div class="skill-source-row ${activeSource === 'class' ? 'active' : ''}" data-source="class" onclick="SkillsStepScene.toggleSource('class')">
+      <div class="skill-source-row ${activeSource === 'class' ? 'active' : ''}" data-source="class" role="button" tabindex="0" aria-pressed="${activeSource === 'class'}">
         <span class="skill-source-label">Class: ${className}</span>
         <span class="skill-source-value skill-bonus">+${availablePoints.class}</span>
         <span class="skill-source-hint">${availablePoints.eligibleSkills?.class?.length || 0} eligible</span>
       </div>` : ''}
       ${availablePoints.breakthrough > 0 ? `
-      <div class="skill-source-row ${activeSource === 'breakthrough' ? 'active' : ''}" data-source="breakthrough" onclick="SkillsStepScene.toggleSource('breakthrough')">
+      <div class="skill-source-row ${activeSource === 'breakthrough' ? 'active' : ''}" data-source="breakthrough" role="button" tabindex="0" aria-pressed="${activeSource === 'breakthrough'}">
         <span class="skill-source-label">Breakthrough: ${btNames.join(', ') || 'Bonus'}</span>
         <span class="skill-source-value skill-bonus">+${availablePoints.breakthrough}</span>
         <span class="skill-source-hint">${availablePoints.eligibleSkills?.breakthrough?.length || 0} eligible</span>
@@ -165,6 +177,19 @@ const SkillsStepScene = (function() {
       </div>
     `;
 
+    // Bind source toggle via event delegation (no inline onclick)
+    breakdown.querySelectorAll('.skill-source-row[data-source]').forEach(row => {
+      row.addEventListener('click', () => {
+        toggleSource(row.dataset.source);
+      });
+      row.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          toggleSource(row.dataset.source);
+        }
+      });
+    });
+
     // Show eligible skills panel if a source is active
     const eligiblePanel = document.getElementById('eligible-skills-panel');
     if (eligiblePanel) {
@@ -173,13 +198,18 @@ const SkillsStepScene = (function() {
         eligiblePanel.innerHTML = `
           <div class="eligible-skills-header">
             <span class="eligible-skills-title">Eligible Skills for ${activeSource} points:</span>
-            <button class="close-eligible" onclick="SkillsStepScene.toggleSource('${activeSource}')">&times;</button>
+            <button class="close-eligible" aria-label="Close eligible skills">&times;</button>
           </div>
           <div class="eligible-skills-list">
             ${eligibleSkills.map(skill => `<span class="eligible-skill-tag">${skill}</span>`).join('')}
           </div>
         `;
         eligiblePanel.style.display = 'block';
+
+        // Bind close button (no inline onclick)
+        eligiblePanel.querySelector('.close-eligible').addEventListener('click', () => {
+          toggleSource(activeSource);
+        });
       } else {
         eligiblePanel.style.display = 'none';
       }
@@ -316,6 +346,37 @@ const SkillsStepScene = (function() {
     return structuredClone(sourceAllocations);
   }
 
+  /**
+   * Restore previously saved skill allocations.
+   * Called when navigating back to this step or loading from localStorage.
+   * savedSkills: array of skill groups matching SKILL_GROUPS structure
+   */
+  function restoreState(savedSkills) {
+    if (!Array.isArray(savedSkills) || savedSkills.length === 0) return;
+
+    // Restore skill points and expertise for each group
+    savedSkills.forEach((savedGroup, gi) => {
+      if (gi >= skillGroups.length) return;
+      if (!savedGroup.skills) return;
+
+      savedGroup.skills.forEach((savedSkill, si) => {
+        if (si >= skillGroups[gi].skills.length) return;
+        // Only restore if skill names match (data may have changed)
+        if (skillGroups[gi].skills[si].name === savedSkill.name) {
+          skillGroups[gi].skills[si].pts = savedSkill.pts || 0;
+          skillGroups[gi].skills[si].expertise = savedSkill.expertise || '';
+        }
+      });
+    });
+
+    // Recalculate source allocations from restored state
+    recalculateSourceAllocations();
+
+    renderSkills();
+    updatePointsRemaining();
+    renderPointsBreakdown();
+  }
+
   function reset() {
     skillGroups = deepCloneSkillGroups();
     availablePoints = {
@@ -340,5 +401,5 @@ const SkillsStepScene = (function() {
     }
   }
 
-  return { init, getSkills, reset, setCharacterData, toggleSource, getSourceAllocations };
+  return { init, getSkills, reset, setCharacterData, toggleSource, getSourceAllocations, restoreState };
 })();

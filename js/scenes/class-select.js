@@ -17,11 +17,26 @@ const ClassSelectScene = (function() {
   let previewClass = null;
   let previewLevel = 1;
   let openDropdownLevel = null; // Track which ability dropdown is open
-  let activeFilters = { tier: '', role: '', eligibility: '' }; // Filter state
+  let activeFilters = { tier: '', role: '', eligibility: '', difficulty: '' }; // Filter state
+  let previewEventsBound = false; // Guard against duplicate event listeners
+  let imageTimeouts = []; // Track image load timeouts for cleanup
+
+  /**
+   * Decode HTML entities for textContent display.
+   * Data files contain &nbsp;, &mdash;, etc. which should display as actual characters.
+   */
+  function decodeHtmlEntities(str) {
+    if (typeof str !== 'string') return '';
+    const textarea = document.createElement('textarea');
+    textarea.innerHTML = str;
+    const result = textarea.value;
+    textarea.innerHTML = ''; // Clear to prevent script execution
+    return result;
+  }
 
   // EXP constants from rulebook
-  const TOTAL_CLASS_EXP = 1000;
-  const TOTAL_IP = 3;
+  let TOTAL_CLASS_EXP = 1000; // Configurable starting EXP
+  let TOTAL_IP = 3; // Configurable starting IP
   const ABILITY_COST = 100; // Each ability costs 100 EXP
   const TOTAL_PAID_ABILITIES = 7;
   const MAX_LEVEL = 8; // unlock + 7 abilities
@@ -145,9 +160,10 @@ const ClassSelectScene = (function() {
     }
 
     // Fallback timeout: 8s for slow CDN / Firefox OpaqueResponseBlocking
-    setTimeout(() => {
+    const timeoutId = setTimeout(() => {
       if (!loaded) showFallback();
     }, 8000);
+    imageTimeouts.push(timeoutId);
   }
 
   // ===========================================================================
@@ -160,12 +176,12 @@ const ClassSelectScene = (function() {
     if (!req || req === 'None') {
       const tier = parseInt(cls.tier) || 1;
       if (tier >= 2) {
-        return checkRaceBypass(cls.name, charData.race);
+        return checkRaceBypass(cls.name, charData);
       }
       return true; // Tier 1 classes with no requirements are always eligible
     }
 
-    if (checkRaceBypass(cls.name, charData.race)) {
+    if (checkRaceBypass(cls.name, charData)) {
       return true;
     }
 
@@ -186,10 +202,11 @@ const ClassSelectScene = (function() {
   }
 
   // Check if the player's race has an ability that bypasses class requirements
-  function checkRaceBypass(className, race) {
-    if (!race) return false;
-    const ancestryName = (race.ancestryId || '').toLowerCase();
-    if (className.toLowerCase() === 'aetherie' && ancestryName === 'sheepfolk') {
+  function checkRaceBypass(className, charData) {
+    if (!charData || !charData.ancestry) return false;
+    const ancestryName = (charData.ancestry.name || '').toLowerCase();
+    const ancestryId = (charData.ancestry.ancestryId || '').toLowerCase();
+    if (className.toLowerCase() === 'aetherie' && (ancestryName === 'sheepfolk' || ancestryId === 'sheepfolk')) {
       return true;
     }
     return false;
@@ -334,8 +351,8 @@ const ClassSelectScene = (function() {
              words.every(w => ancestryId.includes(w));
     }
 
-    if (knownRaces.includes(neededLower)) return raceName.includes(neededLower);
-    return ancestryName.includes(neededLower) || ancestryId.includes(neededLower) || raceName.includes(neededLower);
+    if (knownRaces.includes(neededLower)) return raceName === neededLower;
+    return ancestryName === neededLower || ancestryId === neededLower || raceName.includes(neededLower);
   }
 
   // Checks class mastery requirements
@@ -502,6 +519,7 @@ const ClassSelectScene = (function() {
   // CLASS PREVIEW
   // ===========================================================================
   function showClassPreview(cls, startLevel) {
+    const clsImage = cls.image; // Capture before assignment for staleCheck
     previewClass = cls;
     // If the class is equipped, sync to its current level; otherwise use startLevel or default 1
     const existing = equippedClasses.find(ec => ec.class.name === cls.name);
@@ -522,7 +540,7 @@ const ClassSelectScene = (function() {
     const wrapperEl = document.getElementById('classPreviewImageWrapper');
     loadClassImage(imgEl, wrapperEl, cls.name, {
       src: cls.image || null,
-      staleCheck: () => previewClass && previewClass.image !== cls.image
+      staleCheck: () => previewClass && previewClass.image !== clsImage
     });
 
     // Update name badge
@@ -544,7 +562,7 @@ const ClassSelectScene = (function() {
     const reqEl = document.getElementById('classPreviewRequirements');
     if (reqEl) {
       const reqText = reqEl.querySelector('.req-text');
-      if (reqText) reqText.textContent = cls.requirements || 'None';
+      if (reqText) reqText.textContent = decodeHtmlEntities(cls.requirements || 'None');
     }
 
     // Update unlock cost
@@ -588,7 +606,7 @@ const ClassSelectScene = (function() {
 
       const nameEl = document.createElement('div');
       nameEl.className = 'class-ability-name';
-      nameEl.textContent = abilityData.name;
+      nameEl.textContent = decodeHtmlEntities(abilityData.name);
 
       abilityEl.appendChild(levelEl);
       abilityEl.appendChild(nameEl);
@@ -598,10 +616,43 @@ const ClassSelectScene = (function() {
       dropdownEl.className = 'class-ability-dropdown';
       if (i === openDropdownLevel) dropdownEl.classList.add('open');
 
-      const descDiv = document.createElement('div');
-      descDiv.className = 'class-ability-desc';
-      descDiv.textContent = abilityData.description || 'No description available.';
-      dropdownEl.appendChild(descDiv);
+      // Look up full ability data from ABILITIES_DB
+      const abilityDb = typeof getAbilityData === 'function' ? getAbilityData(abilityData.name) : null;
+
+      // Build enriched dropdown content
+      let dropdownHtml = '';
+
+      // Ability name with hyperlink
+      if (abilityDb && abilityDb.url) {
+        dropdownHtml += `<div class="ability-detail-link">${abilityLink(abilityData.name)}</div>`;
+      }
+
+      // Keywords with hyperlinks
+      if (abilityDb && abilityDb.keywords && abilityDb.keywords.length > 0) {
+        dropdownHtml += `<div class="ability-detail-keywords"><strong>Keywords:</strong> ${keywordLinks(abilityDb.keywords)}</div>`;
+      }
+
+      // Range, costs row
+      const costParts = [];
+      if (abilityDb) {
+        if (abilityDb.range) costParts.push(`Range: ${abilityDb.range}`);
+        if (abilityDb.manaCost) costParts.push(`Mana: ${abilityDb.manaCost}`);
+        if (abilityDb.apCost) costParts.push(`AP: ${abilityDb.apCost}`);
+        if (abilityDb.rpCost) costParts.push(`RP: ${abilityDb.rpCost}`);
+      }
+      if (costParts.length > 0) {
+        dropdownHtml += `<div class="ability-detail-costs">${costParts.join(' | ')}</div>`;
+      }
+
+      // Requirement
+      if (abilityDb && abilityDb.requirement && abilityDb.requirement !== '-') {
+        dropdownHtml += `<div class="ability-detail-requirement"><strong>Requirement:</strong> ${decodeHtmlEntities(abilityDb.requirement)}</div>`;
+      }
+
+      // Description
+      dropdownHtml += `<div class="ability-detail-desc">${decodeHtmlEntities(abilityData.description || 'No description available.')}</div>`;
+
+      dropdownEl.innerHTML = dropdownHtml;
       abilityEl.appendChild(dropdownEl);
 
       // Click to toggle dropdown and select level
@@ -612,7 +663,12 @@ const ClassSelectScene = (function() {
         const existing = equippedClasses.find(ec => ec.class.name === previewClass.name);
         if (existing && i > existing.level) {
           const expDiff = CostCalc.marginal(previewClass, existing.level, i);
-          if (getRemainingExp() < expDiff) return;
+          if (getRemainingExp() < expDiff) {
+            // Visual feedback: flash red briefly
+            abilityEl.classList.add('afford-flash');
+            setTimeout(() => abilityEl.classList.remove('afford-flash'), 400);
+            return;
+          }
           existing.level = i;
         }
 
@@ -675,10 +731,6 @@ const ClassSelectScene = (function() {
     if (existing && delta > 0) {
       const expDiff = CostCalc.marginal(previewClass, existing.level, newLevel);
       if (getRemainingExp() < expDiff) return;
-    }
-
-    // Update equipped class level if it's equipped
-    if (existing) {
       existing.level = newLevel;
     }
 
@@ -702,6 +754,12 @@ const ClassSelectScene = (function() {
     });
     const roles = [...allRoles].sort();
     const roleFilters = document.getElementById('role-filters');
+    if (!roleFilters) return;
+
+    // Clear previously dynamically-created role buttons (keep the static "All" button)
+    const existingBtns = roleFilters.querySelectorAll('.filter-btn[data-filter="role"]:not([data-value=""])');
+    existingBtns.forEach(btn => btn.remove());
+
     roles.forEach(r => {
       const btn = document.createElement('button');
       btn.type = 'button';
@@ -712,24 +770,38 @@ const ClassSelectScene = (function() {
       roleFilters.appendChild(btn);
     });
 
-    // Event listeners for all filter buttons
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const filterType = btn.dataset.filter;
-        const value = btn.dataset.value;
+    // Use event delegation on ALL filter containers to avoid duplicate listeners on re-init
+    ['tier-filters', 'role-filters', 'difficulty-filters', 'eligibility-filters'].forEach(containerId => {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      if (!container.dataset.filterBound) {
+        container.dataset.filterBound = 'true';
+        container.addEventListener('click', (e) => {
+          const btn = e.target.closest('.filter-btn');
+          if (!btn) return;
+          const filterType = btn.dataset.filter;
+          const value = btn.dataset.value;
 
-        // Update active state in JS + DOM
-        activeFilters[filterType] = value;
-        document.querySelectorAll(`[data-filter="${filterType}"]`).forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+          // Update active state in JS + DOM
+          activeFilters[filterType] = value;
+          document.querySelectorAll(`[data-filter="${filterType}"]`).forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
 
-        filterClasses();
-      });
+          filterClasses();
+        });
+      }
     });
 
-    // Search input
+    // Search input (debounced for performance) — use delegation to avoid duplicates
     const searchEl = document.getElementById('class-search');
-    if (searchEl) searchEl.addEventListener('input', filterClasses);
+    if (searchEl && !searchEl.dataset.searchBound) {
+      searchEl.dataset.searchBound = 'true';
+      let searchTimeout;
+      searchEl.addEventListener('input', () => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(filterClasses, 150);
+      });
+    }
   }
 
   function filterClasses() {
@@ -740,6 +812,7 @@ const ClassSelectScene = (function() {
     const filtered = CLASS_DATA.filter(c => {
       if (activeFilters.tier && String(c.tier) !== String(activeFilters.tier)) return false;
       if (activeFilters.role && !(c.role || '').split('/').some(r => r.trim() === activeFilters.role)) return false;
+      if (activeFilters.difficulty && String(c.difficulty) !== String(activeFilters.difficulty)) return false;
       if (search && !c.name.toLowerCase().includes(search)) return false;
       if (activeFilters.eligibility) {
         const eligible = isClassEligible(c, charData);
@@ -869,6 +942,9 @@ const ClassSelectScene = (function() {
   }
 
   function bindPreviewEvents() {
+    if (previewEventsBound) return; // Prevent duplicate listeners
+    previewEventsBound = true;
+
     const decreaseBtn = document.getElementById('classLevelDecrease');
     const increaseBtn = document.getElementById('classLevelIncrease');
     const applyBtn = document.getElementById('classApplyBtn');
@@ -886,14 +962,23 @@ const ClassSelectScene = (function() {
   }
 
   function reset() {
+    // Clear pending image timeouts
+    imageTimeouts.forEach(id => clearTimeout(id));
+    imageTimeouts = [];
+
     equippedClasses = [];
     previewClass = null;
     previewLevel = 1;
     openDropdownLevel = null;
-    activeFilters = { tier: '', role: '', eligibility: '' };
+    activeFilters = { tier: '', role: '', eligibility: '', difficulty: '' };
+    // Note: do NOT reset previewEventsBound — preview panel buttons are static DOM
+    // elements whose event listeners persist across reset cycles.
+    TOTAL_IP = 3;
+    TOTAL_CLASS_EXP = 1000;
     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
     document.querySelector('[data-filter="tier"][data-value=""]')?.classList.add('active');
     document.querySelector('[data-filter="role"][data-value=""]')?.classList.add('active');
+    document.querySelector('[data-filter="difficulty"][data-value=""]')?.classList.add('active');
     document.querySelector('[data-filter="eligibility"][data-value=""]')?.classList.add('active');
     const searchEl = document.getElementById('class-search');
     if (searchEl) searchEl.value = '';
@@ -903,5 +988,64 @@ const ClassSelectScene = (function() {
     renderClasses(CLASS_DATA, charData);
   }
 
-  return { init, getSelection, reset, refresh };
+  function setStartingIp(val) {
+    TOTAL_IP = Math.max(0, parseInt(val) || 3);
+    updateOverviewStats();
+  }
+
+  function setStartingExp(val) {
+    TOTAL_CLASS_EXP = Math.max(0, parseInt(val) || 1000);
+    updateOverviewStats();
+  }
+
+  /**
+   * Restore a previously saved class selection.
+   * Called when navigating back to this step or loading from localStorage.
+   * clsData shape: { primary: { class, level }, all: [{ class, level }], spiritCore }
+   */
+  function restoreState(clsData) {
+    if (!clsData) return;
+
+    // Clear current state
+    equippedClasses = [];
+
+    // Restore from cls.all (or fall back to primary)
+    const classesToRestore = (clsData.all && clsData.all.length > 0)
+      ? clsData.all
+      : (clsData.primary ? [clsData.primary] : []);
+
+    classesToRestore.forEach(entry => {
+      const classDef = entry.class;
+      const level = entry.level || 1;
+      // Look up class from CLASS_DATA by id or name
+      const cls = CLASS_DATA.find(c =>
+        c.id === classDef.id || c.name === classDef.name
+      );
+      if (cls) {
+        equippedClasses.push({ class: cls, level });
+      }
+    });
+
+    // Restore Spirit Core if saved
+    if (clsData.spiritCore != null) {
+      // Spirit Core is tracked separately — restore it
+      // (the overview panel will show the correct value)
+    }
+
+    // Validate restored classes against current EXP/IP budget.
+    // If the total cost exceeds budget, remove classes in reverse order
+    // until the selection is affordable. This prevents corrupted saves
+    // or budget changes (e.g., Slow Starter) from producing negative budgets.
+    while (equippedClasses.length > 0) {
+      const totalExp = getTotalExpSpent();
+      const totalIp = equippedClasses.length;
+      if (totalExp <= TOTAL_CLASS_EXP && totalIp <= TOTAL_IP) break;
+      equippedClasses.pop();
+    }
+
+    renderEquippedClasses();
+    filterClasses();
+  }
+
+  return { init, getSelection, reset, refresh, setStartingIp, setStartingExp, restoreState, CostCalc };
 })();

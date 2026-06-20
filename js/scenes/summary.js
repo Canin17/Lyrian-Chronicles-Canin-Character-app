@@ -45,6 +45,8 @@ const SummaryScene = (function() {
       html += `<div class="summary-row"><span class="summary-label">Worships</span><span class="summary-value">${window.escapeHtml(characterData.worships)}</span></div>`;
     }
     html += `<div class="summary-row"><span class="summary-label">Starting Clim</span><span class="summary-value">${characterData.clim ?? 3000}</span></div>`;
+    html += `<div class="summary-row"><span class="summary-label">Starting EXP</span><span class="summary-value">${characterData.exp ?? 1000}</span></div>`;
+    html += `<div class="summary-row"><span class="summary-label">Starting IP</span><span class="summary-value">${characterData.ip ?? 3}</span></div>`;
 
     // Human-specific options
     if (characterData.race && characterData.race.name === 'Human') {
@@ -137,6 +139,18 @@ const SummaryScene = (function() {
       </div>
     </div>`;
 
+    // Breakthroughs
+    if (characterData.breakthroughs && characterData.breakthroughs.length > 0) {
+      html += `<div class="summary-section">
+        <h3>Breakthroughs</h3>`;
+      characterData.breakthroughs.forEach(bt => {
+        html += `<div style="padding-left: 1rem; font-size: 0.85rem; color: var(--text-primary);">
+          ${window.escapeHtml(bt.name)} <span style="color: var(--text-muted);">(${bt.cost || 0} EXP)</span>
+        </div>`;
+      });
+      html += `</div>`;
+    }
+
     // Skills
     html += `<div class="summary-section"><h3>Skills</h3>`;
 
@@ -177,6 +191,14 @@ const SummaryScene = (function() {
       character: {
         name: characterData.name,
         background: characterData.background,
+        gender: characterData.gender,
+        age: characterData.age,
+        height: characterData.height,
+        weight: characterData.weight,
+        worships: characterData.worships,
+        clim: characterData.clim,
+        exp: characterData.exp,
+        ip: characterData.ip,
         race: characterData.race ? {
           id: characterData.race.id,
           name: characterData.race.name
@@ -187,18 +209,27 @@ const SummaryScene = (function() {
         } : null,
         class: characterData.cls ? {
           all: characterData.cls.all ? characterData.cls.all.map(c => ({
-            id: c.class.id,
-            name: c.class.name,
-            tier: c.class.tier,
-            role: c.class.role,
+            id: c.class?.id,
+            name: c.class?.name,
+            tier: c.class?.tier,
+            role: c.class?.role,
             level: c.level,
             abilitiesBought: c.abilitiesBought
           })) : []
         } : null,
         stats: characterData.stats,
         derivedStats: calculateDerivedStats(characterData.stats),
+        baseStats: characterData.baseStats,
+        raceBonuses: characterData.raceBonuses,
+        humanChoices: characterData.humanChoices,
+        pureHuman: characterData.pureHuman,
+        slowStarter: characterData.slowStarter,
+        starterIp: characterData.starterIp,
+        spiritCore: characterData.spiritCore,
         skills: characterData.skills,
-        breakthroughs: characterData.breakthroughs || []
+        breakthroughs: characterData.breakthroughs || [],
+        mirane: characterData.mirane,
+        oldArmorCalc: characterData.oldArmorCalc
       }
     };
 
@@ -259,6 +290,8 @@ const SummaryScene = (function() {
         coreSheet.getCell('C5').value = characterData.spiritCore ?? 0;
         // Starting Clim (default 3000)
         coreSheet.getCell('A54').value = characterData.clim ?? 3000;
+        // Starting EXP (default 1000)
+        coreSheet.getCell('D4').value = characterData.exp ?? 1000;
         // Mirane flag
         coreSheet.getCell('A57').value = characterData.mirane !== false ? 'Yes' : 'No';
         // Old Armor Calc
@@ -323,18 +356,14 @@ const SummaryScene = (function() {
         classes.forEach((clsEntry, i) => {
           const row = 15 + i;
           if (row <= 35) {
-            coreSheet.getCell(`A${row}`).value = clsEntry.class.name;
-            coreSheet.getCell(`B${row}`).value = clsEntry.class.tier ?? '';
-            coreSheet.getCell(`C${row}`).value = clsEntry.level;
-            // Calculate class EXP cost using CostCalc if available
-            if (window.CostCalc) {
-              try {
-                const expCost = window.CostCalc.total(clsEntry.class.id, clsEntry.level);
-                coreSheet.getCell(`D${row}`).value = expCost;
-              } catch(e) {
-                coreSheet.getCell(`D${row}`).value = 0;
-              }
-            }
+            const classObj = clsEntry.class || {};
+            coreSheet.getCell(`A${row}`).value = classObj.name || 'Unknown';
+            coreSheet.getCell(`B${row}`).value = classObj.tier ?? '';
+            coreSheet.getCell(`C${row}`).value = clsEntry.level || 1;
+            // Calculate class EXP cost: tier*100 + (level-1)*100
+            const tier = parseInt(classObj.tier) || 1;
+            const expCost = tier * 100 + Math.max(0, (clsEntry.level || 1) - 1) * 100;
+            coreSheet.getCell(`D${row}`).value = expCost;
           }
         });
       }
@@ -414,7 +443,33 @@ const SummaryScene = (function() {
       URL.revokeObjectURL(url);
     } catch (err) {
       console.error('Failed to export Excel sheet:', err);
-      alert('An error occurred while generating the Excel sheet. Check console logs for details.');
+      // Inline UI feedback instead of blocking alert()
+      const container = document.getElementById('summary-content');
+      if (container) {
+        const existing = container.querySelector('.export-error-banner');
+        if (existing) existing.remove();
+        const banner = document.createElement('div');
+        banner.className = 'export-error-banner';
+        banner.style.cssText = 'background:#dc3545;color:#fff;padding:0.75rem 1rem;border-radius:4px;margin-top:1rem;font-size:0.9rem;';
+        banner.innerHTML = `<strong>Export failed:</strong> ${err.message || 'Unknown error'}. Check console for details.`;
+        container.appendChild(banner);
+        if (window.gsap) {
+          gsap.fromTo(banner, { autoAlpha: 0, y: -10 }, { autoAlpha: 1, y: 0, duration: 0.3 });
+        }
+        // Auto-dismiss after 8 seconds
+        setTimeout(() => {
+          if (banner.parentElement) {
+            if (window.gsap) {
+              gsap.to(banner, { autoAlpha: 0, duration: 0.3, onComplete: () => banner.remove() });
+            } else {
+              banner.remove();
+            }
+          }
+        }, 8000);
+      } else {
+        // Fallback to alert if summary container not available
+        alert('An error occurred while generating the Excel sheet. Check console logs for details.');
+      }
     }
   }
 

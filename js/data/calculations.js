@@ -61,14 +61,14 @@ function getTotalStatPoints(stats) {
 function isAssignmentComplete(stats) {
   if (!stats) return false;
   const allStats = [...MAIN_STATS, ...SUB_STATS];
-  return allStats.every(s => stats[s.id] != null && stats[s.id] > 0);
+  return allStats.every(s => stats[s.id] != null);
 }
 
 /**
  * Get the remaining unassigned values for a given array and current assignments
  */
 function getAvailableValues(array, assignments) {
-  const used = Object.values(assignments).filter(v => v != null);
+  const used = Object.values(assignments).filter(v => v != null && array.includes(v));
   const remaining = [...array];
   for (const val of used) {
     const idx = remaining.indexOf(val);

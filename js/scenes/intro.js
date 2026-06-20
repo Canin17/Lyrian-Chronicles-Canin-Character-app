@@ -27,19 +27,8 @@ const BackgroundScene = (function() {
       });
 
       // WebGL context loss/recovery handlers
-      canvas.addEventListener('webglcontextlost', (e) => {
-        e.preventDefault();
-        console.warn('WebGL context lost — attempting recovery...');
-      });
-      canvas.addEventListener('webglcontextrestored', () => {
-        console.log('WebGL context restored — rebuilding scene...');
-        // Rebuild scene content after context restore
-        if (app && app.stage) {
-          createBackground();
-          createParticles();
-          createRunes();
-        }
-      });
+      canvas.addEventListener('webglcontextlost', handleContextLost);
+      canvas.addEventListener('webglcontextrestored', handleContextRestored);
 
       createBackground();
       createParticles();
@@ -188,8 +177,32 @@ const BackgroundScene = (function() {
       if (runeTicker) app.ticker.remove(runeTicker);
       particleTicker = null;
       runeTicker = null;
+
+      // Remove canvas event listeners
+      const canvas = document.getElementById('bg-canvas');
+      if (canvas) {
+        canvas.removeEventListener('webglcontextlost', handleContextLost);
+        canvas.removeEventListener('webglcontextrestored', handleContextRestored);
+      }
+
       app.destroy(true, { children: true, texture: true, baseTexture: true });
       app = null;
+    }
+  }
+
+  // Store handler references for cleanup
+  function handleContextLost(e) {
+    e.preventDefault();
+    console.warn('WebGL context lost — attempting recovery...');
+  }
+  function handleContextRestored() {
+    console.log('WebGL context restored — rebuilding scene...');
+    if (app && app.stage) {
+      // Clear existing stage to prevent duplicate particles/runes/tickers
+      app.stage.removeChildren();
+      createBackground();
+      createParticles();
+      createRunes();
     }
   }
 

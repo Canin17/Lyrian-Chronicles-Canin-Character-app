@@ -39,6 +39,8 @@ const StatsScene = (function() {
     } else if (cachedRaceName === 'human') {
       if (humanMainBonus) bonuses[humanMainBonus] = 1;
       if (humanSubBonus) bonuses[humanSubBonus] = 1;
+    } else if (cachedRaceName && cachedRaceName !== '') {
+      console.warn(`[StatsScene] Unknown race "${cachedRaceName}" — no stat bonuses applied. Expected: chimera, demon, fae, youkai, or human.`);
     }
 
     return bonuses;
@@ -56,17 +58,23 @@ const StatsScene = (function() {
 
         if (mainSelect) {
           mainSelect.value = humanMainBonus;
-          mainSelect.onchange = (e) => {
-            humanMainBonus = e.target.value;
-            renderAll();
-          };
+          if (!mainSelect.dataset.humanBonusBound) {
+            mainSelect.dataset.humanBonusBound = 'true';
+            mainSelect.addEventListener('change', (e) => {
+              humanMainBonus = e.target.value;
+              renderAll();
+            });
+          }
         }
         if (subSelect) {
           subSelect.value = humanSubBonus;
-          subSelect.onchange = (e) => {
-            humanSubBonus = e.target.value;
-            renderAll();
-          };
+          if (!subSelect.dataset.humanBonusBound) {
+            subSelect.dataset.humanBonusBound = 'true';
+            subSelect.addEventListener('change', (e) => {
+              humanSubBonus = e.target.value;
+              renderAll();
+            });
+          }
         }
       } else {
         humanContainer.style.display = 'none';
@@ -297,14 +305,70 @@ const StatsScene = (function() {
     return { main: humanMainBonus, sub: humanSubBonus };
   }
 
+  /**
+   * Restore previously saved stat assignments.
+   * Called when navigating back to this step or loading from localStorage.
+   * stats shape: { pow, foc, agi, tou, fitness, cunning, reason, awareness, presence }
+   * (final values including bonuses)
+   * baseStats shape: same keys but base values before bonuses
+   * humanChoices: { main, sub }
+   * raceBonuses: { pow, foc, agi, tou, fitness, cunning, reason, awareness, presence }
+   */
+  function restoreState(stats, baseStats, humanChoices, raceBonuses, raceName) {
+    if (!stats) return;
+
+    // Restore human bonus choices
+    if (humanChoices) {
+      humanMainBonus = humanChoices.main || 'tou';
+      humanSubBonus = humanChoices.sub || 'fitness';
+    }
+
+    // Restore race name for bonus calculation
+    if (raceName) {
+      cachedRaceName = raceName.toLowerCase();
+    }
+
+    // Restore base assignments (without bonuses)
+    if (baseStats) {
+      mainAssignments = {
+        pow: baseStats.pow != null ? baseStats.pow : null,
+        foc: baseStats.foc != null ? baseStats.foc : null,
+        agi: baseStats.agi != null ? baseStats.agi : null,
+        tou: baseStats.tou != null ? baseStats.tou : null
+      };
+      subAssignments = {
+        fitness: baseStats.fitness != null ? baseStats.fitness : null,
+        cunning: baseStats.cunning != null ? baseStats.cunning : null,
+        reason: baseStats.reason != null ? baseStats.reason : null,
+        awareness: baseStats.awareness != null ? baseStats.awareness : null,
+        presence: baseStats.presence != null ? baseStats.presence : null
+      };
+    }
+
+    renderAll();
+
+    // Update human bonus dropdowns if restored
+    if (cachedRaceName === 'human') {
+      const mainSelect = document.getElementById('human-main-select');
+      const subSelect = document.getElementById('human-sub-select');
+      if (mainSelect) mainSelect.value = humanMainBonus;
+      if (subSelect) subSelect.value = humanSubBonus;
+    }
+  }
+
   function reset() {
     mainAssignments = { pow: null, foc: null, agi: null, tou: null };
     subAssignments = { fitness: null, cunning: null, reason: null, awareness: null, presence: null };
     humanMainBonus = 'tou';
     humanSubBonus = 'fitness';
     cachedRaceName = '';
+    // Clear human bonus listener guards so re-init can re-bind
+    const mainSelect = document.getElementById('human-main-select');
+    const subSelect = document.getElementById('human-sub-select');
+    if (mainSelect) delete mainSelect.dataset.humanBonusBound;
+    if (subSelect) delete subSelect.dataset.humanBonusBound;
     renderAll();
   }
 
-  return { init, getStats, getBaseStats, reset, setRaceData, getHumanChoices, getRaceBonuses };
+  return { init, getStats, getBaseStats, reset, setRaceData, getHumanChoices, getRaceBonuses, restoreState };
 })();

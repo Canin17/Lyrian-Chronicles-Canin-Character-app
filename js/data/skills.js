@@ -481,11 +481,12 @@ function calculateExpertisePoints(expertiseStr) {
 
 /**
  * Check if adding expertise would exceed the cap.
- * Expertise cap follows the same rules as skill cap (15 at base).
+ * Expertise cap follows the same rules as skill cap (15 at base, 10 for artisan skills).
  */
 function canAddExpertise(skill, newExpertisePts) {
   const currentExpertise = calculateExpertisePoints(skill.expertise || '');
-  return (currentExpertise + newExpertisePts) <= SKILL_CAP;
+  const effectiveCap = getEffectiveSkillCap(skill.name);
+  return (currentExpertise + newExpertisePts) <= effectiveCap;
 }
 
 // ===========================================================================

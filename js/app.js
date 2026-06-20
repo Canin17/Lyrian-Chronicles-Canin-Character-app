@@ -10,10 +10,37 @@
   'use strict';
 
   // HTML escape utility to prevent XSS
+  // For data that already contains HTML entities (&nbsp;, &mdash;, etc.),
+  // use renderHtml() instead — it escapes dangerous chars but preserves
+  // a whitelist of safe named entities from the data files.
   window.escapeHtml = function(str) {
     if (typeof str !== 'string') return '';
     return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;');
   };
+
+  /**
+   * Render a string that may contain pre-existing HTML entities
+   * (&nbsp;, &mdash;, &lsquo;, &rsquo;, &ldquo;, &rdquo;, &hellip;, &copy;, &reg;, &trade;, &bull;, &middot;, &ndash;, &rarr;, &larr;).
+   * Escapes < > " ' first, then preserves the safe entity list.
+   */
+  window.renderHtml = function(str) {
+    if (typeof str !== 'string') return '';
+    // Escape dangerous characters first
+    let escaped = str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;');
+    // Restore safe named entities that were double-encoded
+    const safeEntities = ['nbsp', 'mdash', 'ndash', 'lsquo', 'rsquo', 'ldquo', 'rdquo', 'hellip', 'copy', 'reg', 'trade', 'bull', 'middot', 'rarr', 'larr', 'times', 'plusmn', 'frac12', 'frac14', 'frac34', 'sup1', 'sup2', 'sup3', 'circ', 'prime', 'Prime', 'laquo', 'raquo'];
+    safeEntities.forEach(entity => {
+      escaped = escaped.replace(new RegExp('&amp;' + entity + ';', 'g'), '&' + entity + ';');
+    });
+    return escaped;
+  };
+
+  // Polyfill for structuredClone (Safari < 16.4, Firefox < 94)
+  if (typeof structuredClone === 'undefined') {
+    window.structuredClone = function(obj) {
+      return JSON.parse(JSON.stringify(obj));
+    };
+  }
 
   // ===========================================================================
   // CHARACTER DATA STORE
@@ -36,6 +63,8 @@
     weight: '',
     worships: '',
     clim: 3000,
+    exp: 1000,
+    ip: 3,
     pureHuman: false,
     slowStarter: false,
     starterIp: '',
@@ -125,6 +154,30 @@
       startBtn.addEventListener('click', () => goToStep(0));
     }
 
+    // Load saved character button
+    const loadBtn = document.getElementById('btn-load-saved');
+    if (loadBtn) {
+      loadBtn.addEventListener('click', () => {
+        if (loadFromLocalStorage()) {
+          // Navigate to the saved step — loadStepData will restore scene state
+          let savedStep = 0;
+          try { savedStep = parseInt(localStorage.getItem(STORAGE_KEY + '-step')) || 0; } catch (e) {}
+          goToStep(Math.max(0, Math.min(savedStep, STEPS.length - 1)));
+        }
+      });
+    }
+
+    // Check for saved character on init
+    try {
+      const savedRaw = localStorage.getItem(STORAGE_KEY);
+      if (savedRaw) {
+        const loadBtn = document.getElementById('btn-load-saved');
+        if (loadBtn) loadBtn.style.display = 'inline-block';
+      }
+    } catch (e) {
+      // localStorage unavailable — silently fail
+    }
+
     // Navigation buttons (delegated)
     document.addEventListener('click', (e) => {
       // Next button
@@ -137,6 +190,8 @@
         if (currentStep > 0) {
           goToStep(currentStep - 1);
         } else {
+          // Save step 0 data before going back to intro
+          saveCurrentStepData();
           showIntro();
         }
       }
@@ -153,7 +208,20 @@
 
       // New character button
       if (e.target.id === 'btn-new-char') {
-        resetAll();
+        resetAll(); // Already clears localStorage and hides load button internally
+      }
+
+      // Resource stepper buttons (+/-)
+      if (e.target.classList.contains('resource-btn')) {
+        const targetId = e.target.dataset.target;
+        const action = e.target.dataset.action;
+        const input = document.getElementById(targetId);
+        if (input) {
+          const step = parseInt(input.step) || 1;
+          let val = parseInt(input.value) || 0;
+          val = action === 'increase' ? val + step : Math.max(0, val - step);
+          input.value = val;
+        }
       }
     });
   }
@@ -174,6 +242,17 @@
     document.getElementById('progress-bar').classList.add('hidden');
 
     currentStep = -1;
+
+    // Show/hide load button based on saved data (safe localStorage access)
+    const loadBtn = document.getElementById('btn-load-saved');
+    if (loadBtn) {
+      try {
+        const hasSaved = localStorage.getItem(STORAGE_KEY);
+        loadBtn.style.display = hasSaved ? 'inline-block' : 'none';
+      } catch (e) {
+        loadBtn.style.display = 'none';
+      }
+    }
 
     // Animate intro
     if (window.gsap) {
@@ -284,6 +363,8 @@
         character.weight = (document.getElementById('char-weight')?.value || '').trim().slice(0, 15);
         character.worships = (document.getElementById('char-worships')?.value || '').trim().slice(0, 50);
         character.clim = parseInt(document.getElementById('char-clim')?.value) || 3000;
+        character.exp = parseInt(document.getElementById('char-exp')?.value) || 1000;
+        character.ip = parseInt(document.getElementById('char-ip')?.value) || 3;
         break;
       case 1: // Race
         const raceSel = RaceSelectScene.getSelection();
@@ -310,6 +391,12 @@
         character.skills = SkillsStepScene.getSkills();
         break;
     }
+
+    // Auto-save to localStorage after every step save
+    saveToLocalStorage();
+
+    // Update beforeunload warning flag
+    updateProgressFlag();
   }
 
   function loadStepData(stepIndex) {
@@ -335,34 +422,72 @@
         if (worshipsEl) worshipsEl.value = character.worships || '';
         const climEl = document.getElementById('char-clim');
         if (climEl) climEl.value = character.clim ?? 3000;
+        const expEl = document.getElementById('char-exp');
+        if (expEl) expEl.value = character.exp ?? 1000;
+        const ipEl = document.getElementById('char-ip');
+        if (ipEl) ipEl.value = character.ip ?? 3;
         break;
-      case 1: // Race - data already in scene state, no reload needed
+      case 1: // Race - restore saved selection
         const pureHumanEl = document.getElementById('pure-human');
         if (pureHumanEl) pureHumanEl.checked = character.pureHuman || false;
         const slowStarterEl = document.getElementById('slow-starter');
         if (slowStarterEl) slowStarterEl.checked = character.slowStarter || false;
         const starterIpEl = document.getElementById('starter-ip');
         if (starterIpEl) starterIpEl.value = character.starterIp || '';
+        // Restore race/ancestry selection
+        if (character.race) {
+          RaceSelectScene.restoreState(character.race, character.ancestry);
+        }
         break;
-      case 2: // Class - refresh grid to reflect updated race
-        ClassSelectScene.refresh();
+      case 2: // Class - restore saved selection
+        if (character.ip !== undefined) {
+          ClassSelectScene.setStartingIp(character.ip);
+        }
+        if (character.exp !== undefined) {
+          ClassSelectScene.setStartingExp(character.exp);
+        }
+        // Restore class selection
+        if (character.cls) {
+          ClassSelectScene.restoreState(character.cls);
+        } else {
+          ClassSelectScene.refresh();
+        }
         break;
-      case 3: // Breakthroughs - refresh grid to reflect updated class/race
-        BreakthroughScene.refresh();
+      case 3: // Breakthroughs - restore saved selection
+        if (character.breakthroughs && character.breakthroughs.length > 0) {
+          BreakthroughScene.restoreState(character.breakthroughs);
+        } else {
+          BreakthroughScene.refresh();
+        }
         break;
-      case 4: // Stats - set race data for racial bonuses
+      case 4: // Stats - restore saved assignments
         if (character.race) {
           StatsScene.setRaceData(character.race.name);
         }
-        StatsScene.init();
+        // Restore stat assignments instead of resetting
+        if (character.baseStats && Object.keys(character.baseStats).length > 0) {
+          StatsScene.restoreState(
+            character.stats,
+            character.baseStats,
+            character.humanChoices,
+            character.raceBonuses,
+            character.race?.name
+          );
+        } else {
+          StatsScene.init();
+        }
         break;
-      case 5: // Skills - update with character data for multi-source calculation
+      case 5: // Skills - restore saved allocations
         SkillsStepScene.setCharacterData({
           race: character.race,
           ancestry: character.ancestry,
           cls: character.cls,
           breakthroughs: character.breakthroughs
         });
+        // Restore skill allocations
+        if (character.skills && character.skills.length > 0) {
+          SkillsStepScene.restoreState(character.skills);
+        }
         break;
       case 6: // Summary
         SummaryScene.render(character);
@@ -373,7 +498,7 @@
   // ===========================================================================
   // RESET
   // ===========================================================================
-  function resetAll() {
+  async function resetAll() {
     // Clear character data
     character.name = '';
     character.background = '';
@@ -382,6 +507,8 @@
     character.cls = null;
     character.breakthroughs = [];
     character.stats = {};
+    character.baseStats = {};
+    character.raceBonuses = {};
     character.skills = [];
     character.gender = '';
     character.age = '';
@@ -389,12 +516,15 @@
     character.weight = '';
     character.worships = '';
     character.clim = 3000;
+    character.exp = 1000;
+    character.ip = 3;
     character.pureHuman = false;
     character.slowStarter = false;
     character.starterIp = '';
     character.mirane = true;
     character.oldArmorCalc = false;
     character.spiritCore = 0;
+    character.humanChoices = {};
 
     // Reset scenes
     RaceSelectScene.reset();
@@ -424,6 +554,10 @@
     if (worshipsInput) worshipsInput.value = '';
     const climInput = document.getElementById('char-clim');
     if (climInput) climInput.value = '3000';
+    const expInput = document.getElementById('char-exp');
+    if (expInput) expInput.value = '1000';
+    const ipInput = document.getElementById('char-ip');
+    if (ipInput) ipInput.value = '3';
     const pureHumanInput = document.getElementById('pure-human');
     if (pureHumanInput) pureHumanInput.checked = false;
     const slowStarterInput = document.getElementById('slow-starter');
@@ -433,26 +567,117 @@
 
     // Re-initialize PixiJS background BEFORE showing intro (avoid flash)
     if (window.PIXI) {
-      BackgroundScene.init();
+      await BackgroundScene.init();
     }
 
     // Go to intro
     showIntro();
+
+    // Re-initialize scenes that need event re-binding after reset
+    // (reset() clears internal state like previewEventsBound but doesn't re-bind)
+    ClassSelectScene.init();
+    StatsScene.init();
+    SkillsStepScene.init();
+
+    // Clear saved character
+    clearLocalStorage();
+    const loadBtn = document.getElementById('btn-load-saved');
+    if (loadBtn) loadBtn.style.display = 'none';
+
+    // Clear beforeunload warning flag since character is reset
+    updateProgressFlag();
   }
 
   // ===========================================================================
   // CHARACTER DATA ACCESSOR (for scenes to check eligibility)
   // ===========================================================================
   window.getCharacterData = function() {
-    // Save latest data before returning
-    saveCurrentStepData();
     return {
-      race: character.race,
-      ancestry: character.ancestry,
-      cls: character.cls,
-      breakthroughs: character.breakthroughs
+      race: character.race ? { ...character.race } : null,
+      ancestry: character.ancestry ? { ...character.ancestry } : null,
+      cls: character.cls ? structuredClone(character.cls) : null,
+      breakthroughs: character.breakthroughs ? [...character.breakthroughs] : []
     };
   };
+
+  // ===========================================================================
+  // LOCAL STORAGE PERSISTENCE (auto-save / manual load)
+  // ===========================================================================
+  const STORAGE_KEY = 'lyrian-chronicles-character';
+
+  function saveToLocalStorage() {
+    try {
+      const data = {
+        ...character,
+        _step: currentStep,
+        _timestamp: Date.now()
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      localStorage.setItem(STORAGE_KEY + '-step', String(currentStep));
+    } catch (e) {
+      // quota exceeded or private browsing — silently fail
+      console.warn('[App] Could not save to localStorage:', e.message);
+    }
+  }
+
+  function loadFromLocalStorage() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return false;
+      const data = JSON.parse(raw);
+      // Restore character data
+      Object.keys(character).forEach(key => {
+        if (data[key] !== undefined) {
+          character[key] = data[key];
+        }
+      });
+      return true;
+    } catch (e) {
+      console.warn('[App] Could not load from localStorage:', e.message);
+      return false;
+    }
+  }
+
+  function clearLocalStorage() {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(STORAGE_KEY + '-step');
+    } catch (e) {
+      // ignore
+    }
+    // Clear in-memory filter guards so re-init can re-bind
+    delete window._btFiltersBound;
+  }
+
+  // ===========================================================================
+  // BEFOREUNLOAD WARNING (prevent accidental tab close with unsaved progress)
+  // ===========================================================================
+  let hasCharacterProgress = false;
+  let beforeunloadBound = false;
+
+  function updateProgressFlag() {
+    const name = character.name;
+    const hasRace = !!character.race;
+    const hasClass = !!character.cls && !!character.cls.primary;
+    const hadProgress = hasCharacterProgress;
+    hasCharacterProgress = !!(name || hasRace || hasClass);
+    if (hasCharacterProgress && !hadProgress && !beforeunloadBound) {
+      window.addEventListener('beforeunload', beforeUnloadHandler);
+      beforeunloadBound = true;
+    } else if (!hasCharacterProgress && hadProgress && beforeunloadBound) {
+      window.removeEventListener('beforeunload', beforeUnloadHandler);
+      beforeunloadBound = false;
+    }
+  }
+
+  function beforeUnloadHandler(e) {
+    if (hasCharacterProgress) {
+      e.preventDefault();
+      e.returnValue = ''; // Required for Chrome
+    }
+  }
+
+  // updateProgressFlag is called from saveCurrentStepData() and resetAll().
 
   // ===========================================================================
   // BOOT

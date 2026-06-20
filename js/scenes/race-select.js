@@ -6,6 +6,20 @@
 const RaceSelectScene = (function() {
   let selectedRace = null;
   let selectedAncestry = null;
+  let imageTimeouts = []; // Track image load timeouts for cleanup
+
+  /**
+   * Decode HTML entities for textContent display.
+   * Data files contain &nbsp;, &mdash;, etc. which should display as actual characters.
+   */
+  function decodeHtmlEntities(str) {
+    if (typeof str !== 'string') return '';
+    const textarea = document.createElement('textarea');
+    textarea.innerHTML = str;
+    const result = textarea.value;
+    textarea.innerHTML = ''; // Clear to prevent script execution
+    return result;
+  }
 
   function init() {
     renderRaces();
@@ -48,7 +62,7 @@ const RaceSelectScene = (function() {
           imgEl.parentNode.replaceChild(fallback, imgEl);
         };
         // 8s fallback timeout (increased from 3s for slow CDN / connection limits)
-        setTimeout(() => {
+        const timeoutId = setTimeout(() => {
           if (!loaded && imgEl.parentNode) {
             imgEl.style.display = 'none';
             const fallback = document.createElement('div');
@@ -57,6 +71,7 @@ const RaceSelectScene = (function() {
             imgEl.parentNode.replaceChild(fallback, imgEl);
           }
         }, 8000);
+        imageTimeouts.push(timeoutId);
         imgEl.src = race.image;
       } else {
         imgEl = document.createElement('div');
@@ -77,7 +92,7 @@ const RaceSelectScene = (function() {
 
       const desc = document.createElement('p');
       desc.className = 'race-desc';
-      desc.textContent = race.description ? race.description.substring(0, 120) + '...' : '';
+      desc.textContent = decodeHtmlEntities(race.description ? race.description.substring(0, 120) + '...' : '');
 
       const details = document.createElement('button');
       details.className = 'race-details-btn';
@@ -211,7 +226,7 @@ const RaceSelectScene = (function() {
           imgEl.parentNode.replaceChild(fallback, imgEl);
         };
         // 8s fallback timeout (increased from 3s for slow CDN / connection limits)
-        setTimeout(() => {
+        const timeoutId = setTimeout(() => {
           if (!loaded && imgEl.parentNode) {
             imgEl.style.display = 'none';
             const fallback = document.createElement('div');
@@ -220,6 +235,7 @@ const RaceSelectScene = (function() {
             imgEl.parentNode.replaceChild(fallback, imgEl);
           }
         }, 8000);
+        imageTimeouts.push(timeoutId);
         imgEl.src = anc.image;
       } else {
         imgEl = document.createElement('div');
@@ -232,7 +248,7 @@ const RaceSelectScene = (function() {
 
       const desc = document.createElement('p');
       desc.className = 'ancestry-desc';
-      desc.textContent = anc.description ? anc.description.substring(0, 100) + '...' : '';
+      desc.textContent = decodeHtmlEntities(anc.description ? anc.description.substring(0, 100) + '...' : '');
 
       card.appendChild(imgEl);
       card.appendChild(name);
@@ -277,10 +293,10 @@ const RaceSelectScene = (function() {
     if (selectedRace) {
       html += `<div class="summary-row"><span class="summary-label">Race</span><span class="summary-value">${window.escapeHtml(selectedRace.name)}</span></div>`;
       if (selectedRace.attributes) {
-        html += `<div class="summary-row"><span class="summary-label">Race Attributes</span><span class="summary-value">${window.escapeHtml(selectedRace.attributes)}</span></div>`;
+        html += `<div class="summary-row"><span class="summary-label">Race Attributes</span><span class="summary-value">${window.renderHtml(selectedRace.attributes)}</span></div>`;
       }
       if (selectedRace.proficiencies) {
-        html += `<div class="summary-row"><span class="summary-label">Proficiencies</span><span class="summary-value">${window.escapeHtml(selectedRace.proficiencies)}</span></div>`;
+        html += `<div class="summary-row"><span class="summary-label">Proficiencies</span><span class="summary-value">${window.renderHtml(selectedRace.proficiencies)}</span></div>`;
       }
     }
 
@@ -290,12 +306,12 @@ const RaceSelectScene = (function() {
     if (selectedAncestry) {
       html += `<div class="summary-row" style="margin-top: 0.5rem; border-top: 1px solid var(--border-color); padding-top: 0.5rem;"><span class="summary-label">${ancestryLabel}</span><span class="summary-value">${window.escapeHtml(selectedAncestry.name)}</span></div>`;
       if (selectedAncestry.attributes) {
-        html += `<div class="summary-row"><span class="summary-label">${ancestryLabel} Traits</span><span class="summary-value">${window.escapeHtml(selectedAncestry.attributes)}</span></div>`;
+        html += `<div class="summary-row"><span class="summary-label">${ancestryLabel} Traits</span><span class="summary-value">${window.renderHtml(selectedAncestry.attributes)}</span></div>`;
         // Render each trait as a clickable dropdown
         const traits = selectedAncestry.attributes.split(',').map(t => t.trim()).filter(Boolean);
         traits.forEach(trait => {
           const desc = TRAIT_DESCRIPTIONS[trait];
-          const descText = desc ? window.escapeHtml(desc) : 'No description available.';
+          const descText = desc ? window.renderHtml(desc) : 'No description available.';
           html += `<details class="trait-dropdown">
             <summary class="trait-dropdown-summary">${window.escapeHtml(trait)}</summary>
             <div class="trait-dropdown-content">${descText}</div>
@@ -303,7 +319,7 @@ const RaceSelectScene = (function() {
         });
       }
       if (selectedAncestry.proficiencies) {
-        html += `<div class="summary-row"><span class="summary-label">Proficiencies</span><span class="summary-value">${window.escapeHtml(selectedAncestry.proficiencies)}</span></div>`;
+        html += `<div class="summary-row"><span class="summary-label">Proficiencies</span><span class="summary-value">${window.renderHtml(selectedAncestry.proficiencies)}</span></div>`;
       }
     } else if (selectedRace) {
       // No ancestry available or needed — show a note
@@ -327,9 +343,9 @@ const RaceSelectScene = (function() {
       <button class="modal-close" type="button">&times;</button>
     </div>
     <div class="modal-body">
-      <p>${window.escapeHtml(race.description)}</p>
-      ${race.attributes ? `<div style="margin-top: 1rem;"><strong>Attributes:</strong> ${window.escapeHtml(race.attributes)}</div>` : ''}
-      ${race.traits ? `<div style="margin-top: 0.5rem;"><strong>Traits:</strong> ${window.escapeHtml(race.traits)}</div>` : ''}
+      <p>${window.renderHtml(race.description)}</p>
+      ${race.attributes ? `<div style="margin-top: 1rem;"><strong>Attributes:</strong> ${window.renderHtml(race.attributes)}</div>` : ''}
+      ${race.traits ? `<div style="margin-top: 0.5rem;"><strong>Traits:</strong> ${window.renderHtml(race.traits)}</div>` : ''}
     </div>`;
 
     content.innerHTML = html;
@@ -341,6 +357,10 @@ const RaceSelectScene = (function() {
   }
 
   function reset() {
+    // Clear pending image timeouts
+    imageTimeouts.forEach(id => clearTimeout(id));
+    imageTimeouts = [];
+
     selectedRace = null;
     selectedAncestry = null;
     const raceCards = document.getElementById('race-cards');
@@ -359,5 +379,31 @@ const RaceSelectScene = (function() {
     renderRaces();
   }
 
-  return { init, getSelection, reset };
+  /**
+   * Restore a previously saved race/ancestry selection.
+   * Called when navigating back to this step or loading from localStorage.
+   */
+  function restoreState(raceData, ancestryData) {
+    if (!raceData) return;
+
+    // Look up race from RACE_DATA by id or name
+    const race = RACE_DATA.find(r => r.id === raceData.id || r.name === raceData.name);
+    if (!race) return;
+
+    // Select the race (this renders ancestries)
+    selectRace(race);
+
+    // If ancestry was saved, select it after ancestries are rendered
+    if (ancestryData) {
+      const anc = (ANCESTRY_MAP[race.name] || []).find(a =>
+        a.id === ancestryData.id || a.ancestryId === ancestryData.ancestryId || a.name === ancestryData.name
+      );
+      if (anc) {
+        // renderAncestries() is synchronous, so cards are already in DOM
+        selectAncestry(anc);
+      }
+    }
+  }
+
+  return { init, getSelection, reset, restoreState };
 })();

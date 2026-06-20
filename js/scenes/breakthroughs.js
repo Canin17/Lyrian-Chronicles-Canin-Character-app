@@ -15,6 +15,19 @@ const BreakthroughScene = (function() {
   // Total abilities that must be bought for a class to be considered "mastered"
   const TOTAL_PAID_ABILITIES = 7;
 
+  /**
+   * Decode HTML entities for textContent display.
+   * Data files contain &nbsp;, &mdash;, etc. which should display as actual characters.
+   */
+  function decodeHtmlEntities(str) {
+    if (typeof str !== 'string') return '';
+    const textarea = document.createElement('textarea');
+    textarea.innerHTML = str;
+    const result = textarea.value;
+    textarea.innerHTML = ''; // Clear to prevent script execution
+    return result;
+  }
+
   // ===========================================================================
   // ELIGIBILITY CHECKER — clause-based parser
   // Splits requirements into clauses by separators (period, comma)
@@ -61,7 +74,7 @@ const BreakthroughScene = (function() {
         return options.some(opt =>
           equipped.some(ec => {
             const name = (ec.class?.name || '').toLowerCase();
-            return name === opt && ec.abilitiesBought >= TOTAL_PAID_ABILITIES;
+            return name === opt && ec.level >= 8; // mastery = level 8 (7 abilities bought)
           })
         );
       }
@@ -73,7 +86,7 @@ const BreakthroughScene = (function() {
         return options.some(opt =>
           equipped.some(ec => {
             const name = (ec.class?.name || '').toLowerCase();
-            return name === opt && ec.abilitiesBought >= TOTAL_PAID_ABILITIES;
+            return name === opt && ec.level >= 8; // mastery = level 8 (7 abilities bought)
           })
         );
       }
@@ -187,11 +200,11 @@ const BreakthroughScene = (function() {
 
     // Check exact match against main race name
     if (knownRaces.includes(neededLower)) {
-      return raceName.includes(neededLower);
+      return raceName === neededLower;
     }
 
     // Check ancestry/subrace match
-    return ancestryName.includes(neededLower) || ancestryId.includes(neededLower) || raceName.includes(neededLower);
+    return ancestryName === neededLower || ancestryId === neededLower || raceName.includes(neededLower);
   }
 
   // ===========================================================================
@@ -281,12 +294,12 @@ const BreakthroughScene = (function() {
           <span class="bt-cost-badge">${bt.cost || 0} EXP</span>
         </div>
       </div>
-      ${bt.prerequisites ? `<div class="bt-preview-prereq ${eligible ? 'eligible' : 'ineligible'}">Requires: ${window.escapeHtml(bt.prerequisites)}</div>` : ''}
-      <div class="bt-preview-description">${window.escapeHtml(bt.description || '')}</div>
+      ${bt.prerequisites ? `<div class="bt-preview-prereq ${eligible ? 'eligible' : 'ineligible'}">Requires: ${window.renderHtml(bt.prerequisites)}</div>` : ''}
+      <div class="bt-preview-description">${window.renderHtml(bt.description || '')}</div>
       ${bt.effects && bt.effects.length > 0 ? `
         <div class="bt-preview-effects">
           <h4>Effects</h4>
-          ${bt.effects.map(e => `<div class="bt-effect-row"><strong>${window.escapeHtml(e.name)}</strong> ${window.escapeHtml(String(e.description || ''))}</div>`).join('')}
+          ${bt.effects.map(e => `<div class="bt-effect-row"><strong>${window.escapeHtml(e.name)}</strong> ${window.renderHtml(String(e.description || ''))}</div>`).join('')}
         </div>
       ` : ''}
       <div class="bt-preview-footer">
@@ -356,7 +369,7 @@ const BreakthroughScene = (function() {
       // Description
       const desc = document.createElement('p');
       desc.className = 'bt-card-description';
-      desc.textContent = bt.description ? (bt.description.length > 120 ? bt.description.substring(0, 120) + '...' : bt.description) : '';
+      desc.textContent = bt.description ? decodeHtmlEntities(bt.description.length > 120 ? bt.description.substring(0, 120) + '...' : bt.description) : '';
 
       // Assemble card
       card.appendChild(header);
@@ -364,7 +377,7 @@ const BreakthroughScene = (function() {
       if (bt.prerequisites) {
         const prereq = document.createElement('div');
         prereq.className = `bt-prereq-badge ${eligible ? 'eligible' : 'ineligible'}`;
-        prereq.textContent = `Requires: ${bt.prerequisites}`;
+        prereq.textContent = decodeHtmlEntities(`Requires: ${bt.prerequisites}`);
         prereq.title = bt.prerequisites;
         card.appendChild(prereq);
       }
@@ -459,6 +472,10 @@ const BreakthroughScene = (function() {
   }
 
   function initFilters() {
+    // Guard: prevent duplicate listeners on re-init
+    if (window._btFiltersBound) return;
+    window._btFiltersBound = true;
+
     // Cost filters
     const costFilters = document.getElementById('cost-filters');
     if (costFilters) {
@@ -495,10 +512,15 @@ const BreakthroughScene = (function() {
       });
     }
 
-    // Search input
+    // Search input (debounced for performance) — use delegation to avoid duplicates
     const searchEl = document.getElementById('bt-search');
-    if (searchEl) {
-      searchEl.addEventListener('input', applyFilters);
+    if (searchEl && !searchEl.dataset.btSearchBound) {
+      searchEl.dataset.btSearchBound = 'true';
+      let searchTimeout;
+      searchEl.addEventListener('input', () => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(applyFilters, 150);
+      });
     }
   }
 
@@ -520,12 +542,39 @@ const BreakthroughScene = (function() {
     return structuredClone(selectedBreakthroughs);
   }
 
+  /**
+   * Restore a previously saved breakthrough selection.
+   * Called when navigating back to this step or loading from localStorage.
+   */
+  function restoreState(savedBreakthroughs) {
+    if (!Array.isArray(savedBreakthroughs)) return;
+
+    selectedBreakthroughs = [];
+    savedBreakthroughs.forEach(btData => {
+      // Look up breakthrough from BREAKTHROUGH_DATA by id or name
+      const bt = BREAKTHROUGH_DATA.find(b =>
+        b.id === btData.id || b.name === btData.name
+      );
+      if (bt) {
+        selectedBreakthroughs.push(bt);
+      }
+    });
+
+    renderSelectedList();
+    applyFilters();
+  }
+
   function reset() {
     selectedBreakthroughs = [];
     renderSelectedList();
     hideBreakthroughPreview();
+    // Reset filter button guards so re-init can re-bind
+    delete window._btFiltersBound;
     const searchEl = document.getElementById('bt-search');
-    if (searchEl) searchEl.value = '';
+    if (searchEl) {
+      searchEl.value = '';
+      delete searchEl.dataset.btSearchBound;
+    }
     // Reset filters
     document.querySelectorAll('#cost-filters .filter-btn, #category-filters .filter-btn, #bt-eligibility-filters .filter-btn').forEach(btn => {
       btn.classList.remove('active');
@@ -534,5 +583,5 @@ const BreakthroughScene = (function() {
     renderBreakthroughs(BREAKTHROUGH_DATA);
   }
 
-  return { init, getSelection, reset, toggleBreakthrough, refresh };
+  return { init, getSelection, reset, toggleBreakthrough, refresh, restoreState };
 })();
