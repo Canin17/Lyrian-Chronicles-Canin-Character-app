@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lyrian Chronicles - Character Creator</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&display=swap" rel="stylesheet" crossorigin="anonymous">
+</head>
+<body>
+  <!-- PixiJS Canvas Background -->
+  <canvas id="bg-canvas"></canvas>
+
+  <!-- Main App Container -->
+  <div id="app">
+    <!-- Progress Bar -->
+    <div id="progress-bar" class="hidden">
+      <div class="progress-track">
+        <div id="progress-fill" class="progress-fill"></div>
+      </div>
+      <div id="progress-steps" class="progress-steps">
+        <div class="step active" data-step="0">
+          <div class="step-circle">1</div>
+          <div class="step-label">Identity</div>
+        </div>
+        <div class="step" data-step="1">
+          <div class="step-circle">2</div>
+          <div class="step-label">Race</div>
+        </div>
+        <div class="step" data-step="2">
+          <div class="step-circle">3</div>
+          <div class="step-label">Class</div>
+        </div>
+        <div class="step" data-step="3">
+          <div class="step-circle">4</div>
+          <div class="step-label">Breakthroughs</div>
+        </div>
+        <div class="step" data-step="4">
+          <div class="step-circle">5</div>
+          <div class="step-label">Stats</div>
+        </div>
+        <div class="step" data-step="5">
+          <div class="step-circle">6</div>
+          <div class="step-label">Skills</div>
+        </div>
+        <div class="step" data-step="6">
+          <div class="step-circle">7</div>
+          <div class="step-label">Summary</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Wizard Steps Container -->
+    <div id="wizard-container">
+
+      <!-- INTRO SCREEN -->
+      <div id="step-intro" class="wizard-step active">
+        <div class="intro-content">
+          <h1 class="title-glow">LYRIAN CHRONICLES</h1>
+          <h2 class="subtitle">Character Creator</h2>
+          <p class="intro-text">Forge your destiny in the world of Lyria. Choose your race, class, and abilities to create a hero worthy of legend.</p>
+          <button id="btn-start" class="btn-primary btn-glow">Begin Creation</button>
+        </div>
+      </div>
+
+      <!-- STEP 1: CHARACTER IDENTITY -->
+      <div id="step-identity" class="wizard-step">
+        <div class="step-panel">
+          <h2>Character Identity</h2>
+          <div class="nav-buttons">
+            <button class="btn-secondary" data-action="back">Back</button>
+            <button class="btn-primary" data-action="next">Continue</button>
+          </div>
+          <div class="form-group">
+            <label for="char-name">Character Name</label>
+            <input type="text" id="char-name" placeholder="Enter your character's name..." maxlength="50" required>
+          </div>
+          <div class="form-group">
+            <label for="char-background">Background</label>
+            <textarea id="char-background" placeholder="A brief description of your character's origins and story..." rows="4"></textarea>
+          </div>
+
+          <!-- Identity extras -->
+          <div class="form-group">
+            <label for="char-gender">Gender</label>
+            <input type="text" id="char-gender" placeholder="e.g. Male, Female, Non-binary..." maxlength="30">
+          </div>
+          <div class="form-group">
+            <label for="char-age">Age</label>
+            <input type="text" id="char-age" placeholder="e.g. 25" maxlength="10">
+          </div>
+          <div class="form-group">
+            <label for="char-height">Height</label>
+            <input type="text" id="char-height" placeholder="e.g. 5'10&quot;" maxlength="10">
+          </div>
+          <div class="form-group">
+            <label for="char-weight">Weight</label>
+            <input type="text" id="char-weight" placeholder="e.g. 160 lbs" maxlength="15">
+          </div>
+          <div class="form-group">
+            <label for="char-worships">Worships</label>
+            <input type="text" id="char-worships" placeholder="e.g. God of Light" maxlength="50">
+          </div>
+          <div class="form-group">
+            <label for="char-clim">Starting Clim</label>
+            <input type="number" id="char-clim" placeholder="e.g. 3000" value="3000" min="0">
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 2: RACE SELECTION -->
+      <div id="step-race" class="wizard-step">
+        <div class="step-panel">
+          <h2>Choose Your Race</h2>
+          <p class="step-description">Select your primary race, then choose an ancestry (subrace) for additional traits.</p>
+          <div class="nav-buttons">
+            <button class="btn-secondary" data-action="back">Back</button>
+            <button class="btn-primary" data-action="next" id="btn-race-next" disabled>Continue</button>
+          </div>
+
+          <!-- Race Summary (top of panel) -->
+          <div id="race-summary" class="selection-summary hidden"></div>
+
+          <!-- Primary Race Selection -->
+          <div id="race-primary-section">
+            <h3>Primary Race</h3>
+            <div id="race-cards" class="card-grid"></div>
+          </div>
+
+          <!-- Ancestry Selection (shown after primary race selected) -->
+          <div id="race-ancestry-section" class="hidden">
+            <h3 id="ancestry-heading">Ancestry (Subrace)</h3>
+            <p id="ancestry-instruction" class="hint-text"></p>
+            <div id="ancestry-cards" class="card-grid"></div>
+
+          <!-- Human-specific options (shown only when Human is selected) -->
+          <div id="human-options-container" class="hidden" style="margin-top: 20px; padding: 15px; border: 1px solid var(--accent-gold); border-radius: 6px; background: rgba(196, 163, 90, 0.05);">
+            <h3 style="margin-top: 0; color: var(--accent-gold);">Human Options</h3>
+            <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+              <div class="checkbox-group" style="display: flex; align-items: center; gap: 8px;">
+                <input type="checkbox" id="pure-human" style="width: auto;">
+                <label for="pure-human" style="margin: 0; text-transform: none; font-size: 1rem;">Pure Human</label>
+              </div>
+              <div class="checkbox-group" style="display: flex; align-items: center; gap: 8px;">
+                <input type="checkbox" id="slow-starter" style="width: auto;">
+                <label for="slow-starter" style="margin: 0; text-transform: none; font-size: 1rem;">Slow Starter</label>
+              </div>
+            </div>
+            <div class="form-group" style="margin-top: 15px;">
+              <label for="starter-ip">Starter IP Spent On</label>
+              <textarea id="starter-ip" placeholder="Describe what your starter Interlude Points were spent on..." rows="2"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 3: CLASS SELECTION -->
+      <div id="step-class" class="wizard-step">
+        <div class="step-panel">
+          <h2>Choose Your Class</h2>
+          <p class="step-description">Select your character's class. Classes define your abilities and playstyle.</p>
+          <div class="nav-buttons">
+            <button class="btn-secondary" data-action="back">Back</button>
+            <button class="btn-primary" data-action="next" id="btn-class-next" disabled>Continue</button>
+          </div>
+
+          <!-- Equipped Classes (always visible) -->
+          <div class="equipped-classes-section">
+            <div class="equipped-classes-header">
+              <h3>Equipped Classes</h3>
+              <div class="equipped-classes-stats">
+                <span class="ip-display" id="ipDisplay">3 IP</span>
+                <span class="exp-remaining" id="expRemaining">1000 EXP</span>
+                <span class="spirit-core-display" id="spiritCoreDisplay">Spirit Core: 0</span>
+              </div>
+            </div>
+            <div class="equipped-classes-list" id="equippedClassesList">
+              <div class="equipped-empty-msg">No classes equipped yet</div>
+            </div>
+          </div>
+
+          <!-- Class Overview Panel (hidden until class selected) -->
+          <div id="class-overview-panel" class="class-overview-panel" style="display:none;">
+            <div class="class-preview-section" id="classPreviewSection">
+              <div class="class-preview-empty">
+                <span class="class-preview-empty-icon">🧙</span>
+                <span class="class-preview-empty-text">Select a class to preview its details.</span>
+              </div>
+              <div id="classPreviewContent" class="class-preview-content" style="display:none;">
+                <!-- Left Panel: Portrait -->
+                <div class="class-preview-left-panel">
+                  <div id="classPreviewImageWrapper" class="class-preview-image-wrapper">
+                    <img id="classPreviewImage" class="class-preview-image" src="" alt="Class Preview">
+                    <span id="classPreviewTier" class="class-preview-tier-badge"></span>
+                    <span id="classPreviewNameBadge" class="class-preview-name-badge"></span>
+                  </div>
+                  <div class="class-preview-level-controls">
+                    <button type="button" id="classLevelDecrease" class="class-level-btn">−</button>
+                    <div class="class-level-display">
+                      <span class="class-level-label">Lv</span>
+                      <span id="classLevelValue" class="class-level-value">1</span>
+                    </div>
+                    <button type="button" id="classLevelIncrease" class="class-level-btn">+</button>
+                  </div>
+                </div>
+
+                <!-- Right Panel: Details -->
+                <div class="class-preview-right-panel">
+                  <!-- Top: Role + Requirements -->
+                  <div class="class-preview-header">
+                    <div class="class-preview-roles">
+                      <span id="classPreviewRole1" class="class-role-tag"></span>
+                      <span id="classPreviewRole2" class="class-role-tag"></span>
+                    </div>
+                    <div class="class-preview-requirements" id="classPreviewRequirements">
+                      <span class="req-label">Requirements:</span>
+                      <span class="req-text"></span>
+                    </div>
+                  </div>
+
+                  <!-- Abilities Grid -->
+                  <div class="class-preview-abilities-header">ABILITIES</div>
+                  <div class="class-preview-abilities-grid" id="classPreviewAbilitiesGrid">
+                    <!-- L1-L4 left column -->
+                    <div class="class-preview-abilities-col" id="classAbilitiesCol1"></div>
+                    <!-- L5-L8 right column -->
+                    <div class="class-preview-abilities-col" id="classAbilitiesCol2"></div>
+                  </div>
+
+                  <!-- Bottom: EXP + Apply -->
+                  <div class="class-preview-footer">
+                    <div class="class-preview-exp-info">
+                      <span id="classPreviewUnlockCost"></span>
+                      <span class="exp-separator">·</span>
+                      <span id="classPreviewTotalCost"></span>
+                    </div>
+                    <button type="button" id="classApplyBtn" class="class-apply-btn">Equip Class</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Class Filters -->
+          <div id="class-filters" class="filter-bar">
+            <div class="filter-group">
+              <label>Tier:</label>
+              <div class="filter-buttons" id="tier-filters">
+                <button type="button" class="filter-btn active" data-filter="tier" data-value="">All</button>
+                <button type="button" class="filter-btn" data-filter="tier" data-value="1">T1</button>
+                <button type="button" class="filter-btn" data-filter="tier" data-value="2">T2</button>
+                <button type="button" class="filter-btn" data-filter="tier" data-value="3">T3</button>
+              </div>
+            </div>
+            <div class="filter-group">
+              <label>Role:</label>
+              <div class="filter-buttons" id="role-filters">
+                <button type="button" class="filter-btn active" data-filter="role" data-value="">All</button>
+              </div>
+            </div>
+            <div class="filter-group">
+              <label>Eligibility:</label>
+              <div class="filter-buttons" id="eligibility-filters">
+                <button type="button" class="filter-btn active" data-filter="eligibility" data-value="">All</button>
+                <button type="button" class="filter-btn" data-filter="eligibility" data-value="eligible">Eligible</button>
+                <button type="button" class="filter-btn" data-filter="eligibility" data-value="warning">Warning</button>
+              </div>
+            </div>
+            <div class="filter-group">
+              <label>Search:</label>
+              <input type="text" id="class-search" placeholder="Search classes...">
+            </div>
+          </div>
+
+          <!-- Class Grid -->
+          <div id="class-grid" class="class-grid"></div>
+
+          <!-- Selected Class Detail -->
+          <div id="class-detail" class="selection-summary hidden"></div>
+        </div>
+      </div>
+
+      <!-- STEP 3.5: BREAKTHROUGHS -->
+      <div id="step-breakthroughs" class="wizard-step">
+        <div class="step-panel breakthroughs-panel">
+          <div class="breakthroughs-header">
+            <div class="breakthroughs-title-section">
+              <h2>Breakthroughs</h2>
+              <p class="breakthroughs-subtitle">Evolve your character — <span id="bt-total-count">87</span> breakthroughs available</p>
+            </div>
+          </div>
+          <div class="nav-buttons">
+            <button class="btn-secondary" data-action="back">Back</button>
+            <button class="btn-primary" data-action="next" id="btn-bt-next">Continue</button>
+          </div>
+
+          <!-- Breakthrough Overview Panel -->
+          <div class="bt-overview-panel">
+            <div class="bt-selected-panel">
+              <div class="bt-selected-header">
+                <h3>SELECTED BREAKTHROUGHS</h3>
+                <div class="bt-selected-stats">
+                  <span class="bt-exp-remaining" id="bt-exp-remaining">300 EXP</span>
+                  <span class="bt-count" id="bt-count">0 selected</span>
+                </div>
+              </div>
+              <div class="bt-selected-list" id="bt-selected-list">
+                <div class="bt-selected-empty">No breakthroughs selected yet</div>
+              </div>
+            </div>
+            <div class="bt-preview-panel" id="bt-preview-panel">
+              <div class="bt-preview-empty">
+                <span class="bt-preview-empty-icon">⭐</span>
+                <span class="bt-preview-empty-text">Select a breakthrough to preview its details.</span>
+              </div>
+              <div id="bt-preview-content" class="bt-preview-content" style="display:none;">
+                <!-- Filled by JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Breakthrough Filters -->
+          <div id="bt-filters" class="filter-bar">
+            <div class="filter-group">
+              <label>Search:</label>
+              <div class="bt-search-wrapper">
+                <input type="text" id="bt-search" placeholder="Search breakthroughs...">
+                <span class="bt-search-count" id="bt-search-count">0 of 0 breakthroughs</span>
+              </div>
+            </div>
+            <div class="filter-group">
+              <label>COST:</label>
+              <div class="filter-buttons" id="cost-filters">
+                <button type="button" class="filter-btn active" data-filter="cost" data-value="">All</button>
+                <button type="button" class="filter-btn" data-filter="cost" data-value="25">25</button>
+                <button type="button" class="filter-btn" data-filter="cost" data-value="50">50</button>
+                <button type="button" class="filter-btn" data-filter="cost" data-value="75">75</button>
+                <button type="button" class="filter-btn" data-filter="cost" data-value="100">100</button>
+                <button type="button" class="filter-btn" data-filter="cost" data-value="150">150</button>
+                <button type="button" class="filter-btn" data-filter="cost" data-value="200">200</button>
+                <button type="button" class="filter-btn" data-filter="cost" data-value="300">300+</button>
+              </div>
+            </div>
+            <div class="filter-group">
+              <label>CATEGORY:</label>
+              <div class="filter-buttons" id="category-filters">
+                <button type="button" class="filter-btn active" data-filter="category" data-value="">All</button>
+                <button type="button" class="filter-btn" data-filter="category" data-value="General">General</button>
+                <button type="button" class="filter-btn" data-filter="category" data-value="Racial">Racial</button>
+                <button type="button" class="filter-btn" data-filter="category" data-value="Class">Class</button>
+              </div>
+            </div>
+            <div class="filter-group">
+              <label>ELIGIBILITY:</label>
+              <div class="filter-buttons" id="bt-eligibility-filters">
+                <button type="button" class="filter-btn active" data-filter="eligibility" data-value="">All</button>
+                <button type="button" class="filter-btn" data-filter="eligibility" data-value="eligible">Eligible Only</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Breakthrough Grid -->
+          <div id="bt-grid" class="bt-grid"></div>
+        </div>
+      </div>
+
+      <!-- STEP 4: ABILITY SCORES -->
+      <div id="step-stats" class="wizard-step">
+        <div class="step-panel">
+          <h2>Allocate Ability Scores</h2>
+          <p class="step-description">You have 20 total stat points (9 already allocated at minimum 1). Distribute your remaining <strong id="stat-points-remaining">11</strong> points across your stats. Each stat ranges from 1-10.</p>
+          
+          <!-- Human Racial Bonus Choices -->
+          <div id="human-choices-container" style="display: none; margin-bottom: 20px; padding: 15px; border: 1px solid var(--accent-gold); border-radius: 6px; background: rgba(196, 163, 90, 0.05);">
+            <h3 style="margin-top: 0; color: var(--accent-gold);">Human Racial Bonus (+1 Main, +1 Sub-Stat)</h3>
+            <div style="display: flex; gap: 20px;">
+              <div style="flex: 1;">
+                <label for="human-main-select" style="display: block; margin-bottom: 5px;">Choose Main Stat (+1)</label>
+                <select id="human-main-select" style="width: 100%; padding: 8px; background: #222; border: 1px solid var(--border-color); color: #fff; border-radius: 4px;">
+                  <option value="pow">Power (POW)</option>
+                  <option value="foc">Focus (FOC)</option>
+                  <option value="agi">Agility (AGI)</option>
+                  <option value="tou" selected>Toughness (TOU)</option>
+                </select>
+              </div>
+              <div style="flex: 1;">
+                <label for="human-sub-select" style="display: block; margin-bottom: 5px;">Choose Sub-Stat (+1)</label>
+                <select id="human-sub-select" style="width: 100%; padding: 8px; background: #222; border: 1px solid var(--border-color); color: #fff; border-radius: 4px;">
+                  <option value="fitness" selected>Fitness</option>
+                  <option value="cunning">Cunning</option>
+                  <option value="reason">Reason</option>
+                  <option value="awareness">Awareness</option>
+                  <option value="presence">Presence</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <div class="nav-buttons">
+            <button class="btn-secondary" data-action="back">Back</button>
+            <button class="btn-primary" data-action="next" id="btn-stats-next">Continue</button>
+          </div>
+
+          <!-- Main Stats -->
+          <div id="main-stats" class="stats-grid">
+            <!-- Filled by JS -->
+          </div>
+
+          <!-- Sub Stats -->
+          <div id="sub-stats-section">
+            <h3>Sub-Stats</h3>
+            <div id="sub-stats" class="stats-grid">
+              <!-- Filled by JS -->
+            </div>
+          </div>
+
+          <!-- Derived Stats Preview -->
+          <div id="derived-stats" class="derived-stats-panel">
+            <h3>Derived Stats Preview</h3>
+            <div class="derived-grid">
+              <div class="derived-item">
+                <span class="derived-label">HP</span>
+                <span class="derived-value" id="derived-hp">21</span>
+              </div>
+              <div class="derived-item">
+                <span class="derived-label">Mana</span>
+                <span class="derived-value" id="derived-mana">7</span>
+              </div>
+              <div class="derived-item">
+                <span class="derived-label">RP</span>
+                <span class="derived-value" id="derived-rp">3</span>
+              </div>
+              <div class="derived-item">
+                <span class="derived-label">Evasion</span>
+                <span class="derived-value" id="derived-evasion">8</span>
+              </div>
+              <div class="derived-item">
+                <span class="derived-label">Potency</span>
+                <span class="derived-value" id="derived-potency">12</span>
+              </div>
+              <div class="derived-item">
+                <span class="derived-label">Initiative</span>
+                <span class="derived-value" id="derived-initiative">1</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 5: SKILLS -->
+      <div id="step-skills" class="wizard-step">
+        <div class="step-panel">
+          <h2>Allocate Skills</h2>
+          <p class="step-description">Spend your skill points across your skills. Each skill has a cap of 15 points.</p>
+          <div class="nav-buttons">
+            <button class="btn-secondary" data-action="back">Back</button>
+            <button class="btn-primary" data-action="next" id="btn-skills-next">Continue</button>
+          </div>
+
+          <!-- Skill Points Breakdown -->
+          <div id="skill-points-breakdown" class="skill-points-breakdown">
+            <!-- Filled by JS -->
+          </div>
+
+          <!-- Eligible Skills Panel -->
+          <div id="eligible-skills-panel" class="eligible-skills-panel" style="display: none;">
+            <!-- Filled by JS when a source is clicked -->
+          </div>
+
+          <!-- Points Remaining -->
+          <div class="skill-points-remaining-bar">
+            <span class="skill-points-label">Points Remaining:</span>
+            <span id="skill-points-remaining" class="skill-points-value">10</span>
+          </div>
+
+          <div id="skills-container">
+            <!-- Filled by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 6: SUMMARY -->
+      <div id="step-summary" class="wizard-step">
+        <div class="step-panel">
+          <h2>Character Summary</h2>
+          <div class="nav-buttons">
+            <button class="btn-secondary" data-action="back">Back</button>
+            <button class="btn-primary" id="btn-export">Export JSON</button>
+            <button class="btn-primary" id="btn-export-excel">Export Excel</button>
+            <button class="btn-primary" id="btn-new-char">New Character</button>
+          </div>
+          <div id="summary-content">
+            <!-- Filled by JS -->
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Class Data Modal -->
+  <div id="class-modal-overlay" class="modal-overlay hidden">
+    <div id="class-modal-content" class="modal-content">
+      <!-- Filled by JS -->
+    </div>
+  </div>
+
+  <!-- Scripts - Load in order -->
+  <!-- Error tracking -->
+  <script>
+    window.addEventListener('error', function(e) {
+      console.error('JS ERROR:', e.message, 'at', e.filename + ':' + e.lineno);
+    });
+    window.addEventListener('unhandledrejection', function(e) {
+      console.error('UNHANDLED REJECTION:', e.reason);
+    });
+  </script>
+  <!-- CDN Dependencies -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/8.8.0/pixi.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.7/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+
+  <!-- Data Files -->
+  <script src="js/data/races.js"></script>
+  <script src="js/data/classes.js"></script>
+  <script src="js/data/breakthroughs.js"></script>
+  <script src="js/data/skills.js"></script>
+  <script src="js/data/calculations.js"></script>
+  <script src="js/data/excel-template.js"></script>
+
+  <!-- Scene Files -->
+  <script src="js/scenes/intro.js"></script>
+  <script src="js/scenes/race-select.js"></script>
+  <script src="js/scenes/class-select.js"></script>
+  <script src="js/scenes/breakthroughs.js"></script>
+  <script src="js/scenes/stats.js"></script>
+  <script src="js/scenes/skills-step.js"></script>
+  <script src="js/scenes/summary.js"></script>
+
+  <!-- Main App -->
+  <script src="js/app.js"></script>
+</body>
+</html>

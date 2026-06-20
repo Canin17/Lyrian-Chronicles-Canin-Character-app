@@ -1,0 +1,22 @@
+# Excel/spreadsheet files
+*.xlsx
+
+# Node dependencies
+node_modules/
+
+# IDE/editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+dist/
+build/
+
+# Plans
+plans/
