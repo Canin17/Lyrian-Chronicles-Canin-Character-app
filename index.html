@@ -369,9 +369,12 @@
       <!-- STEP 4: ABILITY SCORES -->
       <div id="step-stats" class="wizard-step">
         <div class="step-panel">
-          <h2>Allocate Ability Scores</h2>
-          <p class="step-description">You have 20 total stat points (9 already allocated at minimum 1). Distribute your remaining <strong id="stat-points-remaining">11</strong> points across your stats. Each stat ranges from 1-10.</p>
-          
+          <h2>Assign Ability Scores</h2>
+          <p class="step-description">Assign the values from each array to your stats. Every value must be used exactly once — you're rearranging the array, not choosing numbers.</p>
+
+          <!-- Assignment Status -->
+          <div id="assignment-status" class="assignment-status incomplete">0/4 Main · 0/5 Sub assigned</div>
+
           <!-- Human Racial Bonus Choices -->
           <div id="human-choices-container" style="display: none; margin-bottom: 20px; padding: 15px; border: 1px solid var(--accent-gold); border-radius: 6px; background: rgba(196, 163, 90, 0.05);">
             <h3 style="margin-top: 0; color: var(--accent-gold);">Human Racial Bonus (+1 Main, +1 Sub-Stat)</h3>
@@ -397,20 +400,35 @@
               </div>
             </div>
           </div>
-          
+
           <div class="nav-buttons">
             <button class="btn-secondary" data-action="back">Back</button>
-            <button class="btn-primary" data-action="next" id="btn-stats-next">Continue</button>
+            <button class="btn-primary" data-action="next" id="btn-stats-next" disabled>Continue</button>
           </div>
 
-          <!-- Main Stats -->
-          <div id="main-stats" class="stats-grid">
-            <!-- Filled by JS -->
+          <!-- Main Stats Section -->
+          <div class="stat-group-section">
+            <div class="stat-group-header">
+              <h3>Main Stats</h3>
+              <div class="stat-pool-label">
+                Array: <span class="pool-values">( 5 , 4 , 4 , 3 )</span>
+                — Remaining: <span id="main-pool" class="stat-pool"></span>
+              </div>
+            </div>
+            <div id="main-stats" class="stats-grid">
+              <!-- Filled by JS -->
+            </div>
           </div>
 
-          <!-- Sub Stats -->
-          <div id="sub-stats-section">
-            <h3>Sub-Stats</h3>
+          <!-- Sub Stats Section -->
+          <div class="stat-group-section">
+            <div class="stat-group-header">
+              <h3>Sub-Stats</h3>
+              <div class="stat-pool-label">
+                Array: <span class="pool-values">( 5 , 4 , 3 , 2 , 1 )</span>
+                — Remaining: <span id="sub-pool" class="stat-pool"></span>
+              </div>
+            </div>
             <div id="sub-stats" class="stats-grid">
               <!-- Filled by JS -->
             </div>
@@ -422,27 +440,27 @@
             <div class="derived-grid">
               <div class="derived-item">
                 <span class="derived-label">HP</span>
-                <span class="derived-value" id="derived-hp">21</span>
+                <span class="derived-value" id="derived-hp">20</span>
               </div>
               <div class="derived-item">
                 <span class="derived-label">Mana</span>
-                <span class="derived-value" id="derived-mana">7</span>
+                <span class="derived-value" id="derived-mana">6</span>
               </div>
               <div class="derived-item">
                 <span class="derived-label">RP</span>
-                <span class="derived-value" id="derived-rp">3</span>
+                <span class="derived-value" id="derived-rp">2</span>
               </div>
               <div class="derived-item">
                 <span class="derived-label">Evasion</span>
-                <span class="derived-value" id="derived-evasion">8</span>
+                <span class="derived-value" id="derived-evasion">7</span>
               </div>
               <div class="derived-item">
                 <span class="derived-label">Potency</span>
-                <span class="derived-value" id="derived-potency">12</span>
+                <span class="derived-value" id="derived-potency">11</span>
               </div>
               <div class="derived-item">
                 <span class="derived-label">Initiative</span>
-                <span class="derived-value" id="derived-initiative">1</span>
+                <span class="derived-value" id="derived-initiative">0</span>
               </div>
             </div>
           </div>

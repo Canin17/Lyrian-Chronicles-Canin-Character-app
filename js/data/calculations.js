@@ -1,5 +1,6 @@
 // Lyrian Chronicles RPG - Stat Calculations
 // Formulas from Lyrian Chronicles rulebook
+// Stats are assigned via fixed arrays, NOT point-buy
 
 const MAIN_STATS = [
   { id: 'pow', name: 'Power', short: 'POW' },
@@ -16,10 +17,11 @@ const SUB_STATS = [
   { id: 'presence', name: 'Presence' }
 ];
 
-// Point buy system
-const STAT_POINTS_TOTAL = 20;  // Total points to distribute
-const STAT_MIN = 1;
-const STAT_MAX = 10;
+// Array-based stat assignment (from rulebook)
+// Main Stats: assign (5, 4, 4, 3) to the 4 main stats in any order
+// Sub Stats: assign (5, 4, 3, 2, 1) to the 5 sub stats in any order
+const MAIN_STATS_ARRAY = [5, 4, 4, 3];
+const SUB_STATS_ARRAY = [5, 4, 3, 2, 1];
 
 function calculateDerivedStats(stats) {
   if (!stats) return {};
@@ -53,6 +55,24 @@ function getTotalStatPoints(stats) {
          (Number(stats.presence) || 0);
 }
 
-function getRemainingStatPoints(stats) {
-  return STAT_POINTS_TOTAL - getTotalStatPoints(stats);
+/**
+ * Check if all stats have been assigned (no null/undefined values)
+ */
+function isAssignmentComplete(stats) {
+  if (!stats) return false;
+  const allStats = [...MAIN_STATS, ...SUB_STATS];
+  return allStats.every(s => stats[s.id] != null && stats[s.id] > 0);
+}
+
+/**
+ * Get the remaining unassigned values for a given array and current assignments
+ */
+function getAvailableValues(array, assignments) {
+  const used = Object.values(assignments).filter(v => v != null);
+  const remaining = [...array];
+  for (const val of used) {
+    const idx = remaining.indexOf(val);
+    if (idx !== -1) remaining.splice(idx, 1);
+  }
+  return remaining;
 }

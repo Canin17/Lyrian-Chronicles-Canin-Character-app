@@ -1,18 +1,19 @@
 /**
  * Lyrian Chronicles - Ability Scores Scene
- * Point-buy stat allocation with live derived stat preview
+ * Array-based stat assignment per rulebook:
+ *   Main Stats:  assign (5, 4, 4, 3) → Power, Focus, Agility, Toughness
+ *   Sub Stats:   assign (5, 4, 3, 2, 1) → Fitness, Cunning, Reason, Awareness, Presence
  */
 
 const StatsScene = (function() {
-  let stats = {
-    pow: 1, foc: 1, agi: 1, tou: 1,
-    fitness: 1, cunning: 1, reason: 1, awareness: 1, presence: 1
-  };
-  
+  // Base assignments (null = unassigned)
+  let mainAssignments = { pow: null, foc: null, agi: null, tou: null };
+  let subAssignments = { fitness: null, cunning: null, reason: null, awareness: null, presence: null };
+
   let humanMainBonus = 'tou';
   let humanSubBonus = 'fitness';
   let cachedRaceName = '';
-  
+
   function setRaceData(raceName) {
     cachedRaceName = raceName.toLowerCase();
   }
@@ -22,7 +23,7 @@ const StatsScene = (function() {
       pow: 0, foc: 0, agi: 0, tou: 0,
       fitness: 0, cunning: 0, reason: 0, awareness: 0, presence: 0
     };
-    
+
     if (cachedRaceName === 'chimera') {
       bonuses.tou = 1;
       bonuses.awareness = 1;
@@ -39,130 +40,184 @@ const StatsScene = (function() {
       if (humanMainBonus) bonuses[humanMainBonus] = 1;
       if (humanSubBonus) bonuses[humanSubBonus] = 1;
     }
-    
+
     return bonuses;
   }
 
   function init() {
+    // Human racial bonus selectors
     const humanContainer = document.getElementById('human-choices-container');
     if (humanContainer) {
       if (cachedRaceName === 'human') {
         humanContainer.style.display = 'block';
-        
+
         const mainSelect = document.getElementById('human-main-select');
         const subSelect = document.getElementById('human-sub-select');
-        
+
         if (mainSelect) {
           mainSelect.value = humanMainBonus;
           mainSelect.onchange = (e) => {
             humanMainBonus = e.target.value;
-            renderStats();
-            updateDerivedStats();
+            renderAll();
           };
         }
         if (subSelect) {
           subSelect.value = humanSubBonus;
           subSelect.onchange = (e) => {
             humanSubBonus = e.target.value;
-            renderStats();
-            updateDerivedStats();
+            renderAll();
           };
         }
       } else {
         humanContainer.style.display = 'none';
       }
     }
-    
-    renderStats();
+
+    renderAll();
+  }
+
+  function renderAll() {
+    renderStatGroup('main-stats', MAIN_STATS, mainAssignments, MAIN_STATS_ARRAY, 'main');
+    renderStatGroup('sub-stats', SUB_STATS, subAssignments, SUB_STATS_ARRAY, 'sub');
+    updateAssignmentPool('main-pool', mainAssignments, MAIN_STATS_ARRAY);
+    updateAssignmentPool('sub-pool', subAssignments, SUB_STATS_ARRAY);
     updateDerivedStats();
-    updatePointsRemaining();
+    updateCompletionStatus();
   }
 
-  function renderStats() {
-    renderStatGroup('main-stats', MAIN_STATS, true);
-    renderStatGroup('sub-stats', SUB_STATS, false);
-  }
-
-  function renderStatGroup(containerId, statDefs, isMain) {
+  /**
+   * Render a group of stat assignment dropdowns
+   */
+  function renderStatGroup(containerId, statDefs, assignments, array, group) {
     const container = document.getElementById(containerId);
     if (!container) return;
 
     container.innerHTML = '';
 
-    statDefs.forEach((def) => {
+    const available = getAvailableValues(array, assignments);
+
+    statDefs.forEach(def => {
       const box = document.createElement('div');
       box.className = 'stat-box';
       box.dataset.stat = def.id;
+      box.dataset.group = group;
 
-      const baseVal = stats[def.id];
+      const assigned = assignments[def.id];
       const bonuses = getRaceBonuses();
       const raceBonus = bonuses[def.id] || 0;
-      const current = baseVal + raceBonus;
-      
-      const canIncrease = baseVal < STAT_MAX && getTotalAllocated() < STAT_POINTS_TOTAL;
-      const canDecrease = baseVal > STAT_MIN;
+      const baseVal = assigned != null ? assigned : 0;
+      const total = baseVal + raceBonus;
+
+      // Build dropdown options
+      let optionsHtml = '<option value="">—</option>';
+      // Show available values
+      available.forEach(v => {
+        optionsHtml += `<option value="${v}">${v}</option>`;
+      });
+      // If already assigned, show the assigned value
+      if (assigned != null) {
+        optionsHtml = `<option value="${assigned}" selected>${assigned}</option>`;
+        // Also show other available values for reassignment
+        available.forEach(v => {
+          if (v !== assigned) {
+            optionsHtml += `<option value="${v}">${v}</option>`;
+          }
+        });
+      }
+
+      const displayValue = assigned != null ? total : '—';
+      const bonusText = raceBonus > 0 && assigned != null ? ` <span class="race-bonus">(+${raceBonus})</span>` : '';
 
       box.innerHTML = `
         <div class="stat-name">${def.short || def.name}</div>
-        <div class="stat-value">${current}${raceBonus > 0 ? ` <span style="color: var(--accent-gold); font-size: 0.8em; font-weight: normal;">(+${raceBonus})</span>` : ''}</div>
-        <div class="stat-controls">
-          <button class="stat-btn stat-decrease" ${canDecrease ? '' : 'disabled'}>-</button>
-          <button class="stat-btn stat-increase" ${canIncrease ? '' : 'disabled'}>+</button>
+        <div class="stat-assignment">
+          <select class="stat-select" data-stat="${def.id}" data-group="${group}">
+            ${optionsHtml}
+          </select>
+        </div>
+        <div class="stat-total">${displayValue}${bonusText}</div>
+        <div class="stat-label-row">
+          <span class="stat-base-label">Base</span>
+          ${raceBonus > 0 ? '<span class="stat-bonus-label">Race +1</span>' : ''}
         </div>
       `;
 
-      const decBtn = box.querySelector('.stat-decrease');
-      const incBtn = box.querySelector('.stat-increase');
-
-      decBtn.addEventListener('click', () => changeStat(def.id, -1));
-      incBtn.addEventListener('click', () => changeStat(def.id, 1));
+      const select = box.querySelector('.stat-select');
+      select.addEventListener('change', (e) => {
+        const val = e.target.value;
+        handleAssignment(group, def.id, val === '' ? null : parseInt(val));
+      });
 
       container.appendChild(box);
     });
   }
 
-  function changeStat(statId, delta) {
-    const newVal = stats[statId] + delta;
+  /**
+   * Handle stat value assignment with swap logic
+   */
+  function handleAssignment(group, statId, newValue) {
+    const assignments = group === 'main' ? mainAssignments : subAssignments;
+    const array = group === 'main' ? MAIN_STATS_ARRAY : SUB_STATS_ARRAY;
+    const oldValue = assignments[statId];
 
-    if (newVal < STAT_MIN || newVal > STAT_MAX) return;
-    if (delta > 0 && getTotalAllocated() >= STAT_POINTS_TOTAL) return;
+    if (newValue === oldValue) return;
 
-    stats[statId] = newVal;
+    // If unassigning (setting to null)
+    if (newValue === null) {
+      assignments[statId] = null;
+      renderAll();
+      return;
+    }
 
-    renderStats();
-    updateDerivedStats();
-    updatePointsRemaining();
+    // If the new value is already assigned to another stat in this group, swap
+    if (oldValue !== null && oldValue !== newValue) {
+      // Find who has the newValue
+      for (const [otherId, otherVal] of Object.entries(assignments)) {
+        if (otherId !== statId && otherVal === newValue) {
+          // Swap: give the other stat our old value
+          assignments[otherId] = oldValue;
+          break;
+        }
+      }
+    }
 
-    // Animate the change after render (element exists now)
-    const statBox = document.querySelector(`.stat-box[data-stat="${statId}"]`);
-    if (statBox && window.gsap) {
-      const valueEl = statBox.querySelector('.stat-value');
-      gsap.fromTo(valueEl, { scale: 1.3, color: '#fff' }, {
-        scale: 1, color: '#d4af37', duration: 0.3, ease: 'back.out(1.7)'
-      });
+    assignments[statId] = newValue;
+    renderAll();
+  }
+
+  /**
+   * Update the "remaining pool" display
+   */
+  function updateAssignmentPool(poolId, assignments, array) {
+    const poolEl = document.getElementById(poolId);
+    if (!poolEl) return;
+
+    const available = getAvailableValues(array, assignments);
+
+    if (available.length === 0) {
+      poolEl.innerHTML = '<span class="pool-complete">✓ All assigned</span>';
+    } else {
+      poolEl.innerHTML = available.map(v =>
+        `<span class="pool-value">${v}</span>`
+      ).join(' ');
     }
   }
 
-  function getTotalAllocated() {
-    return Object.values(stats).reduce((sum, v) => sum + v, 0);
-  }
-
-  function updatePointsRemaining() {
-    const remaining = STAT_POINTS_TOTAL - getTotalAllocated();
-    const el = document.getElementById('stat-points-remaining');
-    if (el) {
-      el.textContent = remaining;
-      el.style.color = remaining === 0 ? 'var(--accent-green)' : 'var(--accent-gold)';
-    }
-  }
-
+  /**
+   * Update derived stats preview
+   */
   function updateDerivedStats() {
     const bonuses = getRaceBonuses();
     const finalStats = {};
-    Object.keys(stats).forEach(k => {
-      finalStats[k] = stats[k] + (bonuses[k] || 0);
+
+    // Combine main + sub assignments with race bonuses
+    Object.keys(mainAssignments).forEach(k => {
+      finalStats[k] = (mainAssignments[k] != null ? mainAssignments[k] : 0) + (bonuses[k] || 0);
     });
-    
+    Object.keys(subAssignments).forEach(k => {
+      finalStats[k] = (subAssignments[k] != null ? subAssignments[k] : 0) + (bonuses[k] || 0);
+    });
+
     const derived = calculateDerivedStats(finalStats);
 
     const map = {
@@ -180,24 +235,76 @@ const StatsScene = (function() {
     });
   }
 
+  /**
+   * Update completion status and next button
+   */
+  function updateCompletionStatus() {
+    const mainComplete = mainAssignments.pow != null && mainAssignments.foc != null &&
+                         mainAssignments.agi != null && mainAssignments.tou != null;
+    const subComplete = subAssignments.fitness != null && subAssignments.cunning != null &&
+                        subAssignments.reason != null && subAssignments.awareness != null &&
+                        subAssignments.presence != null;
+    const complete = mainComplete && subComplete;
+
+    const nextBtn = document.getElementById('btn-stats-next');
+    if (nextBtn) {
+      nextBtn.disabled = !complete;
+    }
+
+    // Update completion indicator
+    const indicator = document.getElementById('assignment-status');
+    if (indicator) {
+      if (complete) {
+        indicator.textContent = '✓ All stats assigned';
+        indicator.className = 'assignment-status complete';
+      } else {
+        const mainCount = Object.values(mainAssignments).filter(v => v != null).length;
+        const subCount = Object.values(subAssignments).filter(v => v != null).length;
+        indicator.textContent = `${mainCount}/4 Main · ${subCount}/5 Sub assigned`;
+        indicator.className = 'assignment-status incomplete';
+      }
+    }
+  }
+
+  /**
+   * Get final stats (base + race bonuses)
+   */
   function getStats() {
     const bonuses = getRaceBonuses();
     const finalStats = {};
-    Object.keys(stats).forEach(k => {
-      finalStats[k] = stats[k] + (bonuses[k] || 0);
+
+    Object.keys(mainAssignments).forEach(k => {
+      finalStats[k] = (mainAssignments[k] != null ? mainAssignments[k] : 0) + (bonuses[k] || 0);
     });
+    Object.keys(subAssignments).forEach(k => {
+      finalStats[k] = (subAssignments[k] != null ? subAssignments[k] : 0) + (bonuses[k] || 0);
+    });
+
     return finalStats;
   }
 
-  function reset() {
-    stats = {
-      pow: 1, foc: 1, agi: 1, tou: 1,
-      fitness: 1, cunning: 1, reason: 1, awareness: 1, presence: 1
+  /**
+   * Get base assignments (without race bonuses)
+   */
+  function getBaseStats() {
+    return {
+      ...mainAssignments,
+      ...subAssignments
     };
-    renderStats();
-    updateDerivedStats();
-    updatePointsRemaining();
   }
 
-  return { init, getStats, reset, setRaceData, getBaseStats: () => ({ ...stats }), getHumanChoices: () => ({ main: humanMainBonus, sub: humanSubBonus }), getRaceBonuses };
+  function getHumanChoices() {
+    return { main: humanMainBonus, sub: humanSubBonus };
+  }
+
+  function reset() {
+    mainAssignments = { pow: null, foc: null, agi: null, tou: null };
+    subAssignments = { fitness: null, cunning: null, reason: null, awareness: null, presence: null };
+    humanMainBonus = 'tou';
+    humanSubBonus = 'fitness';
+    cachedRaceName = '';
+    renderAll();
+  }
+
+  return { init, getStats, getBaseStats, reset, setRaceData, getHumanChoices, getRaceBonuses };
 })();
