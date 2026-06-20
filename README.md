@@ -102,15 +102,18 @@ All game data is embedded as JavaScript constants in `js/data/`, sourced from th
 
 ## ▶️ Running
 
-Open `index.html` directly in any modern browser — **no server required**.
 
-For local development with a live server:
+If you want to host your own instance or contribute to development:
 
-```bash
-cd "F:/Games/PnP RPG/I-am-stuipid-containment/StandAlone"
-python -m http.server 8080
-# Open http://localhost:8080
-```
+1. Clone the repository:  
+   ```bash  
+   git clone \[https://github.com/Canin17/Lyrian-Chronicles-Canin-Character-app.git\](https://github.com/Canin17/Lyrian-Chronicles-Canin-Character-app.git)
+
+2. Navigate into the directory:  
+   Bash  
+   cd Lyrian-Chronicles-Canin-Character-app
+
+3. Open index.html in your preferred web browser, or serve it locally using a live server extension.
 
 ---
 
