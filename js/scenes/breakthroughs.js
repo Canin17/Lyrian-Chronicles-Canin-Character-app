@@ -7,13 +7,13 @@
  * - Breakthroughs: Start with 300 EXP (only for breakthroughs, unspent lost, doesn't add to Spirit Core)
  */
 
+/* exported BreakthroughScene */
 const BreakthroughScene = (function() {
   let selectedBreakthroughs = [];
 
   // EXP constants from rulebook
   const TOTAL_BREAKTHROUGH_EXP = 300;
   // Total abilities that must be bought for a class to be considered "mastered"
-  const TOTAL_PAID_ABILITIES = 7;
 
   /**
    * Decode HTML entities for textContent display.

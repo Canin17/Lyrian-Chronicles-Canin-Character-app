@@ -3,6 +3,7 @@
  * Handles primary race and ancestry (subrace) selection with images
  */
 
+/* exported RaceSelectScene */
 const RaceSelectScene = (function() {
   let selectedRace = null;
   let selectedAncestry = null;
@@ -23,6 +24,34 @@ const RaceSelectScene = (function() {
 
   function init() {
     renderRaces();
+  }
+
+  /**
+   * Generate Angel's Sword website URL for a primary race.
+   */
+  function getRaceUrl(race) {
+    const slugMap = {
+      'Chimera': 'chimera',
+      'Demon': 'demon',
+      'Fae': 'fae',
+      'Human': 'human',
+      'Youkai': 'youkai'
+    };
+    const slug = slugMap[race.name];
+    return slug ? `https://rpg.angelssword.com/game/0.13.0/races/primary/${slug}` : null;
+  }
+
+  /**
+   * Generate Angel's Sword website URL for an ancestry (subrace).
+   * Demon clans (house-*) don't have individual pages, so link to primary Demon page.
+   */
+  function getAncestryUrl(anc) {
+    if (!anc.ancestryId) return null;
+    // Demon clans don't have individual pages on the website
+    if (anc.ancestryId.startsWith('house-')) {
+      return 'https://rpg.angelssword.com/game/0.13.0/races/primary/demon';
+    }
+    return `https://rpg.angelssword.com/game/0.13.0/races/secondary/${anc.ancestryId}`;
   }
 
   function renderRaces() {
@@ -94,12 +123,14 @@ const RaceSelectScene = (function() {
       desc.className = 'race-desc';
       desc.textContent = decodeHtmlEntities(race.description ? race.description.substring(0, 120) + '...' : '');
 
-      const details = document.createElement('button');
+      const details = document.createElement('a');
       details.className = 'race-details-btn';
+      details.href = getRaceUrl(race);
+      details.target = '_blank';
+      details.rel = 'noopener noreferrer';
       details.textContent = 'See details';
       details.addEventListener('click', (e) => {
         e.stopPropagation();
-        showRaceDetails(race);
       });
 
       content.appendChild(name);
@@ -250,9 +281,20 @@ const RaceSelectScene = (function() {
       desc.className = 'ancestry-desc';
       desc.textContent = decodeHtmlEntities(anc.description ? anc.description.substring(0, 100) + '...' : '');
 
+      const details = document.createElement('a');
+      details.className = 'race-details-btn';
+      details.href = getAncestryUrl(anc);
+      details.target = '_blank';
+      details.rel = 'noopener noreferrer';
+      details.textContent = 'See details';
+      details.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
+
       card.appendChild(imgEl);
       card.appendChild(name);
       card.appendChild(desc);
+      card.appendChild(details);
 
       card.addEventListener('click', () => selectAncestry(anc));
 

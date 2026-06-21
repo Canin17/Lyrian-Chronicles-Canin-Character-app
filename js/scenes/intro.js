@@ -3,6 +3,7 @@
  * Creates a dark, atmospheric background with floating particles
  */
 
+/* exported BackgroundScene */
 const BackgroundScene = (function() {
   let app = null;
   let particleTicker = null;

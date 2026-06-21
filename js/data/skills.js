@@ -3,6 +3,7 @@
 // Source: Lyrian Chronicles system rulebook
 // Per-source allocation tracking with restricted skill lists
 
+/* exported SKILL_GROUPS, SKILL_GRANTING_BREAKTHROUGHS, EXPERTISE_MULTIPLIER, BASE_SKILL_POINTS, calculateAvailableSkillPoints, getRemainingPoints, deepCloneSkillGroups, canAddExpertise, isCraftingGatheringSkill, getEffectiveSkillCap, getRaceSkillPoints */
 const SKILL_GROUPS = [
   {
     name: 'Fitness',
@@ -215,7 +216,7 @@ function getAllSkillNames() {
 // ===========================================================================
 // RACE SKILL POINTS
 // ===========================================================================
-function getRaceSkillPoints(raceName, ancestryName) {
+function getRaceSkillPoints(raceName, _ancestryName) {
   if (!raceName) return { points: 0, eligibleSkills: [] };
 
   // Case-insensitive lookup

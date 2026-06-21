@@ -6,6 +6,7 @@
  * tracked independently and can only be spent on eligible skills.
  */
 
+/* exported SkillsStepScene */
 const SkillsStepScene = (function() {
   let skillGroups = [];
   let availablePoints = { base: 10, race: 0, class: 0, breakthrough: 0, total: 10, eligibleSkills: {} };

@@ -155,7 +155,7 @@
         if (loadFromLocalStorage()) {
           // Navigate to the saved step — loadStepData will restore scene state
           let savedStep = 0;
-          try { savedStep = parseInt(localStorage.getItem(STORAGE_KEY + '-step')) || 0; } catch (e) {}
+          try { savedStep = parseInt(localStorage.getItem(STORAGE_KEY + '-step')) || 0; } catch {}
           goToStep(Math.max(0, Math.min(savedStep, STEPS.length - 1)));
         }
       });
@@ -168,7 +168,7 @@
         const loadBtn = document.getElementById('btn-load-saved');
         if (loadBtn) loadBtn.style.display = 'inline-block';
       }
-    } catch (e) {
+    } catch {
       // localStorage unavailable — silently fail
     }
 
@@ -243,7 +243,7 @@
       try {
         const hasSaved = localStorage.getItem(STORAGE_KEY);
         loadBtn.style.display = hasSaved ? 'inline-block' : 'none';
-      } catch (e) {
+      } catch {
         loadBtn.style.display = 'none';
       }
     }
@@ -636,7 +636,7 @@
     try {
       localStorage.removeItem(STORAGE_KEY);
       localStorage.removeItem(STORAGE_KEY + '-step');
-    } catch (e) {
+    } catch {
       // ignore
     }
     // Clear in-memory filter guards so re-init can re-bind

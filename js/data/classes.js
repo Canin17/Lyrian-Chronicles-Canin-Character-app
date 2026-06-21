@@ -3,6 +3,7 @@
  * 174 classes with tier, role, difficulty, requirements, and images
  */
 
+/* exported CLASS_DATA, CLASS_INDEX, CLASS_ABILITIES_DATA */
 const CLASS_DATA = [  {
     "id": "69ea4f7a6be32fced492fbae",
     "name": "Abjurer",
@@ -2093,7 +2094,65 @@ const CLASS_ABILITIES_DATA = {
       "name": "Secret Art: Efficient Spirit Control",
       "description": "You reduce the cost of your next non-healing keyword action by 2 mana. This cannot reduce the mana cost below 0. Also resets your Circuits, allowing abilities with the Circuit keyword to be used for their reduced mana cost once more."
     }
-  },
+  },  "Aerial Mage": {
+      "L1": {
+        "name": "Aerial Mage",
+        "description": "You may use Aerial Mode Switch.; While grounded and riding an Aerial Stave, you may reload 2 shells instead of 1 when taking the Reload Artifice basic action on your staff. You may do this even if your hands would normally be full and can draw both shells with 1 action.",
+        "cost": 0,
+        "type": "key",
+        "abilityType": "key"
+      },
+      "L2": {
+        "name": "Take Off",
+        "description": "Immediately mount and blast off into the sky equal to double your movement.  Cannot be used if you are the target of an attack during the Encounter Start round.",
+        "cost": 100,
+        "type": "true",
+        "abilityType": "true"
+      },
+      "L3": {
+        "name": "Skills",
+        "description": "You gain +5 skill points to spend on Appraise, Medicine, Magic, Religion, History, Flight, Artifice or Common Knowledge. You can exchange any skill point for 2 expertise points, but must spend them in these skills.",
+        "cost": 0,
+        "type": "stat",
+        "abilityType": "stat"
+      },
+      "L4": {
+        "name": "Airheart Gravity Turn",
+        "description": "You drop 25 feet altitude in order to immediately change direction. Can be used mid movement, all leftover movement can carry over into the new direction.",
+        "cost": 100,
+        "type": "true",
+        "abilityType": "true"
+      },
+      "L5": {
+        "name": "Heart",
+        "description": "You gain +1 to Reason.",
+        "cost": 0,
+        "type": "stat",
+        "abilityType": "stat"
+      },
+      "L6": {
+        "name": "Barrel Roll",
+        "description": "You take the Dodge action and remove Lock On from the attack. You may spend an additional RP to automatically make the attack miss you, even if the attack has Sure Hit.",
+        "cost": 100,
+        "type": "true",
+        "abilityType": "true"
+      },
+      "L7": {
+        "name": "Soul",
+        "description": "You gain +1 to Focus, Power or Agility.",
+        "cost": 0,
+        "type": "stat",
+        "abilityType": "stat"
+      },
+      "L8": {
+        "name": "Secret Art: Arlan Heaven's Fall Dive",
+        "description": "Your next Airship shot gains Sure Hit and Full Pierce.",
+        "cost": 100,
+        "type": "true",
+        "abilityType": "true"
+      }
+  }
+,
   "Aeromancer": {
     "L1": {
       "name": "Wind Master",
@@ -3147,7 +3206,65 @@ const CLASS_ABILITIES_DATA = {
       "name": "Knockout Punch",
       "description": "You may make a Heavy Attack against the target. On damage if the enemy is a Grunt, they immediately drop to 0 HP and fall unconscious."
     }
-  },
+  },  "Cannoneer": {
+      "L1": {
+        "name": "Cannon Expert",
+        "description": "You gain proficiency in Cannons.; Your attacks with the Cannon keyword ignore the 1 attack limitation of cannons.; You may use Rocket Jump.",
+        "cost": 0,
+        "type": "key",
+        "abilityType": "key"
+      },
+      "L2": {
+        "name": "Cannonball",
+        "description": "You make 2 heavy attacks against the target and a light attack against all other enemies within 5ft of the target.",
+        "cost": 100,
+        "type": "true",
+        "abilityType": "true"
+      },
+      "L3": {
+        "name": "Skills",
+        "description": "You gain +5 skill points to spend in Athletics, Artifice, Perception, Survival, Intimidation or Common Knowledge. You can exchange any skill point for 2 expertise points, but must spend them in these skills.",
+        "cost": 0,
+        "type": "stat",
+        "abilityType": "stat"
+      },
+      "L4": {
+        "name": "High Power Shell",
+        "description": "You make a Heavy attack against the target. On damage, they are pushed back 10ft. You are pushed back 5ft away from the target regardless of whether it hits or not.",
+        "cost": 100,
+        "type": "true",
+        "abilityType": "true"
+      },
+      "L5": {
+        "name": "Heart",
+        "description": "You gain +1 to Fitness, Cunning, Reason, Awareness or Presence.",
+        "cost": 0,
+        "type": "stat",
+        "abilityType": "stat"
+      },
+      "L6": {
+        "name": "Armor Crushing Shell",
+        "description": "You make a Light attack against the target. On damage, you apply Sunder 2 until the start of your next turn.",
+        "cost": 100,
+        "type": "true",
+        "abilityType": "true"
+      },
+      "L7": {
+        "name": "Soul",
+        "description": "You gain +1 to Focus or Power.",
+        "cost": 0,
+        "type": "stat",
+        "abilityType": "stat"
+      },
+      "L8": {
+        "name": "Quantum Bomb",
+        "description": "You make a Heavy attack against the target.",
+        "cost": 100,
+        "type": "true",
+        "abilityType": "true"
+      }
+  }
+,
   "Carpenter": {
     "L1": {
       "name": "Carpenter Basics",
@@ -4032,7 +4149,123 @@ const CLASS_ABILITIES_DATA = {
       "name": "Ave María",
       "description": "You attack with a swift double slash in the blink of an eye, making a Heavy Attack that deals Light damage + Heavy Holy damage."
     }
-  },
+  },  "Fae Knight": {
+      "L1": {
+        "name": "Knight of Yddrasil",
+        "description": "You may use Fluttering Blade.; If an enemy is holding a weapon affected by your Fluttering Blade, you may spend 1 RP to deal Heavy Full Pierce damage to it.",
+        "cost": 0,
+        "type": "key",
+        "abilityType": "key"
+      },
+      "L2": {
+        "name": "Fae Knight Style: Oak Stance",
+        "description": "You enter Fae Knight Style: Oak Stance. Weapons with  Fluttering Blade can move up to 20ft as a part of an attack.  Your Fluttering Blade does not provoke attacks of opportunity.",
+        "cost": 100,
+        "type": "true",
+        "abilityType": "true"
+      },
+      "L3": {
+        "name": "Skills",
+        "description": "You gain +5 skill points in either Athletics, Magic, Medicine, Negotiation, Intimidation, Insight or Common Knowledge. You can exchange any skill point for 2 expertise points, but must spend them in these skills.",
+        "cost": 0,
+        "type": "stat",
+        "abilityType": "stat"
+      },
+      "L4": {
+        "name": "Fae Knight Style: Devouring Locust",
+        "description": "Your Fluttering Blade moves in a straight line up to 60ft. Make a light attack that affects every target that the Blade passes through.",
+        "cost": 100,
+        "type": "true",
+        "abilityType": "true"
+      },
+      "L5": {
+        "name": "Heart",
+        "description": "You gain +1 to Fitness, Cunning, Reason, Awareness or Presence.",
+        "cost": 0,
+        "type": "stat",
+        "abilityType": "stat"
+      },
+      "L6": {
+        "name": "Fae Knight Style: Second Plague",
+        "description": "Your Fluttering Blade returns to your hand in the fastest possible path (typically a straight line), it avoids obstacles in the most direct way possible. Make a light attack that affects every target that the blade passes through. Deactivates Fluttering Blade when it returns to you. Combo : If used after Devouring Locust, reduce the AP cost by 1.",
+        "cost": 100,
+        "type": "true",
+        "abilityType": "true"
+      },
+      "L7": {
+        "name": "Soul",
+        "description": "You gain +1 to Focus, Power or Agility.",
+        "cost": 0,
+        "type": "stat",
+        "abilityType": "stat"
+      },
+      "L8": {
+        "name": "Fae Knight Style: Petal Swirl Flash",
+        "description": "You teleport to an enemy within range. Make a melee Light (1 AP), Heavy (2 AP) or Precise attack (2 AP) against that enemy. Afterwards, you regain the use of your Faerie Flash allowing you to use it again this encounter.",
+        "cost": 100,
+        "type": "true",
+        "abilityType": "true"
+      }
+  },  "Fae Knight: Willow Style": {
+      "L1": {
+        "name": "Knight of Yddrasil II",
+        "description": "You may use Fae Knight Style: Willow Stance",
+        "cost": 0,
+        "type": "key",
+        "abilityType": "key"
+      },
+      "L2": {
+        "name": "Fae Knight Style: Carapace",
+        "description": "One of your Fluttering Blades returns to you and interferes with the attack. You may take the dodge or block action against the attack.  This cancels Fluttering Blade on that weapon.",
+        "cost": 100,
+        "type": "true",
+        "abilityType": "true"
+      },
+      "L3": {
+        "name": "Skills",
+        "description": "You gain +5 skill points in either Athletics, Magic, Medicine, Negotiation, Intimidation, Insight or Common Knowledge. You can exchange any skill point for 2 expertise points, but must spend them in these skills.",
+        "cost": 0,
+        "type": "stat",
+        "abilityType": "stat"
+      },
+      "L4": {
+        "name": "Fae Knight Style: Megasoma",
+        "description": "You direct a Heavy Spin Fluttering Blade at a target within 30ft of you, making a Heavy attack and cancelling Fluttering Blade on that weapon afterwards. Cannot be used on a Fluttering Blade that was created this turn.",
+        "cost": 100,
+        "type": "true",
+        "abilityType": "true"
+      },
+      "L5": {
+        "name": "Heart",
+        "description": "You gain +1 to Fitness, Cunning, Reason, Awareness or Presence.",
+        "cost": 0,
+        "type": "stat",
+        "abilityType": "stat"
+      },
+      "L6": {
+        "name": "Fae Knight Style: Gadfly",
+        "description": "Sends a Fluttering Blade to harass the target within 90ft of you, making a light attack against them.  The Fluttering Blade then occupies the same space as the target and follows them throughout all movement, including teleportation.  Gadfly makes an attack of opportunity every time the target attacks a target besides Gadfly. You can upgrade this attack of opportunity to a heavy attack for 1 RP or 1 Mana.",
+        "cost": 100,
+        "type": "true",
+        "abilityType": "true"
+      },
+      "L7": {
+        "name": "Soul",
+        "description": "You gain +1 to Focus, Power, Agility or Toughness.",
+        "cost": 0,
+        "type": "stat",
+        "abilityType": "stat"
+      },
+      "L8": {
+        "name": "Secret Art ~ Faerie Light Eyes: Jade Shelterbelt",
+        "description": "Creates 5 Illusionary Heavy Spin Fluttering Blades within 20ft from you that last until the end of the encounter.  They are dispelled when Fluttering Blade is cancelled on them. These do not count towards your Fluttering Blade limit.",
+        "cost": 100,
+        "type": "true",
+        "abilityType": "true"
+      }
+  }
+
+,
   "Faerie Light Eyes": {
     "L1": {
       "name": "Faerie Light Eyes",
@@ -5430,7 +5663,65 @@ const CLASS_ABILITIES_DATA = {
       "name": "Spiked Armor",
       "description": "Until the start of your next turn, the spikes on your armor and shield reflect damage when you are attacked. When an enemy hits you with a melee attack, they take 4 full pierce damage."
     }
-  },
+  },  "Medic": {
+      "L1": {
+        "name": "Medic's Journey",
+        "description": "You gain proficiency in small weapons, set of missiles and light armor.; You gain +5 skill points to spend in Medicine. You can exchange any skill point for 2 expertise points, but must spend them in this skill.; You gain the benefits of First Response.",
+        "cost": 0,
+        "type": "key",
+        "abilityType": "key"
+      },
+      "L2": {
+        "name": "First Aid",
+        "description": "You grant an ally  First Aid X , where X is the damage they took. When an ally has  First Aid applied by you, you may spend 1 AP while within 5ft of them to remove all First Aid and heal the target for your Focus up to the First Aid value.",
+        "cost": 100,
+        "type": "true",
+        "abilityType": "true"
+      },
+      "L3": {
+        "name": "Skills",
+        "description": "You gain +5 skill points to spend in Athletics, Linguistics, History, Medicine or Common Knowledge. You can exchange any skill point for 2 expertise points, but must spend them in these skills.",
+        "cost": 0,
+        "type": "stat",
+        "abilityType": "stat"
+      },
+      "L4": {
+        "name": "Code Blue",
+        "description": "You may sidestep up to your speed towards an ally and must end this movement within 5ft of them. Your next Painkiller Injection or the AP spending of First Aid used this turn has its AP cost reduced by 1.",
+        "cost": 100,
+        "type": "true",
+        "abilityType": "true"
+      },
+      "L5": {
+        "name": "Heart",
+        "description": "You gain +1 to Fitness or Reason.",
+        "cost": 0,
+        "type": "stat",
+        "abilityType": "stat"
+      },
+      "L6": {
+        "name": "Field Medic",
+        "description": "Medical and Surgery kits (including any upgraded versions) you carry have their burden reduced by 1, down to a minimum of 0.",
+        "cost": 100,
+        "type": "true",
+        "abilityType": "true"
+      },
+      "L7": {
+        "name": "Soul",
+        "description": "You gain +1 to Focus or Toughness.",
+        "cost": 0,
+        "type": "stat",
+        "abilityType": "stat"
+      },
+      "L8": {
+        "name": "Painkiller Injection",
+        "description": "You grant a willing ally temporary HP until the start of your next turn equal to your Focus x X.  The target cannot benefit from this ability again until the end of your next turn.",
+        "cost": 100,
+        "type": "true",
+        "abilityType": "true"
+      }
+  }
+,
   "Merchant": {
     "L1": {
       "name": "Peddler of Wares",
@@ -5737,7 +6028,65 @@ const CLASS_ABILITIES_DATA = {
       "name": "Secret Art: Forbid",
       "description": "You choose a target and pick between basic actions or abilities.&nbsp; Until the start of your next turn, any time the target does the chosen action, they take Full Pierce damage equal to your Focus per AP spent on it."
     }
-  },
+  },  "Naturalist": {
+      "L1": {
+        "name": "Natural Cycle",
+        "description": "At the start of your turn you may pay upkeep 1 mana for each Regrowth you have on an ally. If you do, you may extend its duration by 1 turn. You can choose this upkeep separately for each Regrowth.; You may use Regrowth.",
+        "cost": 0,
+        "type": "key",
+        "abilityType": "key"
+      },
+      "L2": {
+        "name": "Full Bloom",
+        "description": "You consume Regrowth on the target, removing the buff and healing the target immediately for twice its regular value.",
+        "cost": 100,
+        "type": "true",
+        "abilityType": "true"
+      },
+      "L3": {
+        "name": "Skills",
+        "description": "You gain +5 skill points to spend on Athletics, Medicine, Magic, Survival, Animal Husbandry or Common Knowledge. You can exchange any skill point for 2 expertise points, but must spend them in these skills.",
+        "cost": 0,
+        "type": "stat",
+        "abilityType": "stat"
+      },
+      "L4": {
+        "name": "Wild Bloom",
+        "description": "You apply Regrowth to up to 5 (including yourself) allies within range.",
+        "cost": 100,
+        "type": "true",
+        "abilityType": "true"
+      },
+      "L5": {
+        "name": "Heart",
+        "description": "You gain +1 to Fitness, Reason or Awareness.",
+        "cost": 0,
+        "type": "stat",
+        "abilityType": "stat"
+      },
+      "L6": {
+        "name": "Healing Seed",
+        "description": "The next time Regrowth naturally triggers on that ally and heals them, it also removes all stacks of a debuff on the target. If the debuff has Persist, you pay this additional mana cost when the Regrowth triggers and not upon using this ability.",
+        "cost": 100,
+        "type": "true",
+        "abilityType": "true"
+      },
+      "L7": {
+        "name": "Soul",
+        "description": "You gain +1 to Focus or Agility.",
+        "cost": 0,
+        "type": "stat",
+        "abilityType": "stat"
+      },
+      "L8": {
+        "name": "Sudden Growth",
+        "description": "You trigger the healing of your Regrowth.",
+        "cost": 100,
+        "type": "true",
+        "abilityType": "true"
+      }
+  }
+,
   "Necromancer": {
     "L1": {
       "name": "Raise Undead",

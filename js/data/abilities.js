@@ -4,6 +4,7 @@
 // 1064 abilities, 85 keywords
 // ============================================================
 
+/* exported ABILITIES_DB, KEYWORDS_DB, getAbilityData, getKeywordData, abilityLink, keywordLinks, abilityCosts */
 const ABILITIES_DB = {
   "Abjurer's Blast": {
     "name": "Abjurer's Blast",

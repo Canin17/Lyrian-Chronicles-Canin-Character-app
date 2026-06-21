@@ -3,6 +3,7 @@
  * Shows final character overview and export functionality
  */
 
+/* exported SummaryScene */
 const SummaryScene = (function() {
   function render(characterData) {
     const container = document.getElementById('summary-content');
@@ -553,7 +554,6 @@ const SummaryScene = (function() {
           });
 
           // Write Active header at row 1, then abilities starting at row 2
-          const activeHeaderRow = 1;
           const activeStartRow = 2;
           for (let i = 0; i < activeAbilities.length; i++) {
             const row = activeStartRow + i;

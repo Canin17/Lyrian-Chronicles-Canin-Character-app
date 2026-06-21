@@ -12,6 +12,7 @@
  * - EXP spent -> Spirit Core
  */
 
+/* exported ClassSelectScene */
 const ClassSelectScene = (function() {
   let equippedClasses = []; // Array of {class, level}
   let previewClass = null;
@@ -38,7 +39,6 @@ const ClassSelectScene = (function() {
   let TOTAL_CLASS_EXP = 1000; // Configurable starting EXP
   let TOTAL_IP = 3; // Configurable starting IP
   const ABILITY_COST = 100; // Each ability costs 100 EXP
-  const TOTAL_PAID_ABILITIES = 7;
   const MAX_LEVEL = 8; // unlock + 7 abilities
 
   // ===========================================================================
@@ -333,9 +333,6 @@ const ClassSelectScene = (function() {
   // Helper: check if the player's race/ancestry matches a required race name
   function checkRaceMatch(neededRace, race, ancestry) {
     const knownRaces = ['human', 'demon', 'fae', 'chimera', 'angel'];
-    const knownAncestries = ['sheepfolk', 'kitsune', 'raijin', 'tengu', 'anubis', 'selkie', 'lamia',
-      'ratfolk', 'red panda', 'slimefolk', 'spiderfolk', 'wolf-folk', 'centaur', 'arachne',
-      'jiangshi', 'youkai', 'marionette', 'goblin', 'dwarf', 'elf'];
     const neededLower = neededRace.toLowerCase();
 
     if (!race) return false;
@@ -469,6 +466,11 @@ const ClassSelectScene = (function() {
       hideClassPreview();
     }
     renderEquippedClasses();
+    filterClasses(); // Re-render grid to update selected states
+
+    // Enable/disable Continue button
+    const nextBtn = document.getElementById('btn-class-next');
+    if (nextBtn) nextBtn.disabled = equippedClasses.length === 0;
   }
 
   function equipClass(cls) {
@@ -831,6 +833,16 @@ const ClassSelectScene = (function() {
     renderClasses(filtered, charData);
   }
 
+  /**
+   * Generate Angel's Sword website URL for a class.
+   * URL pattern: /game/0.13.0/classes/{slug}
+   * Slug is the class name in lowercase with spaces replaced by hyphens.
+   */
+  function getClassUrl(cls) {
+    const slug = cls.name.toLowerCase().replace(/\s+/g, '-');
+    return `https://rpg.angelssword.com/game/0.13.0/classes/${slug}`;
+  }
+
   function renderClasses(classes, charData) {
     const grid = document.getElementById('class-grid');
     if (!grid) return;
@@ -844,9 +856,11 @@ const ClassSelectScene = (function() {
     classes.forEach((cls, i) => {
       const eligible = isClassEligible(cls, charData);
       const isEquipped = equippedClasses.some(ec => ec.class.name === cls.name);
+      const isPreviewed = previewClass && previewClass.name === cls.name;
       const card = document.createElement('div');
       card.className = 'class-card' +
         (isEquipped ? ' selected' : '') +
+        (isPreviewed ? ' previewed' : '') +
         (!eligible ? ' requirements-warning' : '');
       card.dataset.index = i;
       if (!eligible) card.title = `Requires: ${cls.requirements || 'Unknown'}`;
@@ -896,13 +910,31 @@ const ClassSelectScene = (function() {
       role.className = 'class-card-role';
       role.textContent = cls.role || 'N/A';
 
+      // "See details" link to Angel's Sword website
+      const detailsLink = document.createElement('a');
+      detailsLink.className = 'race-details-btn';
+      detailsLink.href = getClassUrl(cls);
+      detailsLink.target = '_blank';
+      detailsLink.rel = 'noopener noreferrer';
+      detailsLink.textContent = 'See details';
+
       bottomInfo.appendChild(name);
       bottomInfo.appendChild(role);
+      bottomInfo.appendChild(detailsLink);
       overlay.appendChild(tierBadge);
       overlay.appendChild(bottomInfo);
       card.appendChild(overlay);
 
-      card.addEventListener('click', () => showClassPreview(cls));
+      card.addEventListener('click', (e) => {
+        // Don't trigger preview if clicking the "See details" link
+        if (e.target.closest('.race-details-btn')) return;
+        if (previewClass && previewClass.name === cls.name) {
+          // Click on already-previewed class → dismiss overview
+          hideClassPreview();
+        } else {
+          showClassPreview(cls);
+        }
+      });
       grid.appendChild(card);
     });
 

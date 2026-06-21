@@ -60,10 +60,13 @@
   --spacing-2xl: 3rem;
 
   /* Borders */
+  --border-color: #444;
   --border-thin: 0.5px solid var(--accent-gold);
   --border-medium: 1px solid #444;
   --border-thick: 1.5px solid var(--accent-gold);
   --border-radius: 4px;
+  --border-radius-sm: 3px;
+  --border-radius-md: 6px;
   --border-radius-lg: 8px;
 
   /* Shadows */
@@ -921,18 +924,6 @@ body {
   margin-left: var(--spacing-xs);
 }
 
-/* Breakthrough Overview Panel */
-.bt-overview-panel {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-lg);
-  padding: var(--spacing-md);
-  background: rgba(0, 0, 0, 0.3);
-  border: var(--border-thin);
-  border-radius: var(--border-radius-lg);
-}
-
 .bt-overview-stats {
   display: flex;
   gap: var(--spacing-md);
@@ -1377,7 +1368,82 @@ body {
 
 .class-card.selected {
   border-color: var(--accent-gold-light);
-  box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.4), 0 0 30px rgba(255, 215, 0, 0.15);
+  transform: scale(1.03);
+  animation: selected-pulse 2s ease-in-out infinite;
+}
+
+@keyframes selected-pulse {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.4), 0 0 30px rgba(255, 215, 0, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.6), 0 0 45px rgba(255, 215, 0, 0.25);
+  }
+}
+
+.class-card.selected::after {
+  content: '✓';
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 24px;
+  height: 24px;
+  background: var(--accent-gold);
+  color: #1a1a2e;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 800;
+  z-index: 3;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+/* Previewed state — class is being viewed in overview panel */
+.class-card.previewed {
+  border-color: var(--accent-blue, #7eb8da);
+  box-shadow: 0 0 12px rgba(126, 184, 218, 0.35), 0 0 24px rgba(126, 184, 218, 0.15);
+  transform: translateY(-2px);
+  animation: previewed-pulse 2s ease-in-out infinite;
+}
+
+@keyframes previewed-pulse {
+  0%, 100% {
+    box-shadow: 0 0 12px rgba(126, 184, 218, 0.35), 0 0 24px rgba(126, 184, 218, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 18px rgba(126, 184, 218, 0.55), 0 0 36px rgba(126, 184, 218, 0.3);
+  }
+}
+
+.class-card.previewed::after {
+  content: '👁️';
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 24px;
+  height: 24px;
+  background: rgba(26, 26, 46, 0.8);
+  border: 1px solid var(--accent-blue, #7eb8da);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  z-index: 3;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+/* When equipped AND previewed, show the checkmark, not the eye */
+.class-card.selected.previewed::after {
+  content: '✓';
+  background: var(--accent-gold);
+  border-color: var(--accent-gold);
+  color: #1a1a2e;
+  font-size: 0.8rem;
+  font-weight: 800;
 }
 
 .class-card.requirements-warning {
@@ -2319,6 +2385,7 @@ body {
   padding: 0;
   text-decoration: underline;
   align-self: flex-start;
+  pointer-events: auto;
 }
 
 .race-details-btn:hover {
@@ -2541,6 +2608,7 @@ body {
 
 .bt-overview-panel {
   display: flex;
+  flex-direction: row;
   gap: var(--spacing-lg);
   margin-bottom: var(--spacing-lg);
   min-height: 200px;

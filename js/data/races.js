@@ -3,6 +3,7 @@
  * 5 primary races + 42 ancestries with images
  */
 
+/* exported RACE_DATA, ANCESTRY_MAP, TRAIT_DESCRIPTIONS */
 const RACE_DATA = [
   {
     "id": "69ea4f7b6be32fced492ff93",

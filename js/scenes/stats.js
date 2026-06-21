@@ -5,6 +5,7 @@
  *   Sub Stats:   assign (5, 4, 3, 2, 1) → Fitness, Cunning, Reason, Awareness, Presence
  */
 
+/* exported StatsScene */
 const StatsScene = (function() {
   // Base assignments (null = unassigned)
   let mainAssignments = { pow: null, foc: null, agi: null, tou: null };
@@ -161,7 +162,6 @@ const StatsScene = (function() {
    */
   function handleAssignment(group, statId, newValue) {
     const assignments = group === 'main' ? mainAssignments : subAssignments;
-    const array = group === 'main' ? MAIN_STATS_ARRAY : SUB_STATS_ARRAY;
     const oldValue = assignments[statId];
 
     if (newValue === oldValue) return;

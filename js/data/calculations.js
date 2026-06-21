@@ -2,6 +2,7 @@
 // Formulas from Lyrian Chronicles rulebook
 // Stats are assigned via fixed arrays, NOT point-buy
 
+/* exported MAIN_STATS, SUB_STATS, MAIN_STATS_ARRAY, SUB_STATS_ARRAY, calculateDerivedStats, getTotalStatPoints, isAssignmentComplete, getAvailableValues */
 const MAIN_STATS = [
   { id: 'pow', name: 'Power', short: 'POW' },
   { id: 'foc', name: 'Focus', short: 'FOC' },
