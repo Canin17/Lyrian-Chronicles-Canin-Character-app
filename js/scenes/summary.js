@@ -110,6 +110,7 @@ const SummaryScene = (function() {
     html += `</div></div>`;
 
     // Derived Stats
+    const speed = characterData.speed ?? 20;
     html += `<div class="summary-section">
       <h3>Derived Stats</h3>
       <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem;">
@@ -136,6 +137,10 @@ const SummaryScene = (function() {
         <div style="text-align: center; padding: 0.5rem; background: var(--bg-primary); border-radius: 4px;">
           <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Initiative</div>
           <div style="font-size: 1.3rem; font-weight: bold;">${derived.initiative ?? '-'}</div>
+        </div>
+        <div style="text-align: center; padding: 0.5rem; background: var(--bg-primary); border-radius: 4px;">
+          <div style="font-size: 0.75rem; color: var(--accent-gold); text-transform: uppercase;">Speed</div>
+          <div style="font-size: 1.3rem; font-weight: bold;">${speed}ft</div>
         </div>
       </div>
     </div>`;
@@ -230,7 +235,8 @@ const SummaryScene = (function() {
         skills: characterData.skills,
         breakthroughs: characterData.breakthroughs || [],
         mirane: characterData.mirane,
-        oldArmorCalc: characterData.oldArmorCalc
+        oldArmorCalc: characterData.oldArmorCalc,
+        speed: characterData.speed ?? 20
       }
     };
 
@@ -289,6 +295,10 @@ const SummaryScene = (function() {
         coreSheet.getCell('B7').value = characterData.worships || '';
         // Spirit Core
         coreSheet.getCell('C5').value = characterData.spiritCore ?? 0;
+        // Base Speed (from ancestry traits)
+        coreSheet.getCell('H6').value = characterData.speed ?? 20;
+        // Breakthrough count
+        coreSheet.getCell('D7').value = (characterData.breakthroughs || []).length;
         // Starting Clim (default 3000)
         coreSheet.getCell('A54').value = characterData.clim ?? 3000;
         // Starting EXP (default 1000)
@@ -423,7 +433,9 @@ const SummaryScene = (function() {
           const row = 2 + i;
           if (row <= 37) {
             btSheet.getCell(`A${row}`).value = bt.name;
-            btSheet.getCell(`B${row}`).value = 0.0; // Creation spent is 0
+            btSheet.getCell(`B${row}`).value = bt.cost || 0;
+            btSheet.getCell(`C${row}`).value = bt.prerequisites || '';
+            btSheet.getCell(`D${row}`).value = bt.description || '';
           }
         });
       }

@@ -64,7 +64,8 @@
     starterIp: '',
     mirane: true,
     oldArmorCalc: false,
-    spiritCore: 0
+    spiritCore: 0,
+    speed: 20
   };
 
   // ===========================================================================
@@ -367,6 +368,8 @@
         character.pureHuman = document.getElementById('pure-human')?.checked || false;
         character.slowStarter = document.getElementById('slow-starter')?.checked || false;
         character.starterIp = (document.getElementById('starter-ip')?.value || '').trim();
+        // Calculate base speed from ancestry traits
+        character.speed = calculateBaseSpeed(raceSel.ancestry?.name);
         break;
       case 2: // Class
         character.cls = ClassSelectScene.getSelection();
@@ -519,6 +522,7 @@
     character.oldArmorCalc = false;
     character.spiritCore = 0;
     character.humanChoices = {};
+    character.speed = 20;
 
     // Reset scenes
     RaceSelectScene.reset();

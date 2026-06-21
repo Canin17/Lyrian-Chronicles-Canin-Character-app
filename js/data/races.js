@@ -241,6 +241,15 @@ const ANCESTRY_MAP = {
       "image": "https://cdn.angelssword.com/ttrpg/assets/62453f7f-970c-4675-bd26-5528477cf4ae-Selkie_1_raw.sm.webp"
     },
     {
+      "id": "6a1f53686be32fced4930c30",
+      "name": "Sylph",
+      "ancestryId": "sylph",
+      "description": "The Sylph are a subrace of Fae that are particularly blessed by the Wind. Said to have been born of the breeze that danced through the branches and leaves of Yggdrasil herself, there are no beings on Lyr that are more attuned to the wind than a Sylph. To the Sylph, the sky and the wind are their natural companions and hold all the joys and secrets of the world. Sylph villages and cities are built high in the treetops of Easter, wrapping naturally around the massive ancient trees and they rarely have any way of accessing them without flight. These villages can be uncomfortable for visitors as they sway and flex naturally with the trees they\u2019re a part of. The hovering farms are one of the many spectacles of their villages, unique vertical farmland suspended high above the forest floor and are the only place Starlight Berries can be grown, one of the most coveted fruits in Easter. With their close connection to the sky, Sylph\u2019s first developed the method to pluck stars from above as Starcallers, although they rarely used these skills for harm. Sylph Starcallers are the centerpiece for all manner of celebrations in Easter, providing a spectacle of falling starlight that not even the most elaborate fireworks displays of Kirara can rival. Sylph adventurers tend to be free spirits, enamored with exploration and discovering all the ways the wind can rush over the stones or twist through distant forests. They have long traditions of archery and agile swordsmanship and they often scoff at the proclaimed control aeromancers boast over the wind and delight in watching their supposed master of the winds fail in the face of the Blessing of Wind. Sylph companions can be trusted to be skilled and focused in their chosen profession although they can sometimes be distracted by an interesting curl of wind through the leaves. Size: Medium",
+      "attributes": "Elemental Mastery: Wind, Fly, Consume Wind",
+      "proficiencies": [],
+      "image": "https://cdn.angelssword.com/ttrpg/assets/dc5cbccc-fb71-4454-b465-b6258cc88b36-Sylph.sm.webp"
+    },
+    {
       "id": "69ea4f7a6be32fced492fb4b",
       "name": "Unseelie",
       "ancestryId": "unseelie",

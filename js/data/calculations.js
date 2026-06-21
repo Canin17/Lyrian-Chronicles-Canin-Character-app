@@ -2,7 +2,7 @@
 // Formulas from Lyrian Chronicles rulebook
 // Stats are assigned via fixed arrays, NOT point-buy
 
-/* exported MAIN_STATS, SUB_STATS, MAIN_STATS_ARRAY, SUB_STATS_ARRAY, calculateDerivedStats, getTotalStatPoints, isAssignmentComplete, getAvailableValues */
+/* exported MAIN_STATS, SUB_STATS, MAIN_STATS_ARRAY, SUB_STATS_ARRAY, calculateDerivedStats, calculateBaseSpeed, getTotalStatPoints, isAssignmentComplete, getAvailableValues */
 const MAIN_STATS = [
   { id: 'pow', name: 'Power', short: 'POW' },
   { id: 'foc', name: 'Focus', short: 'FOC' },
@@ -42,9 +42,23 @@ function calculateDerivedStats(stats) {
     accuracy: foc,
     initiative: agi,
     saveBonus: tou,
-    guard: tou,
-    speed: 20
+    guard: tou
   };
+}
+
+/**
+ * Calculate permanent base movement speed from ancestry traits.
+ * Default: 20ft.  Fast Runner (Catfolk, Rabbitfolk): 25ft.
+ * Other speed effects (Flight, Horse Step Acceleration, etc.) are
+ * situational/combat-only and are NOT included here.
+ */
+function calculateBaseSpeed(ancestryName) {
+  if (!ancestryName) return 20;
+  const name = ancestryName.toLowerCase();
+  if (name === 'catfolk' || name === 'rabbitfolk') {
+    return 25; // Fast Runner trait
+  }
+  return 20; // Default
 }
 
 function getTotalStatPoints(stats) {
