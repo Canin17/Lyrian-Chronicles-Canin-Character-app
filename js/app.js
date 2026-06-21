@@ -59,9 +59,6 @@
     clim: 3000,
     exp: 1000,
     ip: 3,
-    pureHuman: false,
-    slowStarter: false,
-    starterIp: '',
     mirane: true,
     oldArmorCalc: false,
     spiritCore: 0,
@@ -365,9 +362,6 @@
         const raceSel = RaceSelectScene.getSelection();
         character.race = raceSel.race;
         character.ancestry = raceSel.ancestry;
-        character.pureHuman = document.getElementById('pure-human')?.checked || false;
-        character.slowStarter = document.getElementById('slow-starter')?.checked || false;
-        character.starterIp = (document.getElementById('starter-ip')?.value || '').trim();
         // Calculate base speed from ancestry traits
         character.speed = calculateBaseSpeed(raceSel.ancestry?.name);
         break;
@@ -425,12 +419,6 @@
         if (ipEl) ipEl.value = character.ip ?? 3;
         break;
       case 1: // Race - restore saved selection
-        const pureHumanEl = document.getElementById('pure-human');
-        if (pureHumanEl) pureHumanEl.checked = character.pureHuman || false;
-        const slowStarterEl = document.getElementById('slow-starter');
-        if (slowStarterEl) slowStarterEl.checked = character.slowStarter || false;
-        const starterIpEl = document.getElementById('starter-ip');
-        if (starterIpEl) starterIpEl.value = character.starterIp || '';
         // Restore race/ancestry selection
         if (character.race) {
           RaceSelectScene.restoreState(character.race, character.ancestry);
@@ -515,9 +503,6 @@
     character.clim = 3000;
     character.exp = 1000;
     character.ip = 3;
-    character.pureHuman = false;
-    character.slowStarter = false;
-    character.starterIp = '';
     character.mirane = true;
     character.oldArmorCalc = false;
     character.spiritCore = 0;
@@ -556,12 +541,6 @@
     if (expInput) expInput.value = '1000';
     const ipInput = document.getElementById('char-ip');
     if (ipInput) ipInput.value = '3';
-    const pureHumanInput = document.getElementById('pure-human');
-    if (pureHumanInput) pureHumanInput.checked = false;
-    const slowStarterInput = document.getElementById('slow-starter');
-    if (slowStarterInput) slowStarterInput.checked = false;
-    const starterIpInput = document.getElementById('starter-ip');
-    if (starterIpInput) starterIpInput.value = '';
 
     // Re-initialize PixiJS background BEFORE showing intro (avoid flash)
     if (window.PIXI) {

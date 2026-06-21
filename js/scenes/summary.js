@@ -49,19 +49,6 @@ const SummaryScene = (function() {
     html += `<div class="summary-row"><span class="summary-label">Starting EXP</span><span class="summary-value">${characterData.exp ?? 1000}</span></div>`;
     html += `<div class="summary-row"><span class="summary-label">Starting IP</span><span class="summary-value">${characterData.ip ?? 3}</span></div>`;
 
-    // Human-specific options
-    if (characterData.race && characterData.race.name === 'Human') {
-      if (characterData.pureHuman) {
-        html += `<div class="summary-row"><span class="summary-label">Pure Human</span><span class="summary-value">Yes</span></div>`;
-      }
-      if (characterData.slowStarter) {
-        html += `<div class="summary-row"><span class="summary-label">Slow Starter</span><span class="summary-value">Yes</span></div>`;
-      }
-      if (characterData.starterIp) {
-        html += `<div class="summary-row"><span class="summary-label">Starter IP</span><span class="summary-value">${window.escapeHtml(characterData.starterIp)}</span></div>`;
-      }
-    }
-
     html += `</div>`;
 
     // Race & Class
@@ -228,9 +215,6 @@ const SummaryScene = (function() {
         baseStats: characterData.baseStats,
         raceBonuses: characterData.raceBonuses,
         humanChoices: characterData.humanChoices,
-        pureHuman: characterData.pureHuman,
-        slowStarter: characterData.slowStarter,
-        starterIp: characterData.starterIp,
         spiritCore: characterData.spiritCore,
         skills: characterData.skills,
         breakthroughs: characterData.breakthroughs || [],
@@ -307,10 +291,6 @@ const SummaryScene = (function() {
         coreSheet.getCell('A57').value = characterData.mirane !== false ? 'Yes' : 'No';
         // Old Armor Calc
         coreSheet.getCell('K30').value = characterData.oldArmorCalc ? 'Yes' : 'No';
-        // Human-specific options
-        coreSheet.getCell('A49').value = characterData.pureHuman ? 'Yes' : 'No';
-        coreSheet.getCell('A50').value = characterData.slowStarter ? 'Yes' : 'No';
-        coreSheet.getCell('C52').value = characterData.starterIp || '';
       }
 
       // 5. Fill Base Stats & Race Bonuses (Character Creation Arrays)

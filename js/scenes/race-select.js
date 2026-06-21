@@ -174,16 +174,6 @@ const RaceSelectScene = (function() {
     // Update summary
     updateRaceSummary();
 
-    // Show/hide human options
-    const humanContainer = document.getElementById('human-options-container');
-    if (humanContainer) {
-      if (race.name === 'Human') {
-        humanContainer.classList.remove('hidden');
-      } else {
-        humanContainer.classList.add('hidden');
-      }
-    }
-
     // Animate ancestry section
     if (window.gsap) {
       gsap.fromTo(ancestrySection, { autoAlpha: 0, y: 20 }, { autoAlpha: 1, y: 0, duration: 0.4 });
@@ -442,8 +432,6 @@ const RaceSelectScene = (function() {
     }
     const nextBtn = document.getElementById('btn-race-next');
     if (nextBtn) nextBtn.disabled = true;
-    const humanContainer = document.getElementById('human-options-container');
-    if (humanContainer) humanContainer.classList.add('hidden');
     renderRaces();
   }
 
