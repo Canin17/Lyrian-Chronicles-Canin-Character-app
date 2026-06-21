@@ -280,12 +280,12 @@ const SummaryScene = (function() {
         coreSheet.getCell('B2').value = characterData.name || 'Unnamed';
         coreSheet.getCell('D2').value = characterData.race ? characterData.race.name : 'None';
         coreSheet.getCell('D3').value = characterData.ancestry ? characterData.ancestry.name : 'None';
-        // Identity extras
+        // Identity extras (data goes in column B to avoid overwriting labels in column A)
         coreSheet.getCell('A3').value = characterData.gender || '';
-        coreSheet.getCell('A4').value = characterData.age || '';
-        coreSheet.getCell('A5').value = characterData.height || '';
-        coreSheet.getCell('A6').value = characterData.weight || '';
-        coreSheet.getCell('A7').value = characterData.worships || '';
+        coreSheet.getCell('B4').value = characterData.age || '';
+        coreSheet.getCell('B5').value = characterData.height || '';
+        coreSheet.getCell('B6').value = characterData.weight || '';
+        coreSheet.getCell('B7').value = characterData.worships || '';
         // Spirit Core
         coreSheet.getCell('C5').value = characterData.spiritCore ?? 0;
         // Starting Clim (default 3000)
@@ -368,24 +368,52 @@ const SummaryScene = (function() {
         });
       }
 
-      // 6b. Fill Proficiencies (K9-K12)
-      if (coreSheet && characterData.race) {
-        const race = characterData.race;
-        const ancestry = characterData.ancestry;
-        const raceProfs = race.proficiencies || '';
-        const ancProfs = ancestry ? (ancestry.proficiencies || '') : '';
-        const allProfs = [raceProfs, ancProfs].filter(p => p).join(' ');
+      // 6b. Fill Proficiencies (K9-K12) — gather from ALL sources using arrays
+      if (coreSheet) {
+        const allProfs = new Set();
 
-        // Parse proficiencies by keyword and write to K column
-        const armorMatch = allProfs.match(/(?:armor|light armor|medium armor|heavy armor)[^\.]*\./gi);
-        const langMatch = allProfs.match(/(?:speak|read|write|language|dialect)[^\.]*\./gi);
-        const weaponMatch = allProfs.match(/(?:weapon|weapon group)[^\.]*\./gi);
-        const elementMatch = allProfs.match(/(?:elemental|mastery)[^\.]*\./gi);
+        // --- Race & Ancestry proficiencies ---
+        if (characterData.race) {
+          const race = characterData.race;
+          const ancestry = characterData.ancestry;
+          if (Array.isArray(race.proficiencies)) {
+            race.proficiencies.forEach(p => allProfs.add(p));
+          }
+          if (ancestry && Array.isArray(ancestry.proficiencies)) {
+            ancestry.proficiencies.forEach(p => allProfs.add(p));
+          }
+        }
 
-        coreSheet.getCell('K9').value = armorMatch ? armorMatch.join(' ').trim() : '';
-        coreSheet.getCell('K10').value = langMatch ? langMatch.join(' ').trim() : '';
-        coreSheet.getCell('K11').value = weaponMatch ? weaponMatch.join(' ').trim() : '';
-        coreSheet.getCell('K12').value = elementMatch ? elementMatch.join(' ').trim() : '';
+        // --- Class key-ability (L1) proficiencies ---
+        if (characterData.cls) {
+          const classes = characterData.cls.all || [];
+          classes.forEach(clsEntry => {
+            const classObj = clsEntry.class || {};
+            const className = classObj.name;
+            if (className && typeof CLASS_ABILITIES_DATA === 'object') {
+              const classAbilities = CLASS_ABILITIES_DATA[className];
+              if (classAbilities && classAbilities.L1 && Array.isArray(classAbilities.L1.proficiencies)) {
+                classAbilities.L1.proficiencies.forEach(p => allProfs.add(p));
+              }
+            }
+          });
+        }
+
+        // --- Breakthrough proficiencies ---
+        if (characterData.breakthroughs && characterData.breakthroughs.length > 0) {
+          characterData.breakthroughs.forEach(bt => {
+            if (Array.isArray(bt.proficiencies)) {
+              bt.proficiencies.forEach(p => allProfs.add(p));
+            }
+          });
+        }
+
+        // Write proficiencies to Excel starting at K9
+        let profRow = 9;
+        Array.from(allProfs).forEach(p => {
+          coreSheet.getCell(`K${profRow}`).value = p;
+          profRow++;
+        });
       }
 
       // 7. Fill Breakthroughs
@@ -422,6 +450,149 @@ const SummaryScene = (function() {
             });
           }
         });
+      }
+
+      // 8b. Fill Crafting Skills on Core sheet (M9-M30) + ALL Class Abilities on Abilities sheet
+      if (coreSheet && typeof CLASS_ABILITIES_DATA === 'object' && characterData.cls) {
+        const classes = characterData.cls.all || [];
+
+        // Map class names to their crafting skill name for the Core sheet M column
+        const classToCraftingSkill = {
+          'Blacksmith': 'Blacksmith',
+          'Alchemist': 'Alchemist',
+          'Alchemeister': 'Alchemist',
+          'Armorsmith': 'Armorsmith',
+          'Master Armorer': 'Armorsmith',
+          'Artificer': 'Artificer',
+          'Carpenter': 'Carpenter',
+          'Culinarian': 'Culinarian',
+          'Forgemaster': 'Blacksmith',
+          'Agrarian': 'Farmer',
+          'Farmer': 'Farmer',
+          'Timberwright': 'Carpenter',
+          'Transmuter': 'Transmuter'
+        };
+
+        // Fill M9+ with crafting skill names (dynamic, one per row, deduplicated)
+        const craftingSkillNames = new Set();
+        classes.forEach(clsEntry => {
+          const classObj = clsEntry.class || {};
+          const level = clsEntry.level || 1;
+          if (level >= 1 && classToCraftingSkill[classObj.name]) {
+            craftingSkillNames.add(classToCraftingSkill[classObj.name]);
+          }
+        });
+
+        const skillArr = Array.from(craftingSkillNames);
+        let craftRow = 9;
+        skillArr.forEach((skillName) => {
+          coreSheet.getCell(`M${craftRow}`).value = skillName;
+          craftRow++;
+        });
+
+        // Fill ALL Class Abilities on the Abilities sheet (dynamic positioning)
+        const abilitiesSheet = workbook.getWorksheet('Abilities');
+        if (abilitiesSheet) {
+          // Collect all abilities first, then write them dynamically
+          const activeAbilities = [];
+          const passiveAbilities = [];
+          const written = new Set();
+
+          classes.forEach(clsEntry => {
+            const classObj = clsEntry.class || {};
+            const className = classObj.name;
+            const level = clsEntry.level || 1;
+            const classAbilities = CLASS_ABILITIES_DATA[className];
+            if (!classAbilities) return;
+
+            for (let lvl = 1; lvl <= Math.min(level, 8); lvl++) {
+              const abilityKey = `L${lvl}`;
+              const classAbility = classAbilities[abilityKey];
+              if (!classAbility) continue;
+
+              const abilityName = classAbility.name;
+              if (written.has(abilityName)) continue;
+              written.add(abilityName);
+
+              // Get full ability details from ABILITIES_DB
+              let fullAbility = null;
+              if (typeof ABILITIES_DB === 'object') {
+                fullAbility = ABILITIES_DB[abilityName] || null;
+              }
+
+              // Determine active vs passive
+              const abilityType = fullAbility ? fullAbility.type : 'unknown';
+              const isActive = abilityType === 'false' || abilityType === 'both';
+              const isPassive = abilityType === 'true' || abilityType === 'key' || abilityType === 'unknown';
+
+              // Build ability data
+              let cost = '';
+              if (fullAbility) {
+                const costs = [];
+                if (fullAbility.manaCost) costs.push(`Mana: ${fullAbility.manaCost}`);
+                if (fullAbility.apCost) costs.push(`AP: ${fullAbility.apCost}`);
+                if (fullAbility.rpCost) costs.push(`RP: ${fullAbility.rpCost}`);
+                cost = costs.join(' | ') || '';
+              }
+
+              const abilityData = {
+                name: abilityName,
+                cost: cost,
+                keywords: fullAbility ? (fullAbility.keywords || []).join(', ') : '',
+                range: fullAbility ? (fullAbility.range || '') : '',
+                requirement: fullAbility ? (fullAbility.requirement || '') : '',
+                description: fullAbility
+                  ? (fullAbility.description || classAbility.description || '')
+                  : (classAbility.description || ''),
+                benefits: classAbility.keyBenefits ? classAbility.keyBenefits.join('; ') : ''
+              };
+
+              if (isActive) activeAbilities.push(abilityData);
+              if (isPassive) passiveAbilities.push(abilityData);
+            }
+          });
+
+          // Write Active header at row 1, then abilities starting at row 2
+          const activeHeaderRow = 1;
+          const activeStartRow = 2;
+          for (let i = 0; i < activeAbilities.length; i++) {
+            const row = activeStartRow + i;
+            const ab = activeAbilities[i];
+            abilitiesSheet.getCell(`A${row}`).value = ab.name;
+            abilitiesSheet.getCell(`B${row}`).value = ab.cost;
+            abilitiesSheet.getCell(`C${row}`).value = ab.keywords;
+            abilitiesSheet.getCell(`D${row}`).value = ab.range;
+            abilitiesSheet.getCell(`E${row}`).value = ab.requirement;
+            abilitiesSheet.getCell(`F${row}`).value = ab.description;
+            abilitiesSheet.getCell(`G${row}`).value = ab.benefits;
+          }
+
+          // Write Passive header right after last active ability (or at row 2 if no actives)
+          const passiveHeaderRow = activeStartRow + activeAbilities.length;
+          const passiveStartRow = passiveHeaderRow + 1;
+
+          // Write passive header
+          abilitiesSheet.getCell(`A${passiveHeaderRow}`).value = 'Passive Ability Name';
+          abilitiesSheet.getCell(`B${passiveHeaderRow}`).value = 'Cost';
+          abilitiesSheet.getCell(`C${passiveHeaderRow}`).value = 'Keywords';
+          abilitiesSheet.getCell(`D${passiveHeaderRow}`).value = 'Range';
+          abilitiesSheet.getCell(`E${passiveHeaderRow}`).value = 'Requirement';
+          abilitiesSheet.getCell(`F${passiveHeaderRow}`).value = 'Description';
+          abilitiesSheet.getCell(`G${passiveHeaderRow}`).value = 'Benefits';
+
+          // Write passive abilities
+          for (let i = 0; i < passiveAbilities.length; i++) {
+            const row = passiveStartRow + i;
+            const ab = passiveAbilities[i];
+            abilitiesSheet.getCell(`A${row}`).value = ab.name;
+            abilitiesSheet.getCell(`B${row}`).value = ab.cost;
+            abilitiesSheet.getCell(`C${row}`).value = ab.keywords;
+            abilitiesSheet.getCell(`D${row}`).value = ab.range;
+            abilitiesSheet.getCell(`E${row}`).value = ab.requirement;
+            abilitiesSheet.getCell(`F${row}`).value = ab.description;
+            abilitiesSheet.getCell(`G${row}`).value = ab.benefits;
+          }
+        }
       }
 
       // 9. Fill Backstory

@@ -79,6 +79,7 @@ const ABILITIES_DB = {
     "keywords": [],
     "keywordSlugs": [],
     "keyBenefits": ["You gain proficiency in light armor, shields and a single common group of weapons. This group may include Channeling Weapons, even though they aren't consider common weapons. (But you only get 1 of the possible channeling weapons).", "You gain +5 skill points in the Religion skill.", "You are welcome at establishments for your religion and they are obligated to help you with lodging, advice, food and sometimes equipment."],
+    "proficiencies": ["Light Armor", "Shields", "Common Weapon (1)"],
   },
 
   "Adaptive Defense": {
@@ -125,7 +126,8 @@ const ABILITIES_DB = {
     "rpCost": "",
     "keywords": ["Presence Concealment", "Stealth"],
     "keywordSlugs": ["presence-concealment", "stealth"],
-    "keyBenefits": ["You gain proficiency in 1 common weapon group. In addition, you gain proficiency in 1 common or specialized weapon groups.", "You gain proficiency in 1 armor category of your choosing. Alternatively, you may pick the shield or greatshield.", "You may use Presence Concealment."],
+    "keyBenefits": ["You gain proficiency in 1 common weapon group. In addition, you gain proficiency in 1 common or specialized weapon groups.", "You gain proficiency in 1 armor category of your choosing. Alternatively, you may pick the shield or greatshield.", "You gain +5 skill points in a skill of your choosing."],
+    "proficiencies": ["Common Weapon (1)", "Common/Specialized Weapon (1)", "Armor (1)"],
     "associatedTrueAbility": "Presence Concealment",
     "associatedTrueAbilityUrl": "https://rpg.angelssword.com/game/0.13.0/abilities",
   },
@@ -2691,6 +2693,7 @@ const ABILITIES_DB = {
     "keywords": [],
     "keywordSlugs": [],
     "keyBenefits": ["Your unarmed attack damage is treated as a One-Handed Weapon in which you are proficient.", "You gain proficiency in light armor, light swords and another weapon of your choice.", "You gain +5 skill points to spend in Appraise, Athletics, Deception, Perception, Insight, Medicine, Intimidation, Stealth or Common Knowledge. You can exchange any skill point for 2 expertise points, but must spend them in these skills."],
+    "proficiencies": ["Light Armor", "Shields", "Common Weapon (1)"],
   },
 
   "Cure Touch": {
@@ -5377,6 +5380,7 @@ const ABILITIES_DB = {
     "keywords": [],
     "keywordSlugs": [],
     "keyBenefits": ["You gain proficiency in 5 common weapons groups.", "You gain proficiency in all light armor, medium armor and normal shields.", "You gain +5 HP."],
+    "proficiencies": ["Light Armor", "Medium Armor", "Shields", "Common Weapon (5)"],
   },
 
   "Fire Stance": {
@@ -5883,6 +5887,7 @@ const ABILITIES_DB = {
     "keywords": [],
     "keywordSlugs": [],
     "keyBenefits": ["You gain proficiency in Giant Scissors and proficiency in your choice between Axes or Hori. You may use axes for harvesting foraging outcrops.", "You gain the ability to harvest Tier 1 Foraging Outcrops.", "You gain the ability to use natural item as replacements for an Adventurers Kit and Torches such as:  using the sun/moss as a compass, using vines as rope etc.  The material must be available (GM’s discretion)", "You gain the ability to create Wood Blocks as an Errand.  See item: Carpenter Materials. You may use an IP to do this 4 times instead."],
+    "proficiencies": ["Light Armor", "Shields", "Common Weapon (1)"],
   },
 
   "Forest Walker": {
@@ -7341,6 +7346,7 @@ const ABILITIES_DB = {
     "keywords": [],
     "keywordSlugs": [],
     "keyBenefits": ["You can see the death of non-living things allowing you to automatically do maximum, full pierce damage against objects.", "You apply 1 Mark of Death every time you hit an enemy with ‘Lines of Death’ or ‘Point of Death’ up to a maximum of 7 marks."],
+    "proficiencies": ["Wands", "Small Weapons", "Light Armor"],
   },
 
   "Improvised Defense": {
@@ -8528,6 +8534,7 @@ const ABILITIES_DB = {
     "keywords": [],
     "keywordSlugs": [],
     "keyBenefits": ["You gain a +2 Anti-Mage bonus to your saves against Spells."],
+    "proficiencies": ["Wands", "Light Armor"],
   },
 
   "Maid Training": {
@@ -8827,6 +8834,7 @@ const ABILITIES_DB = {
     "keywords": [],
     "keywordSlugs": [],
     "keyBenefits": ["You may spend an EP to restore a Broken item. Some items (such as consumables) cannot be repaired (GM’s discretion)."],
+    "proficiencies": ["Light Armor", "Shields", "Channeling Weapon (1)"],
   },
 
   "Merchant Lord": {
@@ -8889,6 +8897,7 @@ const ABILITIES_DB = {
     "keywords": [],
     "keywordSlugs": [],
     "keyBenefits": ["You gain proficiency in 1 common and 1 specialized weapon", "You gain +5 skill points to spend in Art. You can exchange any skill point for 2 expertise points, but must spend them in this skill.", "As a mime, you’re not allowed to speak. If you speak during an encounter, you cannot use any Mime abilities until the end of the encounter."],
+    "proficiencies": ["Light Armor", "Shields", "Common Weapon (1)"],
   },
 
   "Mind Connection": {
@@ -9890,6 +9899,7 @@ const ABILITIES_DB = {
     "keywords": [],
     "keywordSlugs": [],
     "keyBenefits": ["You gain proficiency in small weapons, bludgeoning weapons and light armor.", "You gain +5 skill points to spend in Art. You can exchange any skill point for 2 expertise points, but must spend them in this skill.", "You gain 2 Damage Reduction against pies."],
+    "proficiencies": ["Light Armor", "Shields", "Common Weapon (1)"],
   },
 
   "Pillar of Earth": {
@@ -10771,6 +10781,7 @@ const ABILITIES_DB = {
     "keywords": ["Divination"],
     "keywordSlugs": ["divination"],
     "keyBenefits": ["You may use Receive Oracle."],
+    "proficiencies": ["Light Armor", "Medium Armor", "Common Ranged Weapon (1)", "Common Melee Weapon (1)"],
   },
 
   "Reckless Strike": {
@@ -11198,6 +11209,7 @@ const ABILITIES_DB = {
     "keywords": [],
     "keywordSlugs": [],
     "keyBenefits": ["After moving at least 40ft in a turn, your next unarmed strike that turn gains a +2 Transcendent Lightning bonus to accuracy and damage."],
+    "proficiencies": ["Light Armor", "Small Weapons/Light Swords/Dueling/Set of Missiles (1)"],
   },
 
   "Ruminant Metabolism": {
@@ -13376,6 +13388,7 @@ const ABILITIES_DB = {
     "keywords": [],
     "keywordSlugs": [],
     "keyBenefits": ["You gain proficiency in Channeling Weapons and Light Armor.", "You gain +5 skill points in Magic.", "You gain Arcane Mastery. Upon mastering this class, you may master an additional element of your choice."],
+    "proficiencies": ["Wands", "Light Armor"],
   },
 
   "Soul Absorption": {

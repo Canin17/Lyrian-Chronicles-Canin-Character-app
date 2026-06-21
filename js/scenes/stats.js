@@ -118,20 +118,16 @@ const StatsScene = (function() {
 
       // Build dropdown options
       let optionsHtml = '<option value="">—</option>';
-      // Show available values
-      available.forEach(v => {
-        optionsHtml += `<option value="${v}">${v}</option>`;
-      });
-      // If already assigned, show the assigned value
+      // If already assigned, show the assigned value first (selected)
       if (assigned != null) {
-        optionsHtml = `<option value="${assigned}" selected>${assigned}</option>`;
-        // Also show other available values for reassignment
-        available.forEach(v => {
-          if (v !== assigned) {
-            optionsHtml += `<option value="${v}">${v}</option>`;
-          }
-        });
+        optionsHtml += `<option value="${assigned}" selected>${assigned}</option>`;
       }
+      // Also show other available values for reassignment
+      available.forEach(v => {
+        if (v !== assigned) {
+          optionsHtml += `<option value="${v}">${v}</option>`;
+        }
+      });
 
       const displayValue = assigned != null ? total : '—';
       const bonusText = raceBonus > 0 && assigned != null ? ` <span class="race-bonus">(+${raceBonus})</span>` : '';

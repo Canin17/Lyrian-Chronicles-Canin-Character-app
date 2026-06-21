@@ -138,17 +138,51 @@ const BreakthroughScene = (function() {
     // "Must be a/an X" / "Must be X" / "Must be Centaur or Arachne Spiderfolk"
     // "Must choose Faerie or Chimera race" / "Must choose Human race"
     // "You must be proficient with X"
+    // "Must be a human and only a human"
+    // "Must be a Nio, Bullfolk or Bearfolk"
     // NOTE: "Must be an Unknown Paladin that follows Eisen" is a CLASS requirement, not a race
-    const raceMatch = clause.match(/(?:must\s+)?(?:be|choose)\s+(?:a|an)?\s+([a-zA-Z-]+(?:\s+[a-zA-Z-]+)*?)(?:\.|$)/i);
+    // NOTE: "Must be a summoner and have visited the eidolon" — class requirement, be permissive
+    const raceMatch = clause.match(/(?:must\s+)?(?:be|choose)\s+(?:(?:a|an)\s+)?([\w-][\w\s,-]*?[\w-])(?:\s+race\.?|\.)?(?:$)/i);
     if (raceMatch && !lower.includes('mastered') && !lower.includes('maxed')) {
-      const neededRaceStr = raceMatch[1].trim();
-      // If the matched string is very long (4+ words), it's likely a class description, not a race
-      // e.g., "Unknown Paladin that follows Eisen" -> be permissive
-      if (neededRaceStr.split(/\s+/).length >= 4) {
+      let neededRaceStr = raceMatch[1].trim();
+
+      // Strip trailing "race" word (e.g., "Faerie or Chimera race" → "Faerie or Chimera")
+      neededRaceStr = neededRaceStr.replace(/\s+race\s*$/i, '');
+
+      // Handle "X and only X" → extract the race before "and"
+      // e.g., "a human and only a human" → "human"
+      const andOnlyMatch = neededRaceStr.match(/^(.+?)\s+and\s+only\s+(?:a|an)?\s+(.+)$/i);
+      if (andOnlyMatch) {
+        neededRaceStr = andOnlyMatch[1].trim();
+      }
+
+      // Handle "X and have ..." → extract the race before "and"
+      // e.g., "a summoner and have visited the eidolon" → "summoner"
+      const andHaveMatch = neededRaceStr.match(/^(.+?)\s+and\s+have\s+/i);
+      if (andHaveMatch) {
+        neededRaceStr = andHaveMatch[1].trim();
+      }
+
+      // Handle comma-separated AND "or" lists: "Nio, Bullfolk or Bearfolk"
+      // First split on commas, then split each part on "or"
+      // Check 4+ words per INDIVIDUAL option (not the whole string)
+      const rawOptions = neededRaceStr.split(/,/);
+      const options = [];
+      rawOptions.forEach(part => {
+        const orParts = part.split(/\s+or\s+/i);
+        orParts.forEach(op => {
+          const cleaned = op.trim().toLowerCase();
+          if (cleaned) options.push(cleaned);
+        });
+      });
+
+      // Check if any individual option is 4+ words (class description)
+      // e.g., "Unknown Paladin that follows Eisen" -> be permissive for that option
+      const hasClassReq = options.some(opt => opt.split(/\s+/).length >= 4);
+      if (hasClassReq) {
         return true;
       }
-      // Handle "X or Y" options
-      const options = neededRaceStr.split(/\s+or\s+/i).map(s => s.trim().toLowerCase());
+
       return options.some(opt => checkRaceMatch(opt, race, ancestry));
     }
 
@@ -178,10 +212,31 @@ const BreakthroughScene = (function() {
 
   // Helper: check if the player's race/ancestry matches a required race name
   function checkRaceMatch(neededRace, race, ancestry) {
-    const knownRaces = ['human', 'demon', 'fae', 'chimera', 'angel'];
-    const knownAncestries = ['sheepfolk', 'kitsune', 'raijin', 'tengu', 'anubis', 'selkie', 'lamia',
-      'ratfolk', 'red panda', 'slimefolk', 'spiderfolk', 'wolf-folk', 'centaur', 'arachne',
-      'jiangshi', 'youkai', 'marionette', 'goblin', 'dwarf', 'elf'];
+    const knownRaces = ['human', 'demon', 'fae', 'chimera', 'angel', 'youkai'];
+    const raceAliases = ['faerie']; // "faerie" = "fae"
+    // ALL 43 ancestries + aliases for compound names
+    const knownAncestries = [
+      // Chimera (19)
+      'bearfolk', 'bullfolk', 'catfolk', 'centaur', 'cowfolk', 'dogfolk',
+      'harpy', 'horse-folk', 'lamiafolk', 'lizardfolk', 'mothfolk',
+      'phoenix', 'rabbitfolk', 'ratfolk', 'red pandafolk', 'sheepfolk',
+      'slimefolk', 'spiderfolk', 'wolf-folk',
+      // Fae (13)
+      'anubis', 'cait sith', 'cu sith', 'dryad', 'dullahan', 'gnome',
+      'high fae', 'pixie', 'salamander', 'selkie', 'sylph', 'unseelie',
+      'willo wisp',
+      // Youkai (11)
+      'ancient marionette', 'jiangshi', 'kitsune', 'nekomata', 'nio',
+      'oni', 'raijin', 'ryujin', 'suryan', 'tengu', 'yuki-onna',
+      // Aliases / alternate spellings
+      'red panda', 'arachne', 'arachne spiderfolk', 'lamia', 'marionette',
+      'willowisp', 'will-o-wisp', 'sheep', 'wolf', 'horse',
+      'cow', 'bull', 'bear', 'dog', 'cat', 'rabbit', 'rat', 'slime',
+      'spider', 'moth', 'lizard', 'harpy', 'centaur',
+      'raijin youkai', 'ryujin youkai', 'oni youkai', 'tengu youkai',
+      'yuki-onna youkai', 'kitsune youkai', 'jiangshi youkai',
+      'suryan youkai', 'nekomata youkai', 'ancient marionette youkai',
+    ];
     const neededLower = neededRace.toLowerCase();
 
     if (!race) return false;
@@ -190,12 +245,39 @@ const BreakthroughScene = (function() {
     const ancestryId = (ancestry && ancestry.ancestryId) ? ancestry.ancestryId.toLowerCase() : '';
 
     // Handle compound names - all words must be present in the SAME identifier
+    // e.g., "Arachne Spiderfolk" → ancestry name "Arachne Spiderfolk" or id "arachne"
+    // e.g., "Sylph Fae" → ancestry name "Sylph" with primary race "Fae"
     const words = neededLower.split(/\s+/);
     if (words.length > 1) {
-      const raceMatch = words.every(word => raceName.includes(word));
+      // Check if all words match in a single ancestry name/id
       const ancestryNameMatch = words.every(word => ancestryName.includes(word));
       const ancestryIdMatch = words.every(word => ancestryId.includes(word));
-      return raceMatch || ancestryNameMatch || ancestryIdMatch;
+      if (ancestryNameMatch || ancestryIdMatch) return true;
+
+      // Check if first word is an ancestry and last word is the primary race
+      // e.g., "Sylph Fae" → ancestry=Sylph, race=Fae
+      const firstWord = words[0];
+      const lastWord = words[words.length - 1];
+      if (knownAncestries.includes(firstWord) && knownRaces.includes(lastWord)) {
+        if ((ancestryName === firstWord || ancestryId === firstWord) && raceName === lastWord) {
+          return true;
+        }
+      }
+
+      // Check if the primary race matches AND ancestry is in the list
+      // e.g., "Arachne Spiderfolk" → ancestry=Arachne (spiderfolk is implied)
+      if (knownAncestries.includes(neededLower)) {
+        return ancestryName === neededLower || ancestryId === neededLower;
+      }
+
+      // Fallback: check if race matches the last word (primary race)
+      if (knownRaces.includes(lastWord) && raceName === lastWord) {
+        return true;
+      }
+
+      // Fallback: check if all words appear in race name
+      const raceMatch = words.every(word => raceName.includes(word));
+      return raceMatch;
     }
 
     // Check exact match against main race name
@@ -203,8 +285,15 @@ const BreakthroughScene = (function() {
       return raceName === neededLower;
     }
 
+    // Check race aliases (e.g., "faerie" = "fae")
+    if (raceAliases.includes(neededLower)) {
+      const aliasMap = { faerie: 'fae' };
+      return raceName === aliasMap[neededLower];
+    }
+
     // Check ancestry/subrace match
-    return ancestryName === neededLower || ancestryId === neededLower || raceName.includes(neededLower);
+    return ancestryName === neededLower || ancestryId === neededLower ||
+      knownAncestries.includes(neededLower) && (raceName.includes(neededLower) || ancestryName.includes(neededLower));
   }
 
   // ===========================================================================
@@ -575,10 +664,17 @@ const BreakthroughScene = (function() {
       searchEl.value = '';
       delete searchEl.dataset.btSearchBound;
     }
-    // Reset filters
+    // Reset filters — explicitly target the "All" buttons
     document.querySelectorAll('#cost-filters .filter-btn, #category-filters .filter-btn, #bt-eligibility-filters .filter-btn').forEach(btn => {
       btn.classList.remove('active');
-      if (!btn.dataset.value) btn.classList.add('active');
+    });
+    // Activate the "All" button in each filter group
+    ['#cost-filters', '#category-filters', '#bt-eligibility-filters'].forEach(containerId => {
+      const container = document.querySelector(containerId);
+      if (container) {
+        const allBtn = container.querySelector('.filter-btn[data-value=""]');
+        if (allBtn) allBtn.classList.add('active');
+      }
     });
     renderBreakthroughs(BREAKTHROUGH_DATA);
   }

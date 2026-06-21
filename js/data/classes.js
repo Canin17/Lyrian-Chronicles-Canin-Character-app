@@ -2027,7 +2027,8 @@ const CLASS_ABILITIES_DATA = {
   "Acolyte": {
     "L1": {
       "name": "Acolyte's Journey",
-      "description": "You gain proficiency in light armor, shields and a single common group of weapons. This group may include Channeling Weapons, even though they aren't consider common weapons. (But you only get 1 of the possible channeling weapons)."
+      "description": "You gain proficiency in light armor, shields and a single common group of weapons. This group may include Channeling Weapons, even though they aren't consider common weapons. (But you only get 1 of the possible channeling weapons).",
+      "proficiencies": ["Light Armor", "Shields", "Common Weapon (1)"]
     },
     "L2": {
       "name": "Cure Touch",
@@ -2061,7 +2062,8 @@ const CLASS_ABILITIES_DATA = {
   "Adventurer": {
     "L1": {
       "name": "Adventurer Essentials",
-      "description": "You gain proficiency in 1 common weapon group. In addition, you gain proficiency in 1 common or specialized weapon groups."
+      "description": "You gain proficiency in 1 common weapon group. In addition, you gain proficiency in 1 common or specialized weapon groups.",
+      "proficiencies": ["Common Weapon (1)", "Common/Specialized Weapon (1)", "Armor (1)"]
     },
     "L2": {
       "name": "Power Jump",
@@ -3387,7 +3389,8 @@ const CLASS_ABILITIES_DATA = {
   "Cultivator": {
     "L1": {
       "name": "Cultivator's Journey",
-      "description": "Your unarmed attack damage is treated as a One-Handed Weapon in which you are proficient."
+      "description": "Your unarmed attack damage is treated as a One-Handed Weapon in which you are proficient.",
+      "proficiencies": ["Light Armor", "Shields", "Common Weapon (1)"]
     },
     "L2": {
       "name": "Ki Circulation",
@@ -4135,7 +4138,8 @@ const CLASS_ABILITIES_DATA = {
   "Fighter": {
     "L1": {
       "name": "Fighter's Journey",
-      "description": "You gain proficiency in 5 common weapons groups."
+      "description": "You gain proficiency in 5 common weapons groups.",
+      "proficiencies": ["Light Armor", "Medium Armor", "Shields", "Common Weapon (5)"]
     },
     "L2": {
       "name": "Charge",
@@ -5019,7 +5023,8 @@ const CLASS_ABILITIES_DATA = {
   "Idol": {
     "L1": {
       "name": "Idol's Journey",
-      "description": "You gain proficiency in wands, small weapons and light armor."
+      "description": "You gain proficiency in wands, small weapons and light armor.",
+      "proficiencies": ["Wands", "Small Weapons", "Light Armor"]
     },
     "L2": {
       "name": "This is our moment!",
@@ -5189,7 +5194,8 @@ const CLASS_ABILITIES_DATA = {
   "Mage": {
     "L1": {
       "name": "Mage's Journey",
-      "description": "You gain proficiency in the Channeling weapon group's weapons and gain Arcane Mastery. Mastery of an element allows you to use it in Channeling weapon attacks and use it to perform minor tricks relating to it."
+      "description": "You gain proficiency in the Channeling weapon group's weapons and gain Arcane Mastery. Mastery of an element allows you to use it in Channeling weapon attacks and use it to perform minor tricks relating to it.",
+      "proficiencies": ["Wands", "Light Armor"]
     },
     "L2": {
       "name": "Decipher Magic",
@@ -5359,7 +5365,8 @@ const CLASS_ABILITIES_DATA = {
   "Martial Artist": {
     "L1": {
       "name": "Martial Artist's Journey",
-      "description": "Your unarmed attack damage is treated as a One-Handed Weapon in which you are proficient."
+      "description": "Your unarmed attack damage is treated as a One-Handed Weapon in which you are proficient.",
+      "proficiencies": ["Unarmed"]
     },
     "L2": {
       "name": "Leg Sweep",
@@ -5461,7 +5468,8 @@ const CLASS_ABILITIES_DATA = {
   "Mime": {
     "L1": {
       "name": "Mime's Journey",
-      "description": "You gain proficiency in 1 common and 1 specialized weapon"
+      "description": "You gain proficiency in 1 common and 1 specialized weapon",
+      "proficiencies": ["Light Armor", "Shields", "Common Weapon (1)"]
     },
     "L2": {
       "name": "Imaginary Weapon",
@@ -6039,7 +6047,8 @@ const CLASS_ABILITIES_DATA = {
   "Pierrot": {
     "L1": {
       "name": "Pierrot's Journey",
-      "description": "You gain proficiency in small weapons, bludgeoning weapons and light armor."
+      "description": "You gain proficiency in small weapons, bludgeoning weapons and light armor.",
+      "proficiencies": ["Light Armor", "Shields", "Common Weapon (1)"]
     },
     "L2": {
       "name": "Pie Toss",
@@ -6209,7 +6218,8 @@ const CLASS_ABILITIES_DATA = {
   "Ranger": {
     "L1": {
       "name": "Ranger's Journey",
-      "description": "You gain proficiency in light and medium armor, a common ranged weapon group and a common melee weapon group."
+      "description": "You gain proficiency in light and medium armor, a common ranged weapon group and a common melee weapon group.",
+      "proficiencies": ["Light Armor", "Medium Armor", "Common Ranged Weapon (1)", "Common Melee Weapon (1)"]
     },
     "L2": {
       "name": "Track",
@@ -6277,7 +6287,8 @@ const CLASS_ABILITIES_DATA = {
   "Rogue": {
     "L1": {
       "name": "Rogue's Journey",
-      "description": "You gain proficiency with light armor and with one of the following weapon groups: Small weapons, Light swords, Dueling weapons and Set of missiles."
+      "description": "You gain proficiency with light armor and with one of the following weapon groups: Small weapons, Light swords, Dueling weapons and Set of missiles.",
+      "proficiencies": ["Light Armor", "Small Weapons/Light Swords/Dueling/Set of Missiles (1)"]
     },
     "L2": {
       "name": "Evasive Maneuver",
@@ -6787,7 +6798,8 @@ const CLASS_ABILITIES_DATA = {
   "Sorcerer": {
     "L1": {
       "name": "Sorcerer's Journey",
-      "description": "You gain proficiency in Channeling Weapons and Light Armor."
+      "description": "You gain proficiency in Channeling Weapons and Light Armor.",
+      "proficiencies": ["Wands", "Light Armor"]
     },
     "L2": {
       "name": "Magic Blast",

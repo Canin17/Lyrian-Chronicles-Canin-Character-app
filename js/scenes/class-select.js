@@ -623,12 +623,12 @@ const ClassSelectScene = (function() {
       let dropdownHtml = '';
 
       // Ability name with hyperlink
-      if (abilityDb && abilityDb.url) {
+      if (abilityDb && abilityDb.url && typeof abilityLink === 'function') {
         dropdownHtml += `<div class="ability-detail-link">${abilityLink(abilityData.name)}</div>`;
       }
 
       // Keywords with hyperlinks
-      if (abilityDb && abilityDb.keywords && abilityDb.keywords.length > 0) {
+      if (abilityDb && abilityDb.keywords && abilityDb.keywords.length > 0 && typeof keywordLinks === 'function') {
         dropdownHtml += `<div class="ability-detail-keywords"><strong>Keywords:</strong> ${keywordLinks(abilityDb.keywords)}</div>`;
       }
 
@@ -651,6 +651,12 @@ const ClassSelectScene = (function() {
 
       // Description
       dropdownHtml += `<div class="ability-detail-desc">${decodeHtmlEntities(abilityData.description || 'No description available.')}</div>`;
+
+      // Proficiencies (L1 only)
+      if (i === 1 && abilityData.proficiencies && abilityData.proficiencies.length) {
+        const profList = abilityData.proficiencies.map(p => window.escapeHtml(p)).join(', ');
+        dropdownHtml += `<div class="ability-detail-proficiencies"><strong>Proficiencies:</strong> ${profList}</div>`;
+      }
 
       dropdownEl.innerHTML = dropdownHtml;
       abilityEl.appendChild(dropdownEl);

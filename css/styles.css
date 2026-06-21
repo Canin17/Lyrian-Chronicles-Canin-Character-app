@@ -1322,8 +1322,6 @@ body {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: var(--spacing-sm);
-  max-height: 700px;
-  overflow-y: auto;
   padding: var(--spacing-sm);
   margin-bottom: var(--spacing-md);
 }
@@ -1878,40 +1876,56 @@ body {
   gap: var(--spacing-sm);
   min-width: 160px;
   padding: 2px 0;
+  flex-wrap: wrap;
 }
 
 .skill-source-label {
-  color: var(--text-muted);
+  color: var(--text-primary);
   font-size: 0.85rem;
   font-family: var(--font-serif);
+  font-weight: 600;
 }
 
-.skill-source-value {
-  color: var(--text-primary);
-  font-weight: bold;
-  font-size: 0.95rem;
+/* Pool display: spent/total */
+.skill-source-pool {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
   font-family: var(--font-sc);
 }
 
-.skill-source-value.skill-bonus {
-  color: var(--accent-green);
-}
-
-.skill-source-total {
-  border-top: 1px solid var(--border-color);
-  padding-top: 4px;
-  margin-top: 2px;
-  width: 100%;
-}
-
-.skill-source-total .skill-source-label {
-  color: var(--text-primary);
+.skill-source-spent {
+  color: var(--accent-gold-light);
   font-weight: bold;
+  font-size: 1rem;
 }
 
-.skill-source-total .skill-source-value {
-  color: var(--accent-gold);
-  font-size: 1.1rem;
+.skill-source-separator {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.skill-source-total-label {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+/* Remaining indicator */
+.skill-source-remaining {
+  color: var(--accent-green);
+  font-size: 0.8rem;
+  font-family: var(--font-sc);
+  font-weight: 600;
+  background: rgba(40, 167, 69, 0.1);
+  padding: 1px 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(40, 167, 69, 0.25);
+}
+
+.skill-source-remaining.empty {
+  color: var(--accent-red);
+  background: rgba(220, 53, 69, 0.1);
+  border-color: rgba(220, 53, 69, 0.25);
 }
 
 /* Clickable skill source rows - button style */
@@ -2065,7 +2079,7 @@ body {
   opacity: 0.5;
 }
 
-/* Points remaining bar */
+/* Points remaining bar (now shows active source spending info) */
 .skill-points-remaining-bar {
   display: flex;
   align-items: center;
@@ -2075,6 +2089,7 @@ body {
   background: rgba(196, 163, 90, 0.08);
   border: 1px solid rgba(196, 163, 90, 0.25);
   border-radius: var(--border-radius-sm);
+  flex-wrap: wrap;
 }
 
 .skill-points-label {
@@ -2088,6 +2103,10 @@ body {
   font-size: 1.1rem;
   font-weight: bold;
   font-family: var(--font-sc);
+}
+
+.skill-points-value.empty {
+  color: var(--accent-red);
 }
 
 /* ===========================================================================

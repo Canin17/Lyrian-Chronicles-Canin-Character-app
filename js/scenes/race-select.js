@@ -295,8 +295,11 @@ const RaceSelectScene = (function() {
       if (selectedRace.attributes) {
         html += `<div class="summary-row"><span class="summary-label">Race Attributes</span><span class="summary-value">${window.renderHtml(selectedRace.attributes)}</span></div>`;
       }
-      if (selectedRace.proficiencies) {
-        html += `<div class="summary-row"><span class="summary-label">Proficiencies</span><span class="summary-value">${window.renderHtml(selectedRace.proficiencies)}</span></div>`;
+      if (selectedRace.proficiencies && selectedRace.proficiencies.length) {
+        const profList = Array.isArray(selectedRace.proficiencies)
+          ? selectedRace.proficiencies.map(p => window.escapeHtml(p)).join(', ')
+          : selectedRace.proficiencies;
+        html += `<div class="summary-row"><span class="summary-label">Proficiencies</span><span class="summary-value">${profList}</span></div>`;
       }
     }
 
@@ -308,18 +311,24 @@ const RaceSelectScene = (function() {
       if (selectedAncestry.attributes) {
         html += `<div class="summary-row"><span class="summary-label">${ancestryLabel} Traits</span><span class="summary-value">${window.renderHtml(selectedAncestry.attributes)}</span></div>`;
         // Render each trait as a clickable dropdown
-        const traits = selectedAncestry.attributes.split(',').map(t => t.trim()).filter(Boolean);
+        const traits = typeof selectedAncestry.attributes === 'string'
+          ? selectedAncestry.attributes.split(',').map(t => t.trim()).filter(Boolean)
+          : [];
         traits.forEach(trait => {
-          const desc = TRAIT_DESCRIPTIONS[trait];
-          const descText = desc ? window.renderHtml(desc) : 'No description available.';
+          const descDb = typeof TRAIT_DESCRIPTIONS !== 'undefined' ? TRAIT_DESCRIPTIONS : {};
+          const desc = descDb[trait];
+          const descText = desc ? window.renderHtml(desc) : '<em>No description available.</em>';
           html += `<details class="trait-dropdown">
             <summary class="trait-dropdown-summary">${window.escapeHtml(trait)}</summary>
             <div class="trait-dropdown-content">${descText}</div>
           </details>`;
         });
       }
-      if (selectedAncestry.proficiencies) {
-        html += `<div class="summary-row"><span class="summary-label">Proficiencies</span><span class="summary-value">${window.renderHtml(selectedAncestry.proficiencies)}</span></div>`;
+      if (selectedAncestry.proficiencies && selectedAncestry.proficiencies.length) {
+        const profList = Array.isArray(selectedAncestry.proficiencies)
+          ? selectedAncestry.proficiencies.map(p => window.escapeHtml(p)).join(', ')
+          : selectedAncestry.proficiencies;
+        html += `<div class="summary-row"><span class="summary-label">Proficiencies</span><span class="summary-value">${profList}</span></div>`;
       }
     } else if (selectedRace) {
       // No ancestry available or needed — show a note
@@ -350,6 +359,23 @@ const RaceSelectScene = (function() {
 
     content.innerHTML = html;
     overlay.classList.remove('hidden');
+
+    // Bind close button
+    const closeBtn = content.querySelector('.modal-close');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        overlay.classList.add('hidden');
+      });
+    }
+
+    // Bind overlay background click to close
+    const closeOnOverlay = (e) => {
+      if (e.target === overlay) {
+        overlay.classList.add('hidden');
+        overlay.removeEventListener('click', closeOnOverlay);
+      }
+    };
+    overlay.addEventListener('click', closeOnOverlay);
   }
 
   function getSelection() {

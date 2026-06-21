@@ -1,20 +1,21 @@
 /**
  * Lyrian Chronicles - Skills Allocation Scene
  * Skill point distribution across 5 skill groups
- * Multi-source skill point aggregation (base, race, class, breakthroughs)
- * Per-source eligible skill enforcement
- * Clickable sources with eligible skills display
+ * Multi-source skill point pools (base, race, class, breakthroughs)
+ * Per-source eligible skill enforcement — points from each source are
+ * tracked independently and can only be spent on eligible skills.
  */
 
 const SkillsStepScene = (function() {
   let skillGroups = [];
   let availablePoints = { base: 10, race: 0, class: 0, breakthrough: 0, total: 10, eligibleSkills: {} };
   let characterData = null;
-  let activeSource = null; // Track which source is currently selected
+  let activeSource = null; // Currently selected source for spending
 
-  // Per-source allocation tracking
-  let sourceAllocations = {
-    base: {},    // { 'SkillName': pts }
+  // Per-source spending: sourceSpent[source] = { 'SkillName': pts }
+  // Total for a skill = sum of all source allocations
+  let sourceSpent = {
+    base: {},
     race: {},
     class: {},
     breakthrough: {}
@@ -30,82 +31,107 @@ const SkillsStepScene = (function() {
       total: BASE_SKILL_POINTS,
       eligibleSkills: {}
     };
-    resetSourceAllocations();
+    clearSourceSpent();
+    activeSource = 'base'; // Default to base source
     renderSkills();
-    updatePointsRemaining();
+    updatePointsDisplay();
     renderPointsBreakdown();
   }
 
   /**
-   * Reset per-source allocation tracking
+   * Clear all source spending tracking
    */
-  function resetSourceAllocations() {
-    sourceAllocations = { base: {}, race: {}, class: {}, breakthrough: {} };
+  function clearSourceSpent() {
+    sourceSpent = { base: {}, race: {}, class: {}, breakthrough: {} };
   }
 
   /**
-   * Recalculate source allocations from current skill group state.
-   * This is a best-effort approximation since the document only stores totals.
+   * Get total points a skill has from a specific source
    */
-  function recalculateSourceAllocations() {
-    // Reset
-    sourceAllocations = { base: {}, race: {}, class: {}, breakthrough: {} };
+  function getSourceSkillPoints(source, skillName) {
+    return sourceSpent[source]?.[skillName] || 0;
+  }
 
-    // Track remaining capacity per source to avoid over-counting
-    const remaining = {
-      base: availablePoints.base || 0,
-      race: availablePoints.race || 0,
-      class: availablePoints.class || 0,
-      breakthrough: availablePoints.breakthrough || 0
-    };
+  /**
+   * Get total points spent from a source across all skills
+   */
+  function getSourceTotalSpent(source) {
+    const alloc = sourceSpent[source] || {};
+    return Object.values(alloc).reduce((sum, v) => sum + v, 0);
+  }
 
-    // For each skill that has points, distribute across sources
-    // Priority: base first (unrestricted), then race, class, breakthrough
+  /**
+   * Get remaining points for a specific source
+   */
+  function getSourceRemaining(source) {
+    return (availablePoints[source] || 0) - getSourceTotalSpent(source);
+  }
+
+  /**
+   * Get total displayed points for a skill (sum of all sources)
+   */
+  function getSkillTotalPoints(skillName) {
+    let total = 0;
+    for (const source of ['base', 'race', 'class', 'breakthrough']) {
+      total += getSourceSkillPoints(source, skillName);
+    }
+    return total;
+  }
+
+  /**
+   * Sync internal sourceSpent tracking to skillGroups display values.
+   * skillGroups[gi].skills[si].pts = sum of all source allocations for that skill.
+   */
+  function syncSkillGroupsFromSources() {
+    skillGroups.forEach(group => {
+      group.skills.forEach(skill => {
+        skill.pts = getSkillTotalPoints(skill.name);
+      });
+    });
+  }
+
+  /**
+   * Rebuild sourceSpent from existing skillGroups state on restore.
+   * Best-effort approximation since saved data only stores totals.
+   * Tracks attributed amounts per source to prevent over-attribution.
+   */
+  function rebuildSourceSpent() {
+    clearSourceSpent();
+
+    // Track how much we've attributed to each source this pass
+    const attributed = { base: 0, race: 0, class: 0, breakthrough: 0 };
+
+    // For each skill that has points, try to attribute to sources
+    // Priority: restricted sources first (race, class, breakthrough), then base
     skillGroups.forEach(group => {
       group.skills.forEach(skill => {
         if (skill.pts <= 0) return;
 
         let ptsLeft = skill.pts;
 
-        // Try to fill from base first (unrestricted)
-        const baseCap = Math.min(remaining.base, ptsLeft);
-        if (baseCap > 0) {
-          sourceAllocations.base[skill.name] = (sourceAllocations.base[skill.name] || 0) + baseCap;
-          remaining.base -= baseCap;
-          ptsLeft -= baseCap;
-        }
-
-        // Then race (if eligible)
-        if (ptsLeft > 0 && remaining.race > 0) {
-          const raceEligible = availablePoints.eligibleSkills?.race || [];
-          if (raceEligible.includes(skill.name)) {
-            const raceCap = Math.min(remaining.race, ptsLeft);
-            sourceAllocations.race[skill.name] = (sourceAllocations.race[skill.name] || 0) + raceCap;
-            remaining.race -= raceCap;
-            ptsLeft -= raceCap;
+        // Try restricted sources first (they have limited eligible lists)
+        const restrictedSources = ['race', 'class', 'breakthrough'];
+        for (const src of restrictedSources) {
+          if (ptsLeft <= 0) break;
+          const eligible = availablePoints.eligibleSkills?.[src] || [];
+          if (!eligible.includes(skill.name)) continue;
+          const poolSize = availablePoints[src] || 0;
+          const alreadyAttributed = attributed[src];
+          const remainingInPool = poolSize - alreadyAttributed;
+          if (remainingInPool <= 0) continue;
+          // How many can we attribute to this source?
+          const maxFromSource = Math.min(remainingInPool, ptsLeft);
+          if (maxFromSource > 0) {
+            sourceSpent[src][skill.name] = (sourceSpent[src][skill.name] || 0) + maxFromSource;
+            attributed[src] += maxFromSource;
+            ptsLeft -= maxFromSource;
           }
         }
 
-        // Then class (if eligible)
-        if (ptsLeft > 0 && remaining.class > 0) {
-          const classEligible = availablePoints.eligibleSkills?.class || [];
-          if (classEligible.includes(skill.name)) {
-            const classCap = Math.min(remaining.class, ptsLeft);
-            sourceAllocations.class[skill.name] = (sourceAllocations.class[skill.name] || 0) + classCap;
-            remaining.class -= classCap;
-            ptsLeft -= classCap;
-          }
-        }
-
-        // Then breakthrough (if eligible)
-        if (ptsLeft > 0 && remaining.breakthrough > 0) {
-          const btEligible = availablePoints.eligibleSkills?.breakthrough || [];
-          if (btEligible.includes(skill.name)) {
-            const btCap = Math.min(remaining.breakthrough, ptsLeft);
-            sourceAllocations.breakthrough[skill.name] = (sourceAllocations.breakthrough[skill.name] || 0) + btCap;
-            remaining.breakthrough -= btCap;
-            ptsLeft -= btCap;
-          }
+        // Remaining goes to base (unrestricted)
+        if (ptsLeft > 0) {
+          sourceSpent.base[skill.name] = (sourceSpent.base[skill.name] || 0) + ptsLeft;
+          attributed.base += ptsLeft;
         }
       });
     });
@@ -117,17 +143,17 @@ const SkillsStepScene = (function() {
   function setCharacterData(data) {
     characterData = data;
     availablePoints = calculateAvailableSkillPoints(data);
-    activeSource = null; // Reset active source
-    resetSourceAllocations();
-    updatePointsRemaining();
+    // Don't reset activeSource here — keep user's selection
     renderPointsBreakdown();
-    renderSkills(); // Re-render skills to clear any highlights
+    renderSkills();
+    updatePointsDisplay();
   }
 
   /**
-   * Toggle active source and show eligible skills
+   * Select a source for spending. When a source is active,
+   * the + button spends from that source's pool.
    */
-  function toggleSource(source) {
+  function setActiveSource(source) {
     if (activeSource === source) {
       activeSource = null; // Deselect if already selected
     } else {
@@ -135,8 +161,13 @@ const SkillsStepScene = (function() {
     }
     renderPointsBreakdown();
     renderSkills();
+    updatePointsDisplay();
   }
 
+  /**
+   * Render the points breakdown panel showing each source's
+   * total and remaining points.
+   */
   function renderPointsBreakdown() {
     const breakdown = document.getElementById('skill-points-breakdown');
     if (!breakdown) return;
@@ -147,45 +178,63 @@ const SkillsStepScene = (function() {
       .filter(bt => SKILL_GRANTING_BREAKTHROUGHS[bt.name || bt])
       .map(bt => bt.name || bt);
 
-    breakdown.innerHTML = `
-      <div class="skill-source-row ${activeSource === 'base' ? 'active' : ''}" data-source="base" role="button" tabindex="0" aria-pressed="${activeSource === 'base'}">
-        <span class="skill-source-label">Base (Character Creation)</span>
-        <span class="skill-source-value">${availablePoints.base}</span>
-        <span class="skill-source-hint">Any skill</span>
-      </div>
-      ${availablePoints.race > 0 ? `
-      <div class="skill-source-row ${activeSource === 'race' ? 'active' : ''}" data-source="race" role="button" tabindex="0" aria-pressed="${activeSource === 'race'}">
-        <span class="skill-source-label">Race: ${raceName}</span>
-        <span class="skill-source-value skill-bonus">+${availablePoints.race}</span>
-        <span class="skill-source-hint">${availablePoints.eligibleSkills?.race?.length || 0} eligible</span>
-      </div>` : ''}
-      ${availablePoints.class > 0 ? `
-      <div class="skill-source-row ${activeSource === 'class' ? 'active' : ''}" data-source="class" role="button" tabindex="0" aria-pressed="${activeSource === 'class'}">
-        <span class="skill-source-label">Class: ${className}</span>
-        <span class="skill-source-value skill-bonus">+${availablePoints.class}</span>
-        <span class="skill-source-hint">${availablePoints.eligibleSkills?.class?.length || 0} eligible</span>
-      </div>` : ''}
-      ${availablePoints.breakthrough > 0 ? `
-      <div class="skill-source-row ${activeSource === 'breakthrough' ? 'active' : ''}" data-source="breakthrough" role="button" tabindex="0" aria-pressed="${activeSource === 'breakthrough'}">
-        <span class="skill-source-label">Breakthrough: ${btNames.join(', ') || 'Bonus'}</span>
-        <span class="skill-source-value skill-bonus">+${availablePoints.breakthrough}</span>
-        <span class="skill-source-hint">${availablePoints.eligibleSkills?.breakthrough?.length || 0} eligible</span>
-      </div>` : ''}
-      <div class="skill-source-row skill-source-total">
-        <span class="skill-source-label">Total Available</span>
-        <span class="skill-source-value">${availablePoints.total}</span>
-      </div>
-    `;
+    const sources = [
+      { key: 'base', label: 'Base (Character Creation)', total: availablePoints.base, hint: 'Any skill' }
+    ];
 
-    // Bind source toggle via event delegation (no inline onclick)
+    if (availablePoints.race > 0) {
+      sources.push({
+        key: 'race',
+        label: `Race: ${raceName}`,
+        total: availablePoints.race,
+        hint: `${availablePoints.eligibleSkills?.race?.length || 0} eligible`
+      });
+    }
+
+    if (availablePoints.class > 0) {
+      sources.push({
+        key: 'class',
+        label: `Class: ${className}`,
+        total: availablePoints.class,
+        hint: `${availablePoints.eligibleSkills?.class?.length || 0} eligible`
+      });
+    }
+
+    if (availablePoints.breakthrough > 0) {
+      sources.push({
+        key: 'breakthrough',
+        label: `Breakthrough: ${btNames.join(', ') || 'Bonus'}`,
+        total: availablePoints.breakthrough,
+        hint: `${availablePoints.eligibleSkills?.breakthrough?.length || 0} eligible`
+      });
+    }
+
+    breakdown.innerHTML = sources.map(src => {
+      const remaining = getSourceRemaining(src.key);
+      const isActive = activeSource === src.key;
+      return `
+        <div class="skill-source-row ${isActive ? 'active' : ''}" data-source="${src.key}" role="button" tabindex="0" aria-pressed="${isActive}">
+          <span class="skill-source-label">${src.label}</span>
+          <span class="skill-source-pool">
+            <span class="skill-source-spent">${getSourceTotalSpent(src.key)}</span>
+            <span class="skill-source-separator">/</span>
+            <span class="skill-source-total-label">${src.total}</span>
+          </span>
+          <span class="skill-source-remaining ${remaining <= 0 ? 'empty' : ''}">${remaining} left</span>
+          <span class="skill-source-hint">${src.hint}</span>
+        </div>
+      `;
+    }).join('');
+
+    // Bind source selection via event delegation
     breakdown.querySelectorAll('.skill-source-row[data-source]').forEach(row => {
       row.addEventListener('click', () => {
-        toggleSource(row.dataset.source);
+        setActiveSource(row.dataset.source);
       });
       row.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
-          toggleSource(row.dataset.source);
+          setActiveSource(row.dataset.source);
         }
       });
     });
@@ -206,9 +255,8 @@ const SkillsStepScene = (function() {
         `;
         eligiblePanel.style.display = 'block';
 
-        // Bind close button (no inline onclick)
         eligiblePanel.querySelector('.close-eligible').addEventListener('click', () => {
-          toggleSource(activeSource);
+          setActiveSource(activeSource);
         });
       } else {
         eligiblePanel.style.display = 'none';
@@ -224,6 +272,7 @@ const SkillsStepScene = (function() {
 
     // Get eligible skills for the active source
     const eligibleSkills = activeSource ? (availablePoints.eligibleSkills?.[activeSource] || []) : [];
+    const activeRemaining = activeSource ? getSourceRemaining(activeSource) : 0;
 
     skillGroups.forEach((group, groupIdx) => {
       const groupEl = document.createElement('div');
@@ -238,18 +287,35 @@ const SkillsStepScene = (function() {
 
       group.skills.forEach((skill, skillIdx) => {
         const row = document.createElement('div');
+        const totalPts = getSkillTotalPoints(skill.name);
         const isEligible = eligibleSkills.includes(skill.name);
         row.className = `skill-row ${isEligible ? 'eligible' : ''} ${!isEligible && activeSource ? 'ineligible' : ''}`;
 
-        // Use effective cap (artisan skills cap at 10)
         const effectiveCap = getEffectiveSkillCap(skill.name);
-        const canIncrease = skill.pts < effectiveCap && getRemainingPoints(skillGroups, availablePoints.total) > 0;
-        const canDecrease = skill.pts > 0;
+
+        // + button: enabled when active source has remaining AND skill is eligible for that source
+        const canIncrease = activeSource
+          ? (totalPts < effectiveCap && activeRemaining > 0 && isEligible)
+          : false;
+
+        // - button: enabled when skill has any points from any source
+        const canDecrease = totalPts > 0;
+
+        // Build per-source breakdown tooltip
+        const sourceBreakdown = [];
+        for (const src of ['base', 'race', 'class', 'breakthrough']) {
+          const srcPts = getSourceSkillPoints(src, skill.name);
+          if (srcPts > 0) {
+            const srcLabel = { base: 'Base', race: 'Race', class: 'Class', bt: 'BT' }[src] || src;
+            sourceBreakdown.push(`${srcLabel}: ${srcPts}`);
+          }
+        }
+        const tooltip = sourceBreakdown.length > 0 ? `title="${sourceBreakdown.join(', ')}"` : '';
 
         row.innerHTML = `
-          <span class="skill-name">${skill.name}</span>
+          <span class="skill-name" ${tooltip}>${skill.name}</span>
           <button class="skill-btn skill-decrease" ${canDecrease ? '' : 'disabled'}>-</button>
-          <span class="skill-points-display">${skill.pts}</span>
+          <span class="skill-points-display" ${tooltip}>${totalPts}</span>
           <button class="skill-btn skill-increase" ${canIncrease ? '' : 'disabled'}>+</button>
           <input type="text" class="skill-expertise" placeholder="Expertise..." value="" data-group="${groupIdx}" data-skill="${skillIdx}">
         `;
@@ -258,7 +324,6 @@ const SkillsStepScene = (function() {
         const incBtn = row.querySelector('.skill-increase');
         const expertiseInput = row.querySelector('.skill-expertise');
 
-        // Set expertise value safely (avoids XSS in HTML attribute)
         expertiseInput.value = skill.expertise || '';
 
         decBtn.addEventListener('click', () => changeSkillPoints(groupIdx, skillIdx, -1));
@@ -277,41 +342,50 @@ const SkillsStepScene = (function() {
   function changeSkillPoints(groupIdx, skillIdx, delta) {
     const skill = skillGroups[groupIdx].skills[skillIdx];
     const effectiveCap = getEffectiveSkillCap(skill.name);
-    const newVal = skill.pts + delta;
+    const currentTotal = getSkillTotalPoints(skill.name);
 
-    if (newVal < 0 || newVal > effectiveCap) return;
-    if (delta > 0 && getRemainingPoints(skillGroups, availablePoints.total) <= 0) return;
-
-    skill.pts = newVal;
-
-    // Update per-source allocation tracking
     if (delta > 0) {
-      // Try to attribute to active source first, then base
-      if (activeSource && availablePoints[activeSource] > 0) {
-        const eligible = availablePoints.eligibleSkills?.[activeSource] || [];
-        if (eligible.includes(skill.name)) {
-          sourceAllocations[activeSource][skill.name] = (sourceAllocations[activeSource][skill.name] || 0) + 1;
-        } else {
-          sourceAllocations.base[skill.name] = (sourceAllocations.base[skill.name] || 0) + 1;
-        }
-      } else {
-        sourceAllocations.base[skill.name] = (sourceAllocations.base[skill.name] || 0) + 1;
-      }
+      // Spending: must have an active source
+      if (!activeSource) return;
+
+      // Check skill is eligible for active source
+      const eligible = availablePoints.eligibleSkills?.[activeSource] || [];
+      if (!eligible.includes(skill.name)) return;
+
+      // Check source has remaining points
+      if (getSourceRemaining(activeSource) <= 0) return;
+
+      // Check cap
+      if (currentTotal >= effectiveCap) return;
+
+      // Allocate one point from active source
+      sourceSpent[activeSource][skill.name] = (sourceSpent[activeSource][skill.name] || 0) + 1;
+
     } else if (delta < 0) {
-      // Remove from allocations (reverse order: breakthrough → class → race → base)
+      // Removing: take from sources in reverse priority (breakthrough → class → race → base)
       const sources = ['breakthrough', 'class', 'race', 'base'];
+      let removed = false;
       for (const src of sources) {
-        if (sourceAllocations[src][skill.name] > 0) {
-          sourceAllocations[src][skill.name]--;
+        if (getSourceSkillPoints(src, skill.name) > 0) {
+          sourceSpent[src][skill.name]--;
+          if (sourceSpent[src][skill.name] === 0) {
+            delete sourceSpent[src][skill.name];
+          }
+          removed = true;
           break;
         }
       }
+      if (!removed) return;
     }
 
-    renderSkills();
-    updatePointsRemaining();
+    // Sync display values
+    syncSkillGroupsFromSources();
 
-    // Animate the points display after render (element exists now)
+    renderSkills();
+    updatePointsDisplay();
+    renderPointsBreakdown();
+
+    // Animate the points display
     const groupEls = document.querySelectorAll('.skill-group');
     if (groupEls[groupIdx]) {
       const groupEl = groupEls[groupIdx];
@@ -326,29 +400,50 @@ const SkillsStepScene = (function() {
     }
   }
 
-  function updatePointsRemaining() {
-    const remaining = getRemainingPoints(skillGroups, availablePoints.total);
-    const el = document.getElementById('skill-points-remaining');
-    if (el) {
-      el.textContent = remaining;
-      el.style.color = remaining === 0 ? 'var(--accent-green)' : 'var(--accent-gold)';
+  /**
+   * Update the points display showing remaining per active source
+   */
+  function updatePointsDisplay() {
+    // Update the "points spent" summary bar
+    const bar = document.getElementById('skill-points-remaining-bar');
+    if (!bar) return;
+
+    const totalSpent = getSourceTotalSpent('base') + getSourceTotalSpent('race') + getSourceTotalSpent('class') + getSourceTotalSpent('breakthrough');
+    const totalAvailable = availablePoints.total;
+    const totalRemaining = totalAvailable - totalSpent;
+
+    // Show per-source breakdown if active source is set
+    if (activeSource) {
+      const srcRemaining = getSourceRemaining(activeSource);
+      const srcLabel = { base: 'Base', race: 'Race', class: 'Class', breakthrough: 'Breakthrough' }[activeSource];
+      bar.innerHTML = `
+        <span class="skill-points-label">Spending from ${srcLabel}:</span>
+        <span class="skill-points-value ${srcRemaining <= 0 ? 'empty' : ''}">${srcRemaining} remaining</span>
+        <span class="skill-points-label">(Total: ${totalRemaining}/${totalAvailable})</span>
+      `;
+    } else {
+      bar.innerHTML = `
+        <span class="skill-points-label">Select a source above to spend points</span>
+        <span class="skill-points-value">(Total: ${totalRemaining}/${totalAvailable})</span>
+      `;
     }
   }
 
   function getSkills() {
+    // Sync before returning
+    syncSkillGroupsFromSources();
     return structuredClone(skillGroups);
   }
 
   /**
-   * Get per-source allocation data for export/debugging
+   * Get per-source spending data for export/debugging
    */
   function getSourceAllocations() {
-    return structuredClone(sourceAllocations);
+    return structuredClone(sourceSpent);
   }
 
   /**
    * Restore previously saved skill allocations.
-   * Called when navigating back to this step or loading from localStorage.
    * savedSkills: array of skill groups matching SKILL_GROUPS structure
    */
   function restoreState(savedSkills) {
@@ -361,7 +456,6 @@ const SkillsStepScene = (function() {
 
       savedGroup.skills.forEach((savedSkill, si) => {
         if (si >= skillGroups[gi].skills.length) return;
-        // Only restore if skill names match (data may have changed)
         if (skillGroups[gi].skills[si].name === savedSkill.name) {
           skillGroups[gi].skills[si].pts = savedSkill.pts || 0;
           skillGroups[gi].skills[si].expertise = savedSkill.expertise || '';
@@ -369,11 +463,14 @@ const SkillsStepScene = (function() {
       });
     });
 
-    // Recalculate source allocations from restored state
-    recalculateSourceAllocations();
+    // Rebuild source tracking from restored state
+    rebuildSourceSpent();
+
+    // Default active source to base
+    activeSource = 'base';
 
     renderSkills();
-    updatePointsRemaining();
+    updatePointsDisplay();
     renderPointsBreakdown();
   }
 
@@ -388,10 +485,10 @@ const SkillsStepScene = (function() {
       eligibleSkills: {}
     };
     characterData = null;
-    activeSource = null; // Reset active source
-    resetSourceAllocations();
+    activeSource = 'base';
+    clearSourceSpent();
     renderSkills();
-    updatePointsRemaining();
+    updatePointsDisplay();
     renderPointsBreakdown();
 
     // Hide eligible skills panel
@@ -401,5 +498,5 @@ const SkillsStepScene = (function() {
     }
   }
 
-  return { init, getSkills, reset, setCharacterData, toggleSource, getSourceAllocations, restoreState };
+  return { init, getSkills, reset, setCharacterData, setActiveSource, getSourceAllocations, restoreState };
 })();
