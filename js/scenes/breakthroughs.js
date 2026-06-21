@@ -129,7 +129,7 @@ const BreakthroughScene = (function() {
       equipped.forEach(ec => {
         const tier = parseInt(ec.class?.tier) || 1;
         const unlockCost = tier * 100;
-        const abilityCost = Math.max(0, (ec.abilitiesBought || 0)) * 100;
+        const abilityCost = Math.max(0, ((ec.abilitiesBought != null ? ec.abilitiesBought : ec.level - 1))) * 100;
         spiritCore += unlockCost + abilityCost;
       });
       return spiritCore >= required;

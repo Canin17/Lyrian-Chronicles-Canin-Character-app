@@ -214,7 +214,7 @@ const SummaryScene = (function() {
             tier: c.class?.tier,
             role: c.class?.role,
             level: c.level,
-            abilitiesBought: c.abilitiesBought
+            abilitiesBought: c.abilitiesBought != null ? c.abilitiesBought : c.level - 1
           })) : []
         } : null,
         stats: characterData.stats,
@@ -638,8 +638,12 @@ const SummaryScene = (function() {
           }
         }, 8000);
       } else {
-        // Fallback to alert if summary container not available
-        alert('An error occurred while generating the Excel sheet. Check console logs for details.');
+        // Fallback: floating banner if summary container not available
+        const fb = document.createElement("div");
+        fb.style.cssText = "position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#dc3545;color:#fff;padding:0.75rem 1.5rem;border-radius:6px;z-index:9999;font-size:0.9rem;box-shadow:0 4px 12px rgba(0,0,0,0.3);";
+        fb.textContent = "Export failed. Check console for details.";
+        document.body.appendChild(fb);
+        setTimeout(() => fb.remove(), 8000);
       }
     }
   }

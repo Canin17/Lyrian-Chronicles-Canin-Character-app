@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Lyrian Chronicles - Character Creator</title>
   <link rel="stylesheet" href="css/styles.css">
+  <!-- structuredClone polyfill (must load before data/scene scripts) -->
+  <script>
+    if (typeof structuredClone === 'undefined') {
+      window.structuredClone = function(obj) { return JSON.parse(JSON.stringify(obj)); };
+    }
+  </script>
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&display=swap" rel="stylesheet" crossorigin="anonymous">
 </head>

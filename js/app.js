@@ -35,12 +35,6 @@
     return escaped;
   };
 
-  // Polyfill for structuredClone (Safari < 16.4, Firefox < 94)
-  if (typeof structuredClone === 'undefined') {
-    window.structuredClone = function(obj) {
-      return JSON.parse(JSON.stringify(obj));
-    };
-  }
 
   // ===========================================================================
   // CHARACTER DATA STORE

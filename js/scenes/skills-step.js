@@ -214,7 +214,7 @@ const SkillsStepScene = (function() {
       const isActive = activeSource === src.key;
       return `
         <div class="skill-source-row ${isActive ? 'active' : ''}" data-source="${src.key}" role="button" tabindex="0" aria-pressed="${isActive}">
-          <span class="skill-source-label">${src.label}</span>
+          <span class="skill-source-label">${window.escapeHtml(src.label)}</span>
           <span class="skill-source-pool">
             <span class="skill-source-spent">${getSourceTotalSpent(src.key)}</span>
             <span class="skill-source-separator">/</span>
@@ -250,7 +250,7 @@ const SkillsStepScene = (function() {
             <button class="close-eligible" aria-label="Close eligible skills">&times;</button>
           </div>
           <div class="eligible-skills-list">
-            ${eligibleSkills.map(skill => `<span class="eligible-skill-tag">${skill}</span>`).join('')}
+            ${eligibleSkills.map(skill => `<span class="eligible-skill-tag">${window.escapeHtml(skill)}</span>`).join('')}
           </div>
         `;
         eligiblePanel.style.display = 'block';
@@ -280,8 +280,8 @@ const SkillsStepScene = (function() {
 
       groupEl.innerHTML = `
         <div class="skill-group-header">
-          <span class="skill-group-name">${group.name}</span>
-          <span class="skill-group-substat">(${group.subStat})</span>
+          <span class="skill-group-name">${window.escapeHtml(group.name)}</span>
+          <span class="skill-group-substat">(${window.escapeHtml(group.subStat)})</span>
         </div>
       `;
 
@@ -313,7 +313,7 @@ const SkillsStepScene = (function() {
         const tooltip = sourceBreakdown.length > 0 ? `title="${sourceBreakdown.join(', ')}"` : '';
 
         row.innerHTML = `
-          <span class="skill-name" ${tooltip}>${skill.name}</span>
+          <span class="skill-name" ${tooltip}>${window.escapeHtml(skill.name)}</span>
           <button class="skill-btn skill-decrease" ${canDecrease ? '' : 'disabled'}>-</button>
           <span class="skill-points-display" ${tooltip}>${totalPts}</span>
           <button class="skill-btn skill-increase" ${canIncrease ? '' : 'disabled'}>+</button>
