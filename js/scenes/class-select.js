@@ -76,7 +76,13 @@ const ClassSelectScene = (function() {
   }
 
   function getSpiritCoreLevel() {
-    return getTotalExpSpent(); // Spirit Core = total EXP spent
+    // Spirit Core = class EXP spent + main pool EXP spent on breakthroughs
+    let total = getTotalExpSpent();
+    // Add main pool EXP spent on breakthroughs (if breakthrough scene is loaded)
+    if (typeof BreakthroughScene !== 'undefined' && BreakthroughScene.getExpFromMainPool) {
+      total += BreakthroughScene.getExpFromMainPool();
+    }
+    return total;
   }
 
   function updateOverviewStats() {
@@ -969,6 +975,7 @@ const ClassSelectScene = (function() {
 
   function refresh() {
     filterClasses();
+    updateOverviewStats(); // Re-sync Spirit Core with breakthrough spending
   }
 
   function init() {
@@ -1085,5 +1092,27 @@ const ClassSelectScene = (function() {
     filterClasses();
   }
 
-  return { init, getSelection, reset, refresh, setStartingIp, setStartingExp, restoreState, CostCalc };
+  /**
+   * Calculate remaining class EXP from equipped classes and the current budget.
+   * Used by the breakthrough scene for dual-pool EXP spending.
+   */
+  function getRemainingClassExp() {
+    return Math.max(0, TOTAL_CLASS_EXP - getTotalExpSpent());
+  }
+
+  /**
+   * Return the current total class EXP budget (may differ from 1000 if user changed Starting EXP).
+   */
+  function getTotalClassExpBudget() {
+    return TOTAL_CLASS_EXP;
+  }
+
+  /**
+   * Return EXP spent on classes only (base Spirit Core, NOT including breakthrough spending).
+   */
+  function getClassExpSpent() {
+    return getTotalExpSpent();
+  }
+
+  return { init, getSelection, reset, refresh, setStartingIp, setStartingExp, restoreState, CostCalc, getRemainingClassExp, getTotalClassExpBudget, getClassExpSpent };
 })();

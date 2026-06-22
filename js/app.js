@@ -439,6 +439,10 @@
         }
         break;
       case 3: // Breakthroughs - restore saved selection
+        // Pass the remaining class EXP pool and class EXP spent (base Spirit Core)
+        const classExpRemaining = ClassSelectScene.getRemainingClassExp ? ClassSelectScene.getRemainingClassExp() : 0;
+        const classExpSpent = ClassSelectScene.getClassExpSpent ? ClassSelectScene.getClassExpSpent() : 0;
+        BreakthroughScene.setMainExpPool(classExpRemaining, classExpSpent);
         if (character.breakthroughs && character.breakthroughs.length > 0) {
           BreakthroughScene.restoreState(character.breakthroughs);
         } else {

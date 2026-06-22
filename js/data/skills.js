@@ -3,7 +3,7 @@
 // Source: Lyrian Chronicles system rulebook
 // Per-source allocation tracking with restricted skill lists
 
-/* exported SKILL_GROUPS, SKILL_GRANTING_BREAKTHROUGHS, EXPERTISE_MULTIPLIER, BASE_SKILL_POINTS, calculateAvailableSkillPoints, getRemainingPoints, deepCloneSkillGroups, canAddExpertise, isCraftingGatheringSkill, getEffectiveSkillCap, getRaceSkillPoints */
+/* exported SKILL_GROUPS, SKILL_GRANTING_BREAKTHROUGHS, EXPERTISE_MULTIPLIER, BASE_SKILL_POINTS, calculateAvailableSkillPoints, getRemainingPoints, deepCloneSkillGroups, canAddExpertise, isCraftingGatheringSkill, getEffectiveSkillCap, getRaceSkillPoints, SKILL_EXPERTISE_EXAMPLES, parseExpertiseString, serializeExpertiseArray, calculateExpertisePoints */
 const SKILL_GROUPS = [
   {
     name: 'Fitness',
@@ -72,6 +72,66 @@ const ARTISAN_SKILLS = ['Blacksmith', 'Alchemist', 'Farmer'];
 
 // Crafting/gathering skills excluded from "any non-crafting" grants
 const CRAFTING_GATHERING_SKILLS = ['Artifice', 'Appraise'];
+
+// ===========================================================================
+// EXPERTISE EXAMPLES — Rulebook-compliant suggestions per skill
+// Source: https://rpg.angelssword.com/game/latest/rulebook
+// ===========================================================================
+const SKILL_EXPERTISE_EXAMPLES = {
+  'Athletics': ['Swimming', 'Jumping', 'Climbing', 'Basketball'],
+  'Riding': ['Horses', 'Raptors', 'Giant Rabbits'],
+  'Deception': ['Distraction', 'Lying'],
+  'Roguecraft': ['Lockpicking', 'Jury Rigging', 'Traps'],
+  'Stealth': ['Forests', 'Urban', 'Snow'],
+  'Artifice': ['Craftsmanship', 'Swords', 'Guns', 'Manufacturers'],
+  'Appraise': ['Gemstone Grading', 'Antique Weapons', 'Merchant Guild Valuations', 'Forgery Detection'],
+  'Common Knowledge': ['Airships', 'Forests', 'Physics', 'Chemistry'],
+  'Linguistics': ['Cyphers'],
+  'Flight': ['Cruiser-Class Airships', 'Aerial Staves', 'Airship Shields', 'Airship Engines', 'Airship Navigation'],
+  'History': ['Westrian History', 'Northi Noble Houses', 'Royal Etiquette', 'Battlefield Command'],
+  'Magic': ['Dispel', 'Magic Hacking', 'Fire Magic', 'Magic Traps'],
+  'Medicine': ['Natural Medicines', 'Biology: Humans'],
+  'Religion': ['Faith Spell Identification', 'Church of Westria'],
+  'Animal Husbandry': ['Horses', 'Hawks', 'Raptors'],
+  'Insight': ['Body Language', 'Handwriting'],
+  'Perception': ['Urban', 'Forest', 'Snow', 'Hearing'],
+  'Survival': ['Improvised Cooking', 'Wayfinding', 'Forest Survival', 'Fishing'],
+  'Art': ['Cartography', 'Memory Drawing', 'Singing', 'Dancing'],
+  'Intimidation': ['Mercantile', 'Nobility', 'Commonfolk'],
+  'Negotiation': ['Mercantile', 'Nobility', 'Commonfolk']
+};
+
+// ===========================================================================
+// EXPERTISE PERSISTENCE — Parse/serialize "Name (X pts), Name2 (Y pts)"
+// Backwards-compatible with legacy skill.expertise string format.
+// ===========================================================================
+/**
+ * Parse a comma-separated expertise string like "Forests (4 pts), Deserts (2 pts)"
+ * into an array of { name: string, pts: number } objects.
+ */
+function parseExpertiseString(str) {
+  if (!str || typeof str !== 'string') return [];
+  return str.split(',').map(part => {
+    part = part.trim();
+    if (!part) return null;
+    const match = part.match(/^(.+?)(?:\s*\((\d+)\s*pts?\))?$/);
+    if (!match) return null;
+    const name = match[1].trim();
+    const pts = match[2] ? parseInt(match[2], 10) : 2; // Default to +2 if unspecified
+    return name ? { name, pts } : null;
+  }).filter(Boolean);
+}
+
+/**
+ * Serialize an array of { name: string, pts: number } back to "Name (X pts), Name2 (Y pts)" format.
+ */
+function serializeExpertiseArray(arr) {
+  if (!Array.isArray(arr)) return '';
+  return arr
+    .filter(e => e && e.name && e.pts > 0)
+    .map(e => `${e.name} (${e.pts} pts)`)
+    .join(', ');
+}
 
 // ===========================================================================
 // RACE SKILL DATA — All 5 races grant +5 skill points with restricted lists

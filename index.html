@@ -332,6 +332,7 @@
             <div class="breakthroughs-title-section">
               <h2>Breakthroughs</h2>
               <p class="breakthroughs-subtitle">Evolve your character — <span id="bt-total-count">87</span> breakthroughs available</p>
+              <p class="breakthroughs-subtitle" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Starting 300 EXP is used first (doesn't add to Spirit Core), then your main class EXP pool (does add to Spirit Core)</p>
             </div>
           </div>
           <div class="nav-buttons">
@@ -345,7 +346,9 @@
               <div class="bt-selected-header">
                 <h3>SELECTED BREAKTHROUGHS</h3>
                 <div class="bt-selected-stats">
-                  <span class="bt-exp-remaining" id="bt-exp-remaining">300 EXP</span>
+                  <span class="bt-exp-remaining" id="bt-exp-remaining" title="Starting EXP pool (300, does not add to Spirit Core)">300 / 300 EXP</span>
+                  <span class="bt-main-exp-remaining" id="bt-main-exp-remaining" title="Main class EXP pool (adds to Spirit Core when used)">0 / 0 EXP</span>
+                  <span class="bt-spirit-core" id="bt-spirit-core" title="Spirit Core: class EXP + main pool EXP spent on breakthroughs">Spirit Core: 0</span>
                   <span class="bt-count" id="bt-count">0 selected</span>
                 </div>
               </div>

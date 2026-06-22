@@ -22,6 +22,15 @@ const SkillsStepScene = (function() {
     breakthrough: {}
   };
 
+  // Per-source expertise spending: how many skill points were spent on expertise
+  // (1 skill point = 2 expertise points). Tracked separately from main skill points.
+  let sourceExpertiseSpent = {
+    base: {},
+    race: {},
+    class: {},
+    breakthrough: {}
+  };
+
   function init() {
     skillGroups = deepCloneSkillGroups();
     availablePoints = {
@@ -44,21 +53,25 @@ const SkillsStepScene = (function() {
    */
   function clearSourceSpent() {
     sourceSpent = { base: {}, race: {}, class: {}, breakthrough: {} };
+    sourceExpertiseSpent = { base: {}, race: {}, class: {}, breakthrough: {} };
   }
 
   /**
-   * Get total points a skill has from a specific source
+   * Get total points a skill has from a specific source (main + expertise skill points).
    */
   function getSourceSkillPoints(source, skillName) {
-    return sourceSpent[source]?.[skillName] || 0;
+    return (sourceSpent[source]?.[skillName] || 0) + (sourceExpertiseSpent[source]?.[skillName] || 0);
   }
 
   /**
-   * Get total points spent from a source across all skills
+   * Get total points spent from a source across all skills (main + expertise).
    */
   function getSourceTotalSpent(source) {
-    const alloc = sourceSpent[source] || {};
-    return Object.values(alloc).reduce((sum, v) => sum + v, 0);
+    const mainAlloc = sourceSpent[source] || {};
+    const expAlloc = sourceExpertiseSpent[source] || {};
+    const mainSum = Object.values(mainAlloc).reduce((sum, v) => sum + v, 0);
+    const expSum = Object.values(expAlloc).reduce((sum, v) => sum + v, 0);
+    return mainSum + expSum;
   }
 
   /**
@@ -106,33 +119,55 @@ const SkillsStepScene = (function() {
     // Priority: restricted sources first (race, class, breakthrough), then base
     skillGroups.forEach(group => {
       group.skills.forEach(skill => {
-        if (skill.pts <= 0) return;
-
-        let ptsLeft = skill.pts;
-
-        // Try restricted sources first (they have limited eligible lists)
-        const restrictedSources = ['race', 'class', 'breakthrough'];
-        for (const src of restrictedSources) {
-          if (ptsLeft <= 0) break;
-          const eligible = availablePoints.eligibleSkills?.[src] || [];
-          if (!eligible.includes(skill.name)) continue;
-          const poolSize = availablePoints[src] || 0;
-          const alreadyAttributed = attributed[src];
-          const remainingInPool = poolSize - alreadyAttributed;
-          if (remainingInPool <= 0) continue;
-          // How many can we attribute to this source?
-          const maxFromSource = Math.min(remainingInPool, ptsLeft);
-          if (maxFromSource > 0) {
-            sourceSpent[src][skill.name] = (sourceSpent[src][skill.name] || 0) + maxFromSource;
-            attributed[src] += maxFromSource;
-            ptsLeft -= maxFromSource;
+        // 1. Attribute main skill points (skill.pts)
+        let mainPtsLeft = skill.pts || 0;
+        if (mainPtsLeft > 0) {
+          const restrictedSources = ['race', 'class', 'breakthrough'];
+          for (const src of restrictedSources) {
+            if (mainPtsLeft <= 0) break;
+            const eligible = availablePoints.eligibleSkills?.[src] || [];
+            if (!eligible.includes(skill.name)) continue;
+            const poolSize = availablePoints[src] || 0;
+            const alreadyAttributed = attributed[src];
+            const remainingInPool = poolSize - alreadyAttributed;
+            if (remainingInPool <= 0) continue;
+            const maxFromSource = Math.min(remainingInPool, mainPtsLeft);
+            if (maxFromSource > 0) {
+              sourceSpent[src][skill.name] = (sourceSpent[src][skill.name] || 0) + maxFromSource;
+              attributed[src] += maxFromSource;
+              mainPtsLeft -= maxFromSource;
+            }
+          }
+          if (mainPtsLeft > 0) {
+            sourceSpent.base[skill.name] = (sourceSpent.base[skill.name] || 0) + mainPtsLeft;
+            attributed.base += mainPtsLeft;
           }
         }
 
-        // Remaining goes to base (unrestricted)
-        if (ptsLeft > 0) {
-          sourceSpent.base[skill.name] = (sourceSpent.base[skill.name] || 0) + ptsLeft;
-          attributed.base += ptsLeft;
+        // 2. Attribute expertise skill points (total expertise pts / 2)
+        const expTotalPts = calculateExpertisePoints(skill.expertise || '');
+        let expSkillPtsLeft = Math.ceil(expTotalPts / 2);
+        if (expSkillPtsLeft > 0) {
+          const restrictedSources = ['race', 'class', 'breakthrough'];
+          for (const src of restrictedSources) {
+            if (expSkillPtsLeft <= 0) break;
+            const eligible = availablePoints.eligibleSkills?.[src] || [];
+            if (!eligible.includes(skill.name)) continue;
+            const poolSize = availablePoints[src] || 0;
+            const alreadyAttributed = attributed[src];
+            const remainingInPool = poolSize - alreadyAttributed;
+            if (remainingInPool <= 0) continue;
+            const maxFromSource = Math.min(remainingInPool, expSkillPtsLeft);
+            if (maxFromSource > 0) {
+              sourceExpertiseSpent[src][skill.name] = (sourceExpertiseSpent[src][skill.name] || 0) + maxFromSource;
+              attributed[src] += maxFromSource;
+              expSkillPtsLeft -= maxFromSource;
+            }
+          }
+          if (expSkillPtsLeft > 0) {
+            sourceExpertiseSpent.base[skill.name] = (sourceExpertiseSpent.base[skill.name] || 0) + expSkillPtsLeft;
+            attributed.base += expSkillPtsLeft;
+          }
         }
       });
     });
@@ -287,17 +322,23 @@ const SkillsStepScene = (function() {
       `;
 
       group.skills.forEach((skill, skillIdx) => {
-        const row = document.createElement('div');
+        const skillItem = document.createElement('div');
+        skillItem.className = 'skill-item';
+
         const totalPts = getSkillTotalPoints(skill.name);
         const isEligible = eligibleSkills.includes(skill.name);
-        row.className = `skill-row ${isEligible ? 'eligible' : ''} ${!isEligible && activeSource ? 'ineligible' : ''}`;
-
         const effectiveCap = getEffectiveSkillCap(skill.name);
+        const currentExpPts = calculateExpertisePoints(skill.expertise || '');
 
-        // + button: enabled when active source has remaining AND skill is eligible for that source
-        const canIncrease = activeSource
+        // + button: enabled when active source can spend, OR when source is empty
+        // but other sources have points (clicking triggers flash to guide user)
+        const canSpend = activeSource
           ? (totalPts < effectiveCap && activeRemaining > 0 && isEligible)
           : false;
+        const canFlash = !canSpend && activeSource && isEligible && totalPts < effectiveCap
+          ? (getSourceRemaining('base') + getSourceRemaining('race') + getSourceRemaining('class') + getSourceRemaining('breakthrough') > 0)
+          : false;
+        const canIncrease = canSpend || canFlash;
 
         // - button: enabled when skill has any points from any source
         const canDecrease = totalPts > 0;
@@ -313,31 +354,170 @@ const SkillsStepScene = (function() {
         }
         const tooltip = sourceBreakdown.length > 0 ? `title="${sourceBreakdown.join(', ')}"` : '';
 
-        row.innerHTML = `
-          <span class="skill-name" ${tooltip}>${window.escapeHtml(skill.name)}</span>
-          <button class="skill-btn skill-decrease" ${canDecrease ? '' : 'disabled'}>-</button>
-          <span class="skill-points-display" ${tooltip}>${totalPts}</span>
-          <button class="skill-btn skill-increase" ${canIncrease ? '' : 'disabled'}>+</button>
-          <input type="text" class="skill-expertise" placeholder="Expertise..." value="" data-group="${groupIdx}" data-skill="${skillIdx}">
+        // Expertise: parse into structured array
+        const expertises = parseExpertiseString(skill.expertise || '');
+        const suggestions = SKILL_EXPERTISE_EXAMPLES[skill.name] || [];
+        // Expertise buttons: same logic — keep clickable when other sources have points
+        const canSpendExp = activeSource && isEligible && activeRemaining > 0 && (currentExpPts + 2 <= effectiveCap);
+        const canFlashExp = !canSpendExp && activeSource && isEligible && (currentExpPts + 2 <= effectiveCap)
+          ? (getSourceRemaining('base') + getSourceRemaining('race') + getSourceRemaining('class') + getSourceRemaining('breakthrough') > 0)
+          : false;
+        const canAddExp = canSpendExp || canFlashExp;
+
+        skillItem.innerHTML = `
+          <div class="skill-row ${isEligible ? 'eligible' : ''} ${!isEligible && activeSource ? 'ineligible' : ''}">
+            <span class="skill-name" ${tooltip}>${window.escapeHtml(skill.name)}</span>
+            <button class="skill-btn skill-decrease" ${canDecrease ? '' : 'disabled'}>-</button>
+            <span class="skill-points-display" ${tooltip}>${totalPts}</span>
+            <button class="skill-btn skill-increase" ${canIncrease ? '' : 'disabled'}>+</button>
+          </div>
+          <div class="skill-expertise-section">
+            <div class="skill-expertise-list">
+              ${expertises.map(exp => `
+                <div class="expertise-item" data-expertise-name="${window.escapeHtml(exp.name)}">
+                  <span class="expertise-item-name" title="${window.escapeHtml(exp.name)}">${window.escapeHtml(exp.name)}</span>
+                  <button class="expertise-btn expertise-decrease" data-group="${groupIdx}" data-skill="${skillIdx}" data-name="${window.escapeHtml(exp.name)}" ${exp.pts > 0 ? '' : 'disabled'}>-</button>
+                  <span class="expertise-item-value">+${exp.pts}</span>
+                  <button class="expertise-btn expertise-increase" data-group="${groupIdx}" data-skill="${skillIdx}" data-name="${window.escapeHtml(exp.name)}" ${(exp.pts + 2 > effectiveCap || !canAddExp) ? 'disabled' : ''}>+</button>
+                </div>
+              `).join('')}
+              <button class="btn-add-expertise" data-group="${groupIdx}" data-skill="${skillIdx}" ${canAddExp ? '' : 'disabled'}>+ Add Expertise</button>
+            </div>
+            <div class="add-expertise-form hidden" id="expertise-form-${groupIdx}-${skillIdx}">
+              <div class="add-expertise-input-row">
+                <input type="text" class="add-expertise-input" placeholder="Expertise name..." autocomplete="off" data-group="${groupIdx}" data-skill="${skillIdx}">
+                <button class="btn-confirm-expertise" data-group="${groupIdx}" data-skill="${skillIdx}">Add</button>
+                <button class="btn-cancel-expertise" aria-label="Cancel">&times;</button>
+              </div>
+              ${suggestions.length > 0 ? `
+                <div class="expertise-suggestions">
+                  ${suggestions.map(s => `<span class="suggestion-chip" data-group="${groupIdx}" data-skill="${skillIdx}" data-suggestion="${window.escapeHtml(s)}">${window.escapeHtml(s)}</span>`).join('')}
+                </div>
+              ` : ''}
+            </div>
+          </div>
         `;
 
-        const decBtn = row.querySelector('.skill-decrease');
-        const incBtn = row.querySelector('.skill-increase');
-        const expertiseInput = row.querySelector('.skill-expertise');
-
-        expertiseInput.value = skill.expertise || '';
-
+        // Bind main skill buttons
+        const decBtn = skillItem.querySelector('.skill-decrease');
+        const incBtn = skillItem.querySelector('.skill-increase');
         decBtn.addEventListener('click', () => changeSkillPoints(groupIdx, skillIdx, -1));
         incBtn.addEventListener('click', () => changeSkillPoints(groupIdx, skillIdx, 1));
-        expertiseInput.addEventListener('input', (e) => {
-          skillGroups[groupIdx].skills[skillIdx].expertise = e.target.value;
+
+        // Bind expertise +/- buttons
+        skillItem.querySelectorAll('.expertise-increase').forEach(btn => {
+          btn.addEventListener('click', () => {
+            changeExpertisePoints(parseInt(btn.dataset.group), parseInt(btn.dataset.skill), btn.dataset.name, 2);
+          });
+        });
+        skillItem.querySelectorAll('.expertise-decrease').forEach(btn => {
+          btn.addEventListener('click', () => {
+            changeExpertisePoints(parseInt(btn.dataset.group), parseInt(btn.dataset.skill), btn.dataset.name, -2);
+          });
         });
 
-        groupEl.appendChild(row);
+        // Bind "Add Expertise" button
+        skillItem.querySelectorAll('.btn-add-expertise').forEach(btn => {
+          btn.addEventListener('click', () => {
+            toggleAddExpertiseForm(parseInt(btn.dataset.group), parseInt(btn.dataset.skill));
+          });
+        });
+
+        // Bind suggestion chips
+        skillItem.querySelectorAll('.suggestion-chip').forEach(chip => {
+          chip.addEventListener('click', () => {
+            const form = document.getElementById(`expertise-form-${chip.dataset.group}-${chip.dataset.skill}`);
+            const input = form?.querySelector('.add-expertise-input');
+            if (input) {
+              input.value = chip.dataset.suggestion;
+              confirmAddExpertise(parseInt(chip.dataset.group), parseInt(chip.dataset.skill));
+            }
+          });
+        });
+
+        // Bind confirm/cancel buttons
+        skillItem.querySelectorAll('.btn-confirm-expertise').forEach(btn => {
+          btn.addEventListener('click', () => {
+            confirmAddExpertise(parseInt(btn.dataset.group), parseInt(btn.dataset.skill));
+          });
+        });
+        skillItem.querySelectorAll('.btn-cancel-expertise').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const form = btn.closest('.add-expertise-form');
+            if (form) form.classList.add('hidden');
+          });
+        });
+
+        // Bind Enter key on input
+        const inputEl = skillItem.querySelector('.add-expertise-input');
+        if (inputEl) {
+          inputEl.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+              confirmAddExpertise(parseInt(e.target.dataset.group), parseInt(e.target.dataset.skill));
+            }
+          });
+        }
+
+        groupEl.appendChild(skillItem);
       });
 
       container.appendChild(groupEl);
     });
+  }
+
+  /**
+   * Flash the source rows that have remaining points when the active
+   * source is empty. Draws the user's attention to alternative sources
+   * they can switch to.
+   */
+  function flashAvailableSources() {
+    const breakdown = document.getElementById('skill-points-breakdown');
+    if (!breakdown) return;
+
+    const allSources = ['base', 'race', 'class', 'breakthrough'];
+    const availableRows = [];
+
+    allSources.forEach(src => {
+      const remaining = getSourceRemaining(src);
+      if (remaining > 0 && src !== activeSource) {
+        const row = breakdown.querySelector(`.skill-source-row[data-source="${src}"]`);
+        if (row) availableRows.push(row);
+      }
+    });
+
+    if (availableRows.length === 0) return;
+
+    // Scroll the breakdown into view if it's not visible
+    // The breakdown sits at the top of the step-panel; when the user scrolled
+    // down to look at skills, we need to bring it back into view.
+    const breakdownRect = breakdown.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+
+    // Only scroll if the breakdown is outside the visible area
+    if (breakdownRect.top < 0 || breakdownRect.top > viewportHeight * 0.3) {
+      // Scroll the step-panel (or wizard-step) to the top
+      // Both have overflow-y: auto, so we scroll both to be safe
+      const stepPanel = breakdown.closest('.step-panel');
+      const wizardStep = breakdown.closest('.wizard-step');
+      if (stepPanel) {
+        stepPanel.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+      if (wizardStep) {
+        wizardStep.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+
+    // Delay flash slightly to let scroll animation start
+    setTimeout(() => {
+      availableRows.forEach((row, i) => {
+        // Stagger the flash slightly for each row
+        setTimeout(() => {
+          row.classList.add('skill-source-flash');
+          // Remove class after animation completes
+          setTimeout(() => row.classList.remove('skill-source-flash'), 1800);
+        }, i * 150);
+      });
+    }, 300);
   }
 
   function changeSkillPoints(groupIdx, skillIdx, delta) {
@@ -354,7 +534,10 @@ const SkillsStepScene = (function() {
       if (!eligible.includes(skill.name)) return;
 
       // Check source has remaining points
-      if (getSourceRemaining(activeSource) <= 0) return;
+      if (getSourceRemaining(activeSource) <= 0) {
+        flashAvailableSources();
+        return;
+      }
 
       // Check cap
       if (currentTotal >= effectiveCap) return;
@@ -399,6 +582,153 @@ const SkillsStepScene = (function() {
         });
       }
     }
+  }
+
+  /**
+   * Toggle the "Add Expertise" form for a specific skill.
+   */
+  function toggleAddExpertiseForm(groupIdx, skillIdx) {
+    // Close any open form first
+    const existingForm = document.querySelector('.add-expertise-form:not(.hidden)');
+    if (existingForm) {
+      existingForm.classList.add('hidden');
+      return;
+    }
+
+    // Open form for this skill
+    const form = document.getElementById(`expertise-form-${groupIdx}-${skillIdx}`);
+    if (form) {
+      form.classList.remove('hidden');
+      const input = form.querySelector('.add-expertise-input');
+      if (input) input.focus();
+    }
+  }
+
+  /**
+   * Confirm adding a new expertise from the form.
+   * Spends 1 skill point from active source for 2 expertise points.
+   */
+  function confirmAddExpertise(groupIdx, skillIdx) {
+    const form = document.getElementById(`expertise-form-${groupIdx}-${skillIdx}`);
+    if (!form) return;
+    const input = form.querySelector('.add-expertise-input');
+    if (!input) return;
+
+    const expName = input.value.trim();
+    if (!expName) return;
+
+    const skill = skillGroups[groupIdx].skills[skillIdx];
+    const effectiveCap = getEffectiveSkillCap(skill.name);
+
+    // Check: must have active source
+    if (!activeSource) {
+      form.classList.add('hidden');
+      return;
+    }
+
+    // Check: skill must be eligible for active source
+    const eligible = availablePoints.eligibleSkills?.[activeSource] || [];
+    if (!eligible.includes(skill.name)) {
+      form.classList.add('hidden');
+      return;
+    }
+
+    // Check: source must have remaining points
+    if (getSourceRemaining(activeSource) <= 0) {
+      flashAvailableSources();
+      form.classList.add('hidden');
+      return;
+    }
+
+    // Check: cap not exceeded (adding 2 expertise points)
+    const currentExpPts = calculateExpertisePoints(skill.expertise || '');
+    if (currentExpPts + 2 > effectiveCap) {
+      form.classList.add('hidden');
+      return;
+    }
+
+    // Parse existing expertises, add or increment
+    const expertises = parseExpertiseString(skill.expertise || '');
+    const existing = expertises.find(e => e.name.toLowerCase() === expName.toLowerCase());
+    if (existing) {
+      existing.pts += 2;
+    } else {
+      expertises.push({ name: expName, pts: 2 });
+    }
+
+    // Spend 1 skill point from active source
+    sourceExpertiseSpent[activeSource][skill.name] = (sourceExpertiseSpent[activeSource][skill.name] || 0) + 1;
+
+    // Serialize and save
+    skill.expertise = serializeExpertiseArray(expertises);
+
+    // Re-render
+    syncSkillGroupsFromSources();
+    renderSkills();
+    updatePointsDisplay();
+    renderPointsBreakdown();
+  }
+
+  /**
+   * Change expertise points for a specific expertise entry.
+   * delta: +2 or -2 expertise points (costs/refunds 1 skill point).
+   */
+  function changeExpertisePoints(groupIdx, skillIdx, expName, delta) {
+    const skill = skillGroups[groupIdx].skills[skillIdx];
+    const effectiveCap = getEffectiveSkillCap(skill.name);
+
+    // Parse current expertise list
+    const expertises = parseExpertiseString(skill.expertise || '');
+    const expObj = expertises.find(e => e.name.toLowerCase() === expName.toLowerCase());
+
+    if (delta > 0) {
+      // Adding 2 expertise points = spending 1 skill point
+      if (!activeSource) return;
+      const eligible = availablePoints.eligibleSkills?.[activeSource] || [];
+      if (!eligible.includes(skill.name)) return;
+      if (getSourceRemaining(activeSource) <= 0) {
+        flashAvailableSources();
+        return;
+      }
+      if (!expObj) return;
+      if (expObj.pts + 2 > effectiveCap) return; // Cap check
+
+      expObj.pts += 2;
+      sourceExpertiseSpent[activeSource][skill.name] = (sourceExpertiseSpent[activeSource][skill.name] || 0) + 1;
+
+    } else if (delta < 0) {
+      if (!expObj || expObj.pts <= 0) return;
+
+      // Reclaim 1 skill point from sourceExpertiseSpent in reverse priority
+      const sources = ['breakthrough', 'class', 'race', 'base'];
+      let removed = false;
+      for (const src of sources) {
+        if ((sourceExpertiseSpent[src]?.[skill.name] || 0) > 0) {
+          sourceExpertiseSpent[src][skill.name]--;
+          if (sourceExpertiseSpent[src][skill.name] === 0) {
+            delete sourceExpertiseSpent[src][skill.name];
+          }
+          removed = true;
+          break;
+        }
+      }
+      if (!removed) return;
+
+      expObj.pts -= 2;
+      if (expObj.pts <= 0) {
+        const idx = expertises.indexOf(expObj);
+        if (idx !== -1) expertises.splice(idx, 1);
+      }
+    }
+
+    // Serialize and save
+    skill.expertise = serializeExpertiseArray(expertises);
+
+    // Re-render
+    syncSkillGroupsFromSources();
+    renderSkills();
+    updatePointsDisplay();
+    renderPointsBreakdown();
   }
 
   /**

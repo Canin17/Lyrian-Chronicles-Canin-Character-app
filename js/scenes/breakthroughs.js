@@ -5,6 +5,8 @@
  *
  * Rules (from rulebook):
  * - Breakthroughs: Start with 300 EXP (only for breakthroughs, unspent lost, doesn't add to Spirit Core)
+ * - Once the 300 EXP pool is exhausted, the main class EXP pool is used
+ * - Only EXP from the main pool adds to Spirit Core
  */
 
 /* exported BreakthroughScene */
@@ -13,6 +15,10 @@ const BreakthroughScene = (function() {
 
   // EXP constants from rulebook
   const TOTAL_BREAKTHROUGH_EXP = 300;
+  // Main class EXP pool (set from class page, default 0)
+  let mainExpPool = 0;
+  // Spirit Core from class page (set when entering breakthroughs)
+  let baseSpiritCore = 0;
   // Total abilities that must be bought for a class to be considered "mastered"
 
   /**
@@ -297,23 +303,106 @@ const BreakthroughScene = (function() {
   }
 
   // ===========================================================================
-  // EXP CALCULATIONS
+  // EXP CALCULATIONS — Dual-pool system
+  // Starting 300 EXP is used first; once empty, main class EXP pool is used.
+  // Only main pool EXP adds to Spirit Core.
   // ===========================================================================
   function getTotalExpSpent() {
     return selectedBreakthroughs.reduce((total, bt) => total + (bt.cost || 0), 0);
   }
 
-  function getRemainingExp() {
+  /**
+   * How much EXP was drawn from the starting 300 pool.
+   * Capped at TOTAL_BREAKTHROUGH_EXP.
+   */
+  function getExpFromStartingPool() {
+    return Math.min(getTotalExpSpent(), TOTAL_BREAKTHROUGH_EXP);
+  }
+
+  /**
+   * How much EXP was drawn from the main class pool.
+   * Only positive when total spent exceeds the starting 300.
+   */
+  function getExpFromMainPool() {
+    return Math.max(0, getTotalExpSpent() - TOTAL_BREAKTHROUGH_EXP);
+  }
+
+  /**
+   * Remaining EXP in the starting 300 pool.
+   */
+  function getStartingPoolRemaining() {
     return Math.max(0, TOTAL_BREAKTHROUGH_EXP - getTotalExpSpent());
+  }
+
+  /**
+   * Remaining EXP in the main class pool after breakthrough spending.
+   */
+  function getMainPoolRemaining() {
+    return Math.max(0, mainExpPool - getExpFromMainPool());
+  }
+
+  /**
+   * Total available EXP across both pools.
+   */
+  function getTotalAvailableExp() {
+    return TOTAL_BREAKTHROUGH_EXP + mainExpPool;
+  }
+
+  /**
+   * Remaining spendable EXP (combined).
+   */
+  function getRemainingExp() {
+    return Math.max(0, getTotalAvailableExp() - getTotalExpSpent());
+  }
+
+  /**
+   * Total Spirit Core: base from classes + EXP drawn from main pool for breakthroughs.
+   */
+  function getCurrentSpiritCore() {
+    return baseSpiritCore + getExpFromMainPool();
   }
 
   function updateOverviewStats() {
     const expEl = document.getElementById('bt-exp-remaining');
+    const mainExpEl = document.getElementById('bt-main-exp-remaining');
+    const spiritEl = document.getElementById('bt-spirit-core');
     const countEl = document.getElementById('bt-count');
     const totalCountEl = document.getElementById('bt-total-count');
+
+    const startingRemain = getStartingPoolRemaining();
+    const mainRemain = getMainPoolRemaining();
+    const totalSpent = getTotalExpSpent();
+
+    // Starting pool display
     if (expEl) {
-      expEl.textContent = `${getRemainingExp()} EXP`;
+      expEl.textContent = `${startingRemain} / ${TOTAL_BREAKTHROUGH_EXP} EXP`;
+      // Color: green when full, amber when partially used, red when empty
+      if (startingRemain === TOTAL_BREAKTHROUGH_EXP) {
+        expEl.className = 'bt-exp-remaining bt-pool-full';
+      } else if (startingRemain > 0) {
+        expEl.className = 'bt-exp-remaining bt-pool-partial';
+      } else {
+        expEl.className = 'bt-exp-remaining bt-pool-empty';
+      }
     }
+
+    // Main pool display
+    if (mainExpEl) {
+      mainExpEl.textContent = `${mainRemain} / ${mainExpPool} EXP`;
+      if (mainRemain === mainExpPool && totalSpent <= TOTAL_BREAKTHROUGH_EXP) {
+        mainExpEl.className = 'bt-main-exp-remaining bt-pool-full';
+      } else if (mainRemain > 0) {
+        mainExpEl.className = 'bt-main-exp-remaining bt-pool-partial';
+      } else {
+        mainExpEl.className = 'bt-main-exp-remaining bt-pool-empty';
+      }
+    }
+
+    // Spirit Core display
+    if (spiritEl) {
+      spiritEl.textContent = `Spirit Core: ${getCurrentSpiritCore()}`;
+    }
+
     if (countEl) {
       countEl.textContent = `${selectedBreakthroughs.length} selected`;
     }
@@ -679,5 +768,16 @@ const BreakthroughScene = (function() {
     renderBreakthroughs(BREAKTHROUGH_DATA);
   }
 
-  return { init, getSelection, reset, toggleBreakthrough, refresh, restoreState };
+  /**
+   * Set the main class EXP pool available for breakthrough spending.
+   * @param {number} pool - Remaining class EXP (main pool)
+   * @param {number} classExpSpent - EXP spent on classes (base Spirit Core, NOT including breakthrough spending)
+   */
+  function setMainExpPool(pool, classExpSpent) {
+    mainExpPool = Math.max(0, parseInt(pool) || 0);
+    baseSpiritCore = Math.max(0, parseInt(classExpSpent) || 0);
+    updateOverviewStats();
+  }
+
+  return { init, getSelection, reset, toggleBreakthrough, refresh, restoreState, setMainExpPool, getExpFromMainPool, getCurrentSpiritCore };
 })();

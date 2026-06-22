@@ -934,6 +934,29 @@ body {
   color: #4a9c5d;
   font-weight: bold;
 }
+.bt-exp-remaining.bt-pool-partial {
+  color: #c9a227;
+}
+.bt-exp-remaining.bt-pool-empty {
+  color: #8b6914;
+  text-decoration: line-through;
+}
+
+.bt-main-exp-remaining {
+  color: var(--accent-gold);
+  font-weight: bold;
+}
+.bt-main-exp-remaining.bt-pool-partial {
+  color: #c9a227;
+}
+.bt-main-exp-remaining.bt-pool-empty {
+  color: #8b4513;
+}
+
+.bt-spirit-core {
+  color: #9b59b6;
+  font-weight: bold;
+}
 
 .bt-count {
   color: var(--accent-gold);
@@ -2057,6 +2080,44 @@ body {
   padding-left: var(--spacing-xs);
 }
 
+/* Flash animation for available sources when active source is empty */
+@keyframes skillSourceFlash {
+  0%, 100% {
+    background: var(--bg-card);
+    border-color: rgba(196, 163, 90, 0.15);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    transform: scale(1);
+  }
+  15% {
+    background: rgba(196, 163, 90, 0.25);
+    border-color: var(--accent-gold);
+    box-shadow: 0 0 12px rgba(196, 163, 90, 0.5), 0 0 24px rgba(196, 163, 90, 0.25);
+    transform: scale(1.03);
+  }
+  30% {
+    background: var(--bg-card);
+    border-color: rgba(196, 163, 90, 0.15);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    transform: scale(1);
+  }
+  45% {
+    background: rgba(196, 163, 90, 0.2);
+    border-color: var(--accent-gold);
+    box-shadow: 0 0 10px rgba(196, 163, 90, 0.4), 0 0 20px rgba(196, 163, 90, 0.2);
+    transform: scale(1.02);
+  }
+  60% {
+    background: var(--bg-card);
+    border-color: rgba(196, 163, 90, 0.15);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    transform: scale(1);
+  }
+}
+
+.skill-source-flash {
+  animation: skillSourceFlash 1.8s ease-in-out;
+}
+
 /* Eligible skills panel */
 .eligible-skills-panel {
   background: rgba(196, 163, 90, 0.1);
@@ -2640,6 +2701,7 @@ body {
   gap: var(--spacing-md);
   font-size: 0.85rem;
   color: var(--text-muted);
+  flex-wrap: wrap;
 }
 
 .bt-selected-list {
@@ -2970,6 +3032,194 @@ body {
 
 /* ===========================================================================
    PRINT STYLESHEET — Character Sheet Print Support
+   =========================================================================== */
+/* ===========================================================================
+   INTERACTIVE SKILL EXPERTISE WIDGET
+   =========================================================================== */
+.skill-expertise-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+  width: 100%;
+}
+
+.skill-expertise-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.expertise-item {
+  display: inline-flex;
+  align-items: center;
+  background: var(--bg-primary);
+  border: 1px solid var(--accent-gold-dark);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 0.8rem;
+}
+
+.expertise-item-name {
+  color: var(--text-primary);
+  margin-right: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+}
+
+.expertise-btn {
+  background: var(--bg-tertiary);
+  border: 1px solid #444;
+  color: var(--accent-gold);
+  border-radius: 3px;
+  width: 18px;
+  height: 18px;
+  font-size: 0.75rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.expertise-btn:hover:not(:disabled) {
+  background: var(--accent-gold);
+  color: var(--bg-primary);
+  border-color: var(--accent-gold);
+}
+
+.expertise-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.expertise-item-value {
+  color: var(--accent-gold-light);
+  font-weight: bold;
+  padding: 0 4px;
+  flex-shrink: 0;
+}
+
+.btn-add-expertise {
+  background: none;
+  border: 1px dashed var(--accent-gold-dark);
+  color: var(--accent-gold-light);
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  align-self: flex-start;
+}
+
+.btn-add-expertise:hover {
+  background: rgba(196, 163, 90, 0.1);
+  border-color: var(--accent-gold);
+}
+
+.add-expertise-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 8px;
+  max-width: 420px;
+}
+
+.add-expertise-form.hidden {
+  display: none !important;
+}
+
+.add-expertise-input-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.add-expertise-input {
+  flex: 1;
+  background: var(--bg-primary);
+  border: 1px solid #444;
+  border-radius: 4px;
+  padding: 4px 8px;
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  font-family: var(--font-serif);
+}
+
+.add-expertise-input:focus {
+  border-color: var(--accent-gold);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(196, 163, 90, 0.3);
+}
+
+.btn-confirm-expertise {
+  background: var(--accent-gold-dark);
+  border: 1px solid var(--accent-gold);
+  color: #000;
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-confirm-expertise:hover {
+  background: var(--accent-gold);
+}
+
+.btn-cancel-expertise {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 1.2rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 2px;
+}
+
+.btn-cancel-expertise:hover {
+  color: #fff;
+}
+
+.expertise-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.suggestion-chip {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 2px 8px;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.suggestion-chip:hover {
+  background: rgba(196, 163, 90, 0.05);
+  border-color: var(--accent-gold-dark);
+  color: var(--accent-gold-light);
+}
+
+/* Expertise disabled state for gathering skills */
+.skill-expertise-section.disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* ===========================================================================
+   PRINT
    =========================================================================== */
 @media print {
   /* Reset colors and shadows for print */

@@ -65,6 +65,10 @@ export default [
         isCraftingGatheringSkill: "readonly",
         getEffectiveSkillCap: "readonly",
         getRaceSkillPoints: "readonly",
+        SKILL_EXPERTISE_EXAMPLES: "readonly",
+        parseExpertiseString: "readonly",
+        serializeExpertiseArray: "readonly",
+        calculateExpertisePoints: "readonly",
 
         // Scene modules (IIFE modules, consumed by app.js)
         BackgroundScene: "readonly",
