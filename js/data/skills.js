@@ -3,7 +3,7 @@
 // Source: Lyrian Chronicles system rulebook
 // Per-source allocation tracking with restricted skill lists
 
-/* exported SKILL_GROUPS, SKILL_GRANTING_BREAKTHROUGHS, EXPERTISE_MULTIPLIER, BASE_SKILL_POINTS, calculateAvailableSkillPoints, getRemainingPoints, deepCloneSkillGroups, canAddExpertise, isCraftingGatheringSkill, getEffectiveSkillCap, getRaceSkillPoints, SKILL_EXPERTISE_EXAMPLES, parseExpertiseString, serializeExpertiseArray, calculateExpertisePoints */
+/* exported SKILL_GROUPS, SKILL_GRANTING_BREAKTHROUGHS, EXPERTISE_MULTIPLIER, BASE_SKILL_POINTS, calculateAvailableSkillPoints, getRemainingPoints, deepCloneSkillGroups, canAddExpertise, isCraftingGatheringSkill, getEffectiveSkillCap, getRaceSkillPoints, SKILL_EXPERTISE_EXAMPLES, parseExpertiseString, serializeExpertiseArray, calculateExpertisePoints, BREAKTHROUGH_SKILL_BONUSES, getBreakthroughSkillBonuses, getBreakthroughBonusForSkill, getBreakthroughBonusesForSkill */
 const SKILL_GROUPS = [
   {
     name: 'Fitness',
@@ -574,4 +574,107 @@ function isCraftingGatheringSkill(skillName) {
 function getEffectiveSkillCap(skillName) {
   if (isArtisanSkill(skillName)) return 10;
   return SKILL_CAP;
+}
+
+// ===========================================================================
+// BREAKTHROUGH SKILL BONUSES
+// Structured mapping of breakthrough IDs to their skill-affecting effects.
+// This is the authoritative source for which breakthroughs grant passive
+// skill bonuses and what those bonuses are.
+// ===========================================================================
+const BREAKTHROUGH_SKILL_BONUSES = {
+  // Bully: +5 Intimidation vs targets with less Fitness
+  '69ea4f7a6be32fced492fb78': {
+    skill: 'Intimidation',
+    bonus: 5,
+    condition: 'vs targets with less Fitness than you',
+    unconditional: false
+  },
+  // Mystic Eyes of Faerie Light: +10 Perception to detect illusions
+  '69ea4f7a6be32fced492fb69': {
+    skill: 'Perception',
+    bonus: 10,
+    condition: 'to detect illusions',
+    unconditional: false
+  },
+  // Blend In (Slimefolk): +30 to hide magical disguise
+  '69ea4f7a6be32fced492fb8b': {
+    skill: 'Deception',
+    bonus: 30,
+    condition: 'to hide magical disguise',
+    unconditional: false
+  },
+  // Arachne (Spiderfolk): -10 Swimming
+  '69ea4f7a6be32fced492fba2': {
+    skill: 'Athletics',
+    bonus: -10,
+    condition: 'swimming checks',
+    unconditional: false
+  }
+};
+
+/**
+ * Get all skill bonuses from the character's selected breakthroughs.
+ * Returns an array of { skill, bonus, breakthroughName, condition, unconditional }
+ *
+ * @param {Array} selectedBreakthroughs - Array of breakthrough objects from character data
+ * @returns {Array} Array of skill bonus objects
+ */
+function getBreakthroughSkillBonuses(selectedBreakthroughs) {
+  if (!selectedBreakthroughs || !Array.isArray(selectedBreakthroughs)) {
+    return [];
+  }
+
+  const bonuses = [];
+
+  for (const bt of selectedBreakthroughs) {
+    const btId = bt.id || bt;
+    const btName = bt.name || btId;
+    const btBonus = BREAKTHROUGH_SKILL_BONUSES[btId];
+
+    if (btBonus) {
+      bonuses.push({
+        skill: btBonus.skill,
+        bonus: btBonus.bonus,
+        breakthroughName: btName,
+        condition: btBonus.condition,
+        unconditional: btBonus.unconditional
+      });
+    }
+  }
+
+  return bonuses;
+}
+
+/**
+ * Get the total breakthrough bonus for a specific skill.
+ * Only counts unconditional bonuses (no situational modifiers).
+ *
+ * @param {string} skillName - The skill name to check
+ * @param {Array} selectedBreakthroughs - Array of breakthrough objects
+ * @returns {number} Total unconditional bonus for the skill
+ */
+function getBreakthroughBonusForSkill(skillName, selectedBreakthroughs) {
+  const bonuses = getBreakthroughSkillBonuses(selectedBreakthroughs);
+  let total = 0;
+
+  for (const b of bonuses) {
+    if (b.skill === skillName && b.unconditional) {
+      total += b.bonus;
+    }
+  }
+
+  return total;
+}
+
+/**
+ * Get all bonuses (including conditional) for a specific skill.
+ *
+ * @param {string} skillName - The skill name to check
+ * @param {Array} selectedBreakthroughs - Array of breakthrough objects
+ * @returns {Array} Array of bonus objects for this skill
+ */
+function getBreakthroughBonusesForSkill(skillName, selectedBreakthroughs) {
+  const bonuses = getBreakthroughSkillBonuses(selectedBreakthroughs);
+  return bonuses.filter(b => b.skill === skillName);
 }

@@ -148,21 +148,38 @@ const SummaryScene = (function() {
     html += `<div class="summary-section"><h3>Skills</h3>`;
 
     if (skills && Array.isArray(skills)) {
+      // Collect all breakthrough bonuses for display
+      const allBtBonuses = getBreakthroughSkillBonuses(characterData.breakthroughs || []);
+      const btSkillMap = {};
+      allBtBonuses.forEach(b => {
+        if (!btSkillMap[b.skill]) btSkillMap[b.skill] = [];
+        btSkillMap[b.skill].push(b);
+      });
+
       skills.forEach(group => {
-      const investedSkills = group.skills.filter(s => s.pts > 0);
-      if (investedSkills.length > 0) {
+        // Show group if it has invested skills OR breakthrough bonuses
+        const groupSkills = group.skills;
+        const hasInvested = groupSkills.some(s => s.pts > 0);
+        const hasBtBonus = groupSkills.some(s => btSkillMap[s.name]);
+        if (!hasInvested && !hasBtBonus) return;
+
         html += `<div style="margin-bottom: 0.5rem;">
           <div style="color: var(--accent-gold); font-size: 0.9rem; margin-bottom: 0.25rem;">${group.name} (${group.subStat})</div>`;
 
-        investedSkills.forEach(skill => {
+        groupSkills.forEach(skill => {
+          if (skill.pts <= 0 && !btSkillMap[skill.name]) return; // skip empty skills with no bonus
+
           const expertise = skill.expertise ? ` [${window.escapeHtml(skill.expertise)}]` : '';
+          const bonuses = btSkillMap[skill.name] || [];
+          const btText = bonuses.length > 0
+            ? ` <span style="color: var(--accent-gold-light); opacity: 0.7; font-size: 0.8rem;">(${bonuses.map(b => `${b.bonus > 0 ? '+' : ''}${b.bonus} ${b.breakthroughName}${b.condition ? ' (' + b.condition + ')' : ''}`).join(', ')})</span>`
+            : '';
           html += `<div style="padding-left: 1rem; font-size: 0.85rem; color: var(--text-primary);">
-            ${window.escapeHtml(skill.name)}: <strong style="color: var(--accent-gold-light);">${skill.pts}</strong>${expertise}
+            ${window.escapeHtml(skill.name)}: <strong style="color: var(--accent-gold-light);">${skill.pts}</strong>${expertise}${btText}
           </div>`;
         });
 
         html += `</div>`;
-      }
       });
     }
 

@@ -1907,6 +1907,32 @@ body {
   font-size: 1.1rem;
 }
 
+/* Breakthrough bonus badges on skill rows */
+.skill-bt-bonus {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+  margin-right: 4px;
+}
+
+.bt-bonus-tag {
+  display: inline-block;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: bold;
+  line-height: 1.4;
+  background: var(--accent-purple);
+  color: #fff;
+  border: 1px solid var(--accent-purple-light, #a855f7);
+  white-space: nowrap;
+}
+
+.bt-bonus-tag.negative {
+  background: var(--danger);
+  border-color: var(--danger);
+}
+
 .skill-btn {
   width: 24px;
   height: 24px;
@@ -2125,27 +2151,6 @@ body {
   animation: skillSourceFlash 1.8s ease-in-out;
 }
 
-/* Eligible skills panel */
-.eligible-skills-panel {
-  background: rgba(196, 163, 90, 0.1);
-  border: 1px solid rgba(196, 163, 90, 0.3);
-  border-radius: var(--border-radius-md);
-  padding: var(--spacing-md);
-  margin-bottom: var(--spacing-md);
-  animation: slideDown 0.3s ease-out;
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 @keyframes affordFlash {
   0%, 100% { background-color: transparent; }
   50% { background-color: rgba(220, 53, 69, 0.3); }
@@ -2155,55 +2160,10 @@ body {
   animation: affordFlash 0.4s ease;
 }
 
-.eligible-skills-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--spacing-sm);
-  padding-bottom: var(--spacing-xs);
-  border-bottom: 1px solid var(--border-color);
+.afford-flash {
+  animation: affordFlash 0.4s ease;
 }
 
-.eligible-skills-title {
-  color: var(--accent-gold);
-  font-family: var(--font-sc);
-  font-size: 0.95rem;
-  font-weight: bold;
-}
-
-.close-eligible {
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  font-size: 1.2rem;
-  cursor: pointer;
-  padding: 2px 6px;
-  border-radius: var(--border-radius-sm);
-  transition: all 0.2s ease;
-}
-
-.close-eligible:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--text-primary);
-}
-
-.eligible-skills-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--spacing-xs);
-}
-
-.eligible-skill-tag {
-  background: rgba(196, 163, 90, 0.2);
-  color: var(--accent-gold);
-  padding: 2px 8px;
-  border-radius: var(--border-radius-sm);
-  font-size: 0.8rem;
-  font-family: var(--font-sc);
-  border: 1px solid rgba(196, 163, 90, 0.3);
-}
-
-/* Skill row eligibility highlighting */
 .skill-row.eligible {
   background: rgba(196, 163, 90, 0.15);
   border-left: 3px solid var(--accent-gold);
@@ -3313,8 +3273,7 @@ body {
   .stats-grid,
   .derived-stats-panel,
   .skill-points-breakdown,
-  .skill-points-remaining-bar,
-  .eligible-skills-panel {
+  .skill-points-remaining-bar {
     display: none !important;
   }
 

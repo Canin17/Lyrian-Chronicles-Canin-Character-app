@@ -275,29 +275,6 @@ const SkillsStepScene = (function() {
       });
     });
 
-    // Show eligible skills panel if a source is active
-    const eligiblePanel = document.getElementById('eligible-skills-panel');
-    if (eligiblePanel) {
-      if (activeSource && availablePoints.eligibleSkills?.[activeSource]?.length > 0) {
-        const eligibleSkills = availablePoints.eligibleSkills[activeSource];
-        eligiblePanel.innerHTML = `
-          <div class="eligible-skills-header">
-            <span class="eligible-skills-title">Eligible Skills for ${activeSource} points:</span>
-            <button class="close-eligible" aria-label="Close eligible skills">&times;</button>
-          </div>
-          <div class="eligible-skills-list">
-            ${eligibleSkills.map(skill => `<span class="eligible-skill-tag">${window.escapeHtml(skill)}</span>`).join('')}
-          </div>
-        `;
-        eligiblePanel.style.display = 'block';
-
-        eligiblePanel.querySelector('.close-eligible').addEventListener('click', () => {
-          setActiveSource(activeSource);
-        });
-      } else {
-        eligiblePanel.style.display = 'none';
-      }
-    }
   }
 
   function renderSkills() {
@@ -329,6 +306,14 @@ const SkillsStepScene = (function() {
         const isEligible = eligibleSkills.includes(skill.name);
         const effectiveCap = getEffectiveSkillCap(skill.name);
         const currentExpPts = calculateExpertisePoints(skill.expertise || '');
+
+        // Get breakthrough bonuses for this skill
+        const btBonuses = getBreakthroughBonusesForSkill(skill.name, characterData?.breakthroughs || []);
+        const btBonusHtml = btBonuses.length > 0
+          ? `<span class="skill-bt-bonus" title="${btBonuses.map(b => `${b.breakthroughName}: ${b.bonus > 0 ? '+' : ''}${b.bonus} ${b.condition ? '(' + b.condition + ')' : ''}`).join(', ')}">
+              ${btBonuses.map(b => `<span class="bt-bonus-tag" title="${b.breakthroughName}: ${b.bonus > 0 ? '+' : ''}${b.bonus}${b.condition ? ' (' + b.condition + ')' : ''}">${b.bonus > 0 ? '+' : ''}${b.bonus}</span>`).join('')}
+            </span>`
+          : '';
 
         // + button: enabled when active source can spend, OR when source is empty
         // but other sources have points (clicking triggers flash to guide user)
@@ -367,6 +352,7 @@ const SkillsStepScene = (function() {
         skillItem.innerHTML = `
           <div class="skill-row ${isEligible ? 'eligible' : ''} ${!isEligible && activeSource ? 'ineligible' : ''}">
             <span class="skill-name" ${tooltip}>${window.escapeHtml(skill.name)}</span>
+            ${btBonusHtml}
             <button class="skill-btn skill-decrease" ${canDecrease ? '' : 'disabled'}>-</button>
             <span class="skill-points-display" ${tooltip}>${totalPts}</span>
             <button class="skill-btn skill-increase" ${canIncrease ? '' : 'disabled'}>+</button>
@@ -821,12 +807,6 @@ const SkillsStepScene = (function() {
     renderSkills();
     updatePointsDisplay();
     renderPointsBreakdown();
-
-    // Hide eligible skills panel
-    const eligiblePanel = document.getElementById('eligible-skills-panel');
-    if (eligiblePanel) {
-      eligiblePanel.style.display = 'none';
-    }
   }
 
   return { init, getSkills, reset, setCharacterData, setActiveSource, getSourceAllocations, restoreState };
