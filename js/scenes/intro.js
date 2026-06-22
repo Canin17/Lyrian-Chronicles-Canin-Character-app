@@ -198,6 +198,10 @@ const BackgroundScene = (function() {
   }
   function handleContextRestored() {
     console.log('WebGL context restored — rebuilding scene...');
+    // Remove old ticker callbacks before rebuilding to prevent duplicate animations
+    if (particleTicker) { app.ticker.remove(particleTicker); particleTicker = null; }
+    if (runeTicker) { app.ticker.remove(runeTicker); runeTicker = null; }
+
     if (app && app.stage) {
       // Clear existing stage to prevent duplicate particles/runes/tickers
       app.stage.removeChildren();

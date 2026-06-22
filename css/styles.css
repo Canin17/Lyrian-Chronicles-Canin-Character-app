@@ -941,6 +941,13 @@ body {
   color: #8b6914;
   text-decoration: line-through;
 }
+.bt-exp-remaining.bt-pool-disabled {
+  color: var(--text-muted);
+  opacity: 0.35;
+}
+.bt-exp-remaining-label.bt-pool-disabled {
+  opacity: 0.35;
+}
 
 .bt-main-exp-remaining {
   color: var(--accent-gold);
@@ -2702,6 +2709,59 @@ body {
   font-size: 0.85rem;
   color: var(--text-muted);
   flex-wrap: wrap;
+  align-items: center;
+}
+
+/* Toggle switch for Starting EXP display */
+.bt-stat-toggle {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  margin-right: -4px;
+}
+.bt-stat-toggle input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.bt-toggle-slider {
+  position: relative;
+  display: block;
+  width: 36px;
+  height: 20px;
+  background: #3a3a3a;
+  border: 1px solid #555;
+  border-radius: 10px;
+  transition: background 0.2s, border-color 0.2s;
+}
+.bt-toggle-slider::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: #ccc;
+  border-radius: 50%;
+  transition: transform 0.2s, background 0.2s;
+}
+.bt-stat-toggle.active .bt-toggle-slider {
+  background: var(--accent-gold);
+  border-color: var(--accent-gold);
+}
+.bt-stat-toggle.active .bt-toggle-slider::after {
+  transform: translateX(16px);
+  background: #fff;
+}
+.bt-stat-toggle:hover .bt-toggle-slider {
+  border-color: var(--accent-gold);
+}
+.bt-exp-remaining-label {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  white-space: nowrap;
 }
 
 .bt-selected-list {

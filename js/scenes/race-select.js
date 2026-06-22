@@ -374,7 +374,7 @@ const RaceSelectScene = (function() {
     summary.classList.remove('hidden');
   }
 
-  function showRaceDetails(race) {
+  function _showRaceDetails(race) {
     const overlay = document.getElementById('class-modal-overlay');
     const content = document.getElementById('class-modal-content');
     if (!overlay || !content) return;

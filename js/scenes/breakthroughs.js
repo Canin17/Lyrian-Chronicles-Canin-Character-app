@@ -104,7 +104,9 @@ const BreakthroughScene = (function() {
       // "Must have the Mark of Justice ability"
       const abilityMatch = clause.match(/(?:must have|requires)\s+(?:the\s+)?(.+?)(?:\s+ability)?(?:\.|$)/i);
       if (abilityMatch) {
-        const btName = abilityMatch[1].trim().toLowerCase();
+        let btName = abilityMatch[1].trim().toLowerCase();
+        // Strip trailing "breakthrough" word (e.g., "Skill Training breakthrough" → "Skill Training")
+        btName = btName.replace(/\s+breakthrough\s*$/i, '');
         // Check breakthroughs by name
         if (breakthroughs.some(b => b.name.toLowerCase() === btName)) {
           return true;
@@ -187,6 +189,27 @@ const BreakthroughScene = (function() {
       const hasClassReq = options.some(opt => opt.split(/\s+/).length >= 4);
       if (hasClassReq) {
         return true;
+      }
+
+      // If none of the options match known races/ancestries, it's likely a class
+      // requirement (e.g., "summoner", "paladin") — be permissive
+      const knownRacesCheck = ['human', 'demon', 'fae', 'chimera', 'angel', 'youkai'];
+      const knownAncestriesCheck = [
+        'bearfolk', 'bullfolk', 'catfolk', 'centaur', 'cowfolk', 'dogfolk',
+        'harpy', 'horse-folk', 'lamiafolk', 'lizardfolk', 'mothfolk',
+        'phoenix', 'rabbitfolk', 'ratfolk', 'red pandafolk', 'sheepfolk',
+        'slimefolk', 'spiderfolk', 'wolf-folk',
+        'anubis', 'cait sith', 'cu sith', 'dryad', 'dullahan', 'gnome',
+        'high fae', 'pixie', 'salamander', 'selkie', 'sylph', 'unseelie',
+        'willo wisp',
+        'ancient marionette', 'jiangshi', 'kitsune', 'nekomata', 'nio',
+        'oni', 'raijin', 'ryujin', 'suryan', 'tengu', 'yuki-onna',
+      ];
+      const allUnrecognized = options.every(opt =>
+        !knownRacesCheck.includes(opt) && !knownAncestriesCheck.some(a => opt.includes(a) || a.includes(opt))
+      );
+      if (allUnrecognized) {
+        return true; // Likely a class requirement — be permissive
       }
 
       return options.some(opt => checkRaceMatch(opt, race, ancestry));
@@ -312,25 +335,40 @@ const BreakthroughScene = (function() {
   }
 
   /**
-   * How much EXP was drawn from the starting 300 pool.
-   * Capped at TOTAL_BREAKTHROUGH_EXP.
+   * Whether the starting 300 EXP pool is active (toggle ON).
+   * When OFF, all spending bypasses the starting pool and goes straight to the main pool.
    */
-  function getExpFromStartingPool() {
+  function isStartingPoolEnabled() {
+    const toggle = document.getElementById('bt-exp-toggle');
+    return toggle ? toggle.checked : true;
+  }
+
+  /**
+   * EXP drawn from the starting 300 pool.
+   * Capped at TOTAL_BREAKTHROUGH_EXP.
+   * When starting pool toggle is OFF, this is always 0.
+   */
+  function _getExpFromStartingPool() {
+    if (!isStartingPoolEnabled()) return 0;
     return Math.min(getTotalExpSpent(), TOTAL_BREAKTHROUGH_EXP);
   }
 
   /**
    * How much EXP was drawn from the main class pool.
-   * Only positive when total spent exceeds the starting 300.
+   * When starting pool toggle is ON: only positive when total spent exceeds the starting 300.
+   * When starting pool toggle is OFF: ALL spending comes from main pool.
    */
   function getExpFromMainPool() {
+    if (!isStartingPoolEnabled()) return getTotalExpSpent();
     return Math.max(0, getTotalExpSpent() - TOTAL_BREAKTHROUGH_EXP);
   }
 
   /**
    * Remaining EXP in the starting 300 pool.
+   * When starting pool toggle is OFF, always shows full pool (unused).
    */
   function getStartingPoolRemaining() {
+    if (!isStartingPoolEnabled()) return TOTAL_BREAKTHROUGH_EXP;
     return Math.max(0, TOTAL_BREAKTHROUGH_EXP - getTotalExpSpent());
   }
 
@@ -343,8 +381,10 @@ const BreakthroughScene = (function() {
 
   /**
    * Total available EXP across both pools.
+   * When starting pool toggle is OFF, only main pool counts.
    */
   function getTotalAvailableExp() {
+    if (!isStartingPoolEnabled()) return mainExpPool;
     return TOTAL_BREAKTHROUGH_EXP + mainExpPool;
   }
 
@@ -364,6 +404,7 @@ const BreakthroughScene = (function() {
 
   function updateOverviewStats() {
     const expEl = document.getElementById('bt-exp-remaining');
+    const expLabel = document.getElementById('bt-exp-remaining-label');
     const mainExpEl = document.getElementById('bt-main-exp-remaining');
     const spiritEl = document.getElementById('bt-spirit-core');
     const countEl = document.getElementById('bt-count');
@@ -372,24 +413,40 @@ const BreakthroughScene = (function() {
     const startingRemain = getStartingPoolRemaining();
     const mainRemain = getMainPoolRemaining();
     const totalSpent = getTotalExpSpent();
+    const poolEnabled = isStartingPoolEnabled();
 
     // Starting pool display
     if (expEl) {
       expEl.textContent = `${startingRemain} / ${TOTAL_BREAKTHROUGH_EXP} EXP`;
-      // Color: green when full, amber when partially used, red when empty
-      if (startingRemain === TOTAL_BREAKTHROUGH_EXP) {
+      // When toggle OFF: grayed out / disabled look
+      if (!poolEnabled) {
+        expEl.className = 'bt-exp-remaining bt-pool-disabled';
+        if (expLabel) expLabel.className = 'bt-exp-remaining-label bt-pool-disabled';
+      } else if (startingRemain === TOTAL_BREAKTHROUGH_EXP) {
         expEl.className = 'bt-exp-remaining bt-pool-full';
+        if (expLabel) expLabel.className = 'bt-exp-remaining-label';
       } else if (startingRemain > 0) {
         expEl.className = 'bt-exp-remaining bt-pool-partial';
+        if (expLabel) expLabel.className = 'bt-exp-remaining-label';
       } else {
         expEl.className = 'bt-exp-remaining bt-pool-empty';
+        if (expLabel) expLabel.className = 'bt-exp-remaining-label';
       }
     }
 
     // Main pool display
     if (mainExpEl) {
       mainExpEl.textContent = `${mainRemain} / ${mainExpPool} EXP`;
-      if (mainRemain === mainExpPool && totalSpent <= TOTAL_BREAKTHROUGH_EXP) {
+      if (!poolEnabled) {
+        // When starting pool OFF, main pool is the active pool
+        if (mainRemain === mainExpPool && totalSpent === 0) {
+          mainExpEl.className = 'bt-main-exp-remaining bt-pool-full';
+        } else if (mainRemain > 0) {
+          mainExpEl.className = 'bt-main-exp-remaining bt-pool-partial';
+        } else {
+          mainExpEl.className = 'bt-main-exp-remaining bt-pool-empty';
+        }
+      } else if (mainRemain === mainExpPool && totalSpent <= TOTAL_BREAKTHROUGH_EXP) {
         mainExpEl.className = 'bt-main-exp-remaining bt-pool-full';
       } else if (mainRemain > 0) {
         mainExpEl.className = 'bt-main-exp-remaining bt-pool-partial';
@@ -705,10 +762,34 @@ const BreakthroughScene = (function() {
   // ===========================================================================
   // INITIALIZATION
   // ===========================================================================
+  function initExpToggle() {
+    const toggle = document.getElementById('bt-exp-toggle');
+    const label = toggle ? toggle.parentElement : null;
+
+    function applyExpToggle() {
+      const on = toggle.checked;
+      if (label) {
+        label.classList.toggle('active', on);
+      }
+      // Re-render stats so the disabled/active styling and pool math update
+      updateOverviewStats();
+      // Re-apply filters so affordability reflects the new pool
+      applyFilters();
+    }
+
+    if (toggle) {
+      // Ensure default is ON
+      toggle.checked = true;
+      applyExpToggle();
+      toggle.addEventListener('change', applyExpToggle);
+    }
+  }
+
   function init() {
     renderSelectedList();
     renderBreakthroughs(BREAKTHROUGH_DATA);
     initFilters();
+    initExpToggle();
   }
 
   // Refresh the grid when returning to this step after changing class/race

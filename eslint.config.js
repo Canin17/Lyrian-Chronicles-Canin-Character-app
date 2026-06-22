@@ -55,6 +55,7 @@ export default [
         keywordLinks: "readonly",
         abilityCosts: "readonly",
         calculateDerivedStats: "readonly",
+        calculateBaseSpeed: "readonly",
         getTotalStatPoints: "readonly",
         isAssignmentComplete: "readonly",
         getAvailableValues: "readonly",

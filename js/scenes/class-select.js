@@ -250,7 +250,7 @@ const ClassSelectScene = (function() {
     const commaIdx = clause.indexOf(',');
     if (commaIdx !== -1) {
       const firstPart = clause.substring(0, commaIdx).trim().toLowerCase();
-      const knownRaces = ['human', 'demon', 'fae', 'chimera', 'angel'];
+      const knownRaces = ['human', 'demon', 'fae', 'chimera', 'angel', 'youkai'];
       const knownAncestries = ['sheepfolk', 'kitsune', 'raijin', 'tengu', 'anubis', 'selkie', 'lamia',
         'ratfolk', 'red panda', 'slimefolk', 'spiderfolk', 'wolf-folk', 'centaur', 'arachne',
         'jiangshi', 'youkai', 'marionette', 'goblin', 'dwarf', 'elf'];
@@ -338,7 +338,7 @@ const ClassSelectScene = (function() {
 
   // Helper: check if the player's race/ancestry matches a required race name
   function checkRaceMatch(neededRace, race, ancestry) {
-    const knownRaces = ['human', 'demon', 'fae', 'chimera', 'angel'];
+    const knownRaces = ['human', 'demon', 'fae', 'chimera', 'angel', 'youkai'];
     const neededLower = neededRace.toLowerCase();
 
     if (!race) return false;
