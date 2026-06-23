@@ -75,6 +75,7 @@
     { id: 'step-breakthroughs', name: 'Breakthroughs' },
     { id: 'step-stats', name: 'Stats' },
     { id: 'step-skills', name: 'Skills' },
+    { id: 'step-equipment', name: 'Equipment' },
     { id: 'step-summary', name: 'Summary' }
   ];
 
@@ -97,6 +98,7 @@
     BreakthroughScene.init();
     StatsScene.init();
     SkillsStepScene.init();
+    EquipmentScene.init();
 
     // Animate intro title
     animateIntro();
@@ -213,6 +215,15 @@
           let val = parseInt(input.value) || 0;
           val = action === 'increase' ? val + step : Math.max(0, val - step);
           input.value = val;
+        }
+      }
+
+      // Clickable progress step circles — jump to any step
+      const stepEl = e.target.closest('.progress-steps .step');
+      if (stepEl) {
+        const targetStep = parseInt(stepEl.dataset.step);
+        if (!isNaN(targetStep)) {
+          goToStep(targetStep);
         }
       }
     });
@@ -335,9 +346,10 @@
 
     // Update step indicators
     document.querySelectorAll('.progress-steps .step').forEach((el, i) => {
-      el.classList.remove('active', 'completed');
+      el.classList.remove('active', 'completed', 'future');
       if (i === stepIndex) el.classList.add('active');
-      if (i < stepIndex) el.classList.add('completed');
+      else if (i < stepIndex) el.classList.add('completed');
+      else el.classList.add('future');
     });
   }
 
@@ -380,6 +392,11 @@
         break;
       case 5: // Skills
         character.skills = SkillsStepScene.getSkills();
+        break;
+      case 6: // Equipment
+        character.inventory = EquipmentScene.getInventory();
+        character.climSpent = EquipmentScene.getClimSpent();
+        character.remainingClim = EquipmentScene.getRemainingClim();
         break;
     }
 
@@ -478,7 +495,22 @@
           SkillsStepScene.restoreState(character.skills);
         }
         break;
-      case 6: // Summary
+      case 6: // Equipment
+        EquipmentScene.setCharacterData({
+          race: character.race,
+          ancestry: character.ancestry,
+          cls: character.cls,
+          breakthroughs: character.breakthroughs,
+          stats: character.stats,
+          clim: character.clim
+        });
+        if (character.inventory) {
+          EquipmentScene.restoreState(character.inventory);
+        } else {
+          EquipmentScene.reset();
+        }
+        break;
+      case 7: // Summary
         SummaryScene.render(character);
         break;
     }
@@ -512,6 +544,8 @@
     character.spiritCore = 0;
     character.humanChoices = {};
     character.speed = 20;
+    character.inventory = [];
+    character.climSpent = 0;
 
     // Reset scenes
     RaceSelectScene.reset();
@@ -519,6 +553,7 @@
     BreakthroughScene.reset();
     StatsScene.reset();
     SkillsStepScene.reset();
+    EquipmentScene.reset();
     SummaryScene.reset();
 
     // Destroy PixiJS background
@@ -559,6 +594,7 @@
     ClassSelectScene.init();
     StatsScene.init();
     SkillsStepScene.init();
+    EquipmentScene.init();
 
     // Clear saved character
     clearLocalStorage();

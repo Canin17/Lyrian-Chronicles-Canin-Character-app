@@ -183,6 +183,38 @@ const SummaryScene = (function() {
       });
     }
 
+    // Equipment & Inventory
+    if (characterData.inventory && characterData.inventory.length > 0) {
+      html += `<div class="summary-section">
+        <h3>Equipped Items &amp; Inventory</h3>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.8rem; color: var(--text-muted); border-bottom: 1px solid var(--bg-tertiary); padding-bottom: 0.25rem;">
+          <span>Item Details</span>
+          <span>Qty · Burden · Cost</span>
+        </div>`;
+      
+      let totalBurden = 0;
+      let totalCost = 0;
+      
+      characterData.inventory.forEach(entry => {
+        const itemWeight = (entry.item.burdenCost || 0) * entry.quantity;
+        const itemCost = (entry.item.climCost || 0) * entry.quantity;
+        totalBurden += itemWeight;
+        totalCost += itemCost;
+        
+        html += `<div class="summary-row" style="padding-left: 0.5rem; font-size: 0.85rem; margin-bottom: 0.25rem;">
+          <span class="summary-value" style="font-weight: bold; color: var(--text-primary);">${window.escapeHtml(entry.item.name)} <span style="font-weight: normal; font-size: 0.75rem; color: var(--text-muted);">(${window.escapeHtml(entry.item.type)} · ${window.escapeHtml(entry.item.subType)})</span></span>
+          <span class="summary-value" style="color: var(--accent-gold-light);">${entry.quantity} &times; <span style="font-size: 0.8rem; color: var(--text-muted);">(${entry.item.burdenCost} Burden, ${entry.item.climCost} Clim)</span></span>
+        </div>`;
+      });
+      
+      html += `<div style="display: flex; justify-content: space-between; margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px dashed var(--bg-tertiary); font-size: 0.85rem; color: var(--text-muted);">
+        <span>Total Clim Spent: <strong style="color: var(--accent-gold-light);">${totalCost} Clim</strong></span>
+        <span>Total Burden Weight: <strong style="color: var(--accent-gold-light);">${totalBurden} Burden</strong></span>
+      </div>`;
+      
+      html += `</div>`;
+    }
+
     html += `</div>`;
 
     container.innerHTML = html;
@@ -235,6 +267,9 @@ const SummaryScene = (function() {
         spiritCore: characterData.spiritCore,
         skills: characterData.skills,
         breakthroughs: characterData.breakthroughs || [],
+        inventory: characterData.inventory || [],
+        climSpent: characterData.climSpent || 0,
+        remainingClim: characterData.remainingClim ?? characterData.clim,
         mirane: characterData.mirane,
         oldArmorCalc: characterData.oldArmorCalc,
         speed: characterData.speed ?? 20

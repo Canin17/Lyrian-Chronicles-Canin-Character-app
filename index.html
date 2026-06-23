@@ -22,7 +22,7 @@
   <div id="app" role="main">
     <!-- Progress Bar -->
     <div id="progress-bar" class="hidden" role="navigation" aria-label="Character creation progress">
-      <div class="progress-track" role="progressbar" id="progress-fill-parent" aria-valuemin="0" aria-valuemax="7" aria-valuenow="0" aria-label="Wizard progress">
+      <div class="progress-track" role="progressbar" id="progress-fill-parent" aria-valuemin="0" aria-valuemax="8" aria-valuenow="0" aria-label="Wizard progress">
         <div id="progress-fill" class="progress-fill"></div>
       </div>
       <div id="progress-steps" class="progress-steps" role="list" aria-label="Wizard steps">
@@ -52,6 +52,10 @@
         </div>
         <div class="step" data-step="6" role="listitem">
           <div class="step-circle">7</div>
+          <div class="step-label">Equipment</div>
+        </div>
+        <div class="step" data-step="7" role="listitem">
+          <div class="step-circle">8</div>
           <div class="step-label">Summary</div>
         </div>
       </div>
@@ -332,7 +336,7 @@
             <div class="breakthroughs-title-section">
               <h2>Breakthroughs</h2>
               <p class="breakthroughs-subtitle">Evolve your character — <span id="bt-total-count">87</span> breakthroughs available</p>
-              <p class="breakthroughs-subtitle" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Starting 300 EXP is used first (doesn't add to Spirit Core), then your main class EXP pool (does add to Spirit Core)</p>
+              <p class="breakthroughs-hint">Starting 300 EXP is used first (doesn't add to Spirit Core), then your main class EXP pool (does add to Spirit Core)</p>
             </div>
           </div>
           <div class="nav-buttons">
@@ -424,21 +428,21 @@
           <div id="assignment-status" class="assignment-status incomplete">0/4 Main · 0/5 Sub assigned</div>
 
           <!-- Human Racial Bonus Choices -->
-          <div id="human-choices-container" style="display: none; margin-bottom: 20px; padding: 15px; border: 1px solid var(--accent-gold); border-radius: 6px; background: rgba(196, 163, 90, 0.05);">
-            <h3 style="margin-top: 0; color: var(--accent-gold);">Human Racial Bonus (+1 Main, +1 Sub-Stat)</h3>
-            <div style="display: flex; gap: 20px;">
-              <div style="flex: 1;">
-                <label for="human-main-select" style="display: block; margin-bottom: 5px;">Choose Main Stat (+1)</label>
-                <select id="human-main-select" style="width: 100%; padding: 8px; background: #222; border: 1px solid var(--border-color); color: #fff; border-radius: 4px;">
+          <div id="human-choices-container" class="human-choices-container">
+            <h3>Human Racial Bonus (+1 Main, +1 Sub-Stat)</h3>
+            <div class="human-choices-grid">
+              <div>
+                <label for="human-main-select" class="human-choices-label">Choose Main Stat (+1)</label>
+                <select id="human-main-select" class="human-choices-select">
                   <option value="pow">Power (POW)</option>
                   <option value="foc">Focus (FOC)</option>
                   <option value="agi">Agility (AGI)</option>
                   <option value="tou" selected>Toughness (TOU)</option>
                 </select>
               </div>
-              <div style="flex: 1;">
-                <label for="human-sub-select" style="display: block; margin-bottom: 5px;">Choose Sub-Stat (+1)</label>
-                <select id="human-sub-select" style="width: 100%; padding: 8px; background: #222; border: 1px solid var(--border-color); color: #fff; border-radius: 4px;">
+              <div>
+                <label for="human-sub-select" class="human-choices-label">Choose Sub-Stat (+1)</label>
+                <select id="human-sub-select" class="human-choices-select">
                   <option value="fitness" selected>Fitness</option>
                   <option value="cunning">Cunning</option>
                   <option value="reason">Reason</option>
@@ -541,6 +545,80 @@
         </div>
       </div>
 
+      <!-- STEP 5.5: EQUIPMENT & ITEM PURCHASE -->
+      <div id="step-equipment" class="wizard-step" role="tabpanel" aria-label="Item Purchase">
+        <div class="step-panel equipment-panel">
+          <h2>Purchase Equipment</h2>
+          <p class="step-description">Spend your starting Clim to purchase items. Track your carrying capacity (Burden) to avoid becoming encumbered.</p>
+          <div class="nav-buttons">
+            <button class="btn-secondary" data-action="back">Back</button>
+            <button class="btn-primary" data-action="next" id="btn-equipment-next">Continue</button>
+          </div>
+
+          <!-- Sticky Header -->
+          <div class="equipment-sticky-header">
+            <div class="sticky-stat">
+              <span class="sticky-label">Total Clim Available</span>
+              <span class="sticky-value" id="eq-clim-total">3000 Clim</span>
+            </div>
+            <div class="sticky-stat">
+              <span class="sticky-label">Clim Spent</span>
+              <span class="sticky-value" id="eq-clim-spent">0 Clim</span>
+            </div>
+            <div class="sticky-stat">
+              <span class="sticky-label">Remaining Clim</span>
+              <span class="sticky-value" id="eq-clim-remaining">3000 Clim</span>
+            </div>
+            <div class="sticky-stat">
+              <span class="sticky-label">Regular Burden</span>
+              <span class="sticky-value" id="eq-burden-regular">0 / 10</span>
+            </div>
+            <div class="sticky-stat">
+              <span class="sticky-label">Combat Burden</span>
+              <span class="sticky-value" id="eq-burden-combat">0 / 5</span>
+            </div>
+          </div>
+
+          <!-- Purchased Inventory Shelf -->
+          <div class="equipment-inventory-shelf-container">
+            <h3>Your Purchased Inventory (Click item to inspect)</h3>
+            <div id="purchased-inventory-shelf" class="purchased-inventory-shelf">
+              <!-- Filled by JS -->
+            </div>
+          </div>
+
+          <!-- Horizontal Detail Bar -->
+          <div class="equipment-details-sidebar">
+            <div id="eq-item-detail-panel" class="eq-item-detail-panel">
+              <!-- Filled by JS -->
+            </div>
+          </div>
+
+          <div class="equipment-workspace">
+            <!-- Category Tabs + Search + Items Grid -->
+            <div class="equipment-main-area">
+              <!-- Category Filtering -->
+              <div class="equipment-filters-row">
+                <span class="filter-label">Filter by Category:</span>
+                <div id="equipment-categories" class="equipment-categories-tabs">
+                  <!-- Filled by JS -->
+                </div>
+              </div>
+
+              <!-- Search Bar -->
+              <div class="equipment-search-row">
+                <input type="text" id="equipment-search-input" placeholder="Search items by name, subtype, or rules description..." class="eq-search-field">
+              </div>
+
+              <!-- Item Grid -->
+              <div id="equipment-grid" class="equipment-grid">
+                <!-- Filled by JS -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- STEP 6: SUMMARY -->
       <div id="step-summary" class="wizard-step" role="tabpanel" aria-label="Character Summary">
         <div class="step-panel">
@@ -590,6 +668,7 @@
   <script src="js/data/skills.js"></script>
   <script src="js/data/calculations.js"></script>
   <script src="js/data/excel-template.js"></script>
+  <script src="js/data/items.js"></script>
 
   <!-- Scene Files -->
   <script src="js/scenes/intro.js"></script>
@@ -598,6 +677,7 @@
   <script src="js/scenes/breakthroughs.js"></script>
   <script src="js/scenes/stats.js"></script>
   <script src="js/scenes/skills-step.js"></script>
+  <script src="js/scenes/equipment.js"></script>
   <script src="js/scenes/summary.js"></script>
 
   <!-- Main App -->
