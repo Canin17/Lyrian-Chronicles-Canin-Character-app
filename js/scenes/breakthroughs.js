@@ -331,7 +331,7 @@ const BreakthroughScene = (function() {
   // Only main pool EXP adds to Spirit Core.
   // ===========================================================================
   function getTotalExpSpent() {
-    return selectedBreakthroughs.reduce((total, bt) => total + (bt.cost || 0), 0);
+    return selectedBreakthroughs.reduce((total, bt) => total + getEffectiveCost(bt), 0);
   }
 
   /**
@@ -481,18 +481,50 @@ const BreakthroughScene = (function() {
       return;
     }
 
-    selectedBreakthroughs.forEach(bt => {
+    selectedBreakthroughs.forEach((bt, i) => {
       const item = document.createElement('div');
       item.className = 'bt-selected-item';
+
+      const type = getStatTrainingType(bt);
+      const effectiveCost = getEffectiveCost(bt);
+      const key = btInstanceKey(bt, i);
+      const currentChoice = statBonusChoices[key];
+
+      let statPickerHtml = '';
+      if (type) {
+        const options = type === 'primary' ? PRIMARY_STAT_KEYS : SECONDARY_STAT_KEYS;
+        const label = type === 'primary' ? 'Primary' : 'Secondary';
+        statPickerHtml = `
+          <div class="bt-stat-picker">
+            <span class="bt-stat-picker-label">+1 ${label}:</span>
+            <select class="bt-stat-select" data-bt-index="${i}" data-type="${type}">
+              <option value="">— choose —</option>
+              ${options.map(o => `<option value="${o.key}" ${currentChoice === o.key ? 'selected' : ''}>${o.label}</option>`).join('')}
+            </select>
+          </div>`;
+      }
+
       item.innerHTML = `
         <span class="bt-selected-name">${window.escapeHtml(bt.name)}</span>
-        <span class="bt-selected-cost">${bt.cost || 0} EXP</span>
+        <span class="bt-selected-cost">${effectiveCost} EXP</span>
+        ${statPickerHtml}
         <button class="bt-remove-btn" title="Remove">✕</button>
       `;
+
+      // Bind remove button
       item.querySelector('.bt-remove-btn').addEventListener('click', (e) => {
         e.stopPropagation();
         removeBreakthrough(bt);
       });
+
+      // Bind stat picker change
+      if (type) {
+        const select = item.querySelector('.bt-stat-select');
+        select.addEventListener('change', (e) => {
+          handleStatChoiceChange(parseInt(e.target.dataset.btIndex), e.target.value);
+        });
+      }
+
       list.appendChild(item);
     });
   }
@@ -500,10 +532,129 @@ const BreakthroughScene = (function() {
   function removeBreakthrough(bt) {
     const idx = selectedBreakthroughs.findIndex(s => s.id === bt.id);
     if (idx >= 0) {
+      // Also remove the stat choice if it had one
+      const key = btInstanceKey(bt, idx);
+      delete statBonusChoices[key];
       selectedBreakthroughs.splice(idx, 1);
+      // Re-key choices after splice (indices shifted)
+      rekeyStatBonusChoices();
       renderSelectedList();
       updateOverviewStats();
       applyFilters();
+    }
+  }
+
+  // ===========================================================================
+  // STAT BONUS TRACKING — Primary/Secondary Stat Training
+  // ===========================================================================
+
+  // Map of breakthrough instance key (id + index) → chosen stat key
+  // e.g. { "69ea4f7a6be32fced492fb62:0": "pow", "69ea4f7a6be32fced492fb63:1": "fitness" }
+  let statBonusChoices = {};
+
+  // Stat keys for dropdowns
+  const PRIMARY_STAT_KEYS = [
+    { key: 'pow', label: 'Power' },
+    { key: 'foc', label: 'Focus' },
+    { key: 'agi', label: 'Agility' },
+    { key: 'tou', label: 'Toughness' }
+  ];
+  const SECONDARY_STAT_KEYS = [
+    { key: 'fitness', label: 'Fitness' },
+    { key: 'cunning', label: 'Cunning' },
+    { key: 'reason', label: 'Reason' },
+    { key: 'awareness', label: 'Awareness' },
+    { key: 'presence', label: 'Presence' }
+  ];
+
+  /**
+   * Check if a breakthrough is a stat-training type.
+   * Returns 'primary' | 'secondary' | null
+   */
+  function getStatTrainingType(bt) {
+    const name = (bt.name || '').toLowerCase();
+    if (name === 'primary stat training') return 'primary';
+    if (name === 'secondary stat training') return 'secondary';
+    return null;
+  }
+
+  /**
+   * Generate a unique key for a selected breakthrough instance.
+   */
+  function btInstanceKey(bt, index) {
+    return `${bt.id}:${index}`;
+  }
+
+  /**
+   * Rebuild statBonusChoices keys after array mutations (splice).
+   */
+  function rekeyStatBonusChoices() {
+    const oldChoices = { ...statBonusChoices };
+    statBonusChoices = {};
+    selectedBreakthroughs.forEach((bt, i) => {
+      const key = btInstanceKey(bt, i);
+      // Find the old key that maps to this bt at this index
+      for (const [oldKey, val] of Object.entries(oldChoices)) {
+        const [oldId] = oldKey.split(':');
+        if (oldId === bt.id && !statBonusChoices[key]) {
+          statBonusChoices[key] = val;
+          break;
+        }
+      }
+    });
+  }
+
+  /**
+   * Calculate the cost for Primary Stat Training based on how many times
+   * it has already been selected. Base 400, +100 each, max 700.
+   */
+  function getPrimaryStatTrainingCost(bt) {
+    if (getStatTrainingType(bt) !== 'primary') return bt.cost || 0;
+    const count = selectedBreakthroughs.filter(
+      s => getStatTrainingType(s) === 'primary'
+    ).length;
+    return Math.min(400 + count * 100, 700);
+  }
+
+  /**
+   * Get the effective cost for a breakthrough (handles escalation).
+   */
+  function getEffectiveCost(bt) {
+    return getPrimaryStatTrainingCost(bt);
+  }
+
+  /**
+   * Compute total stat bonuses from all selected stat-training breakthroughs.
+   * Returns { pow: N, foc: N, agi: N, tou: N, fitness: N, cunning: N, reason: N, awareness: N, presence: N }
+   */
+  function getStatBonuses() {
+    const bonuses = {
+      pow: 0, foc: 0, agi: 0, tou: 0,
+      fitness: 0, cunning: 0, reason: 0, awareness: 0, presence: 0
+    };
+    selectedBreakthroughs.forEach((bt, i) => {
+      const type = getStatTrainingType(bt);
+      if (!type) return;
+      const key = btInstanceKey(bt, i);
+      const chosen = statBonusChoices[key];
+      if (chosen && bonuses.hasOwnProperty(chosen)) {
+        bonuses[chosen] += 1;
+      }
+    });
+    return bonuses;
+  }
+
+  /**
+   * Handle stat choice change for a stat-training breakthrough.
+   */
+  function handleStatChoiceChange(btIndex, newStat) {
+    const bt = selectedBreakthroughs[btIndex];
+    if (!bt) return;
+    const key = btInstanceKey(bt, btIndex);
+    statBonusChoices[key] = newStat;
+    // Refresh stats scene if it's loaded
+    if (typeof StatsScene !== 'undefined' && StatsScene.setBreakthroughBonuses) {
+      StatsScene.setBreakthroughBonuses(getStatBonuses());
     }
   }
 
@@ -642,13 +793,27 @@ const BreakthroughScene = (function() {
     if (idx >= 0) {
       // Deselect
       selectedBreakthroughs.splice(idx, 1);
+      // Clean up stat choice
+      const key = btInstanceKey(bt, idx);
+      delete statBonusChoices[key];
+      rekeyStatBonusChoices();
     } else {
-      // Check EXP budget
-      if (getRemainingExp() < (bt.cost || 0)) {
+      // Check EXP budget — use effective cost (handles escalation)
+      const cost = getEffectiveCost(bt);
+      if (getRemainingExp() < cost) {
         return; // Not enough EXP
       }
       // Select
       selectedBreakthroughs.push(bt);
+      // Auto-select first available stat for stat-training breakthroughs
+      const type = getStatTrainingType(bt);
+      if (type) {
+        const newIdx = selectedBreakthroughs.length - 1;
+        const newKey = btInstanceKey(bt, newIdx);
+        // Default to first stat (user can change it)
+        const defaultStat = type === 'primary' ? 'pow' : 'fitness';
+        statBonusChoices[newKey] = defaultStat;
+      }
     }
 
     // Re-render
@@ -797,16 +962,41 @@ const BreakthroughScene = (function() {
     applyFilters();
   }
 
+  /**
+   * Return a clean copy of stat bonus choices for saving.
+   */
+  function getStatBonusChoices() {
+    return structuredClone(statBonusChoices);
+  }
+
+  /**
+   * Restore stat bonus choices from saved data.
+   */
+  function restoreStatBonusChoices(saved) {
+    if (!saved || typeof saved !== 'object') return;
+    statBonusChoices = {};
+    Object.keys(saved).forEach(key => {
+      statBonusChoices[key] = saved[key];
+    });
+  }
+
   function getSelection() {
-    return structuredClone(selectedBreakthroughs);
+    return {
+      breakthroughs: structuredClone(selectedBreakthroughs),
+      statBonusChoices: getStatBonusChoices()
+    };
   }
 
   /**
    * Restore a previously saved breakthrough selection.
    * Called when navigating back to this step or loading from localStorage.
    */
-  function restoreState(savedBreakthroughs) {
-    if (!Array.isArray(savedBreakthroughs)) return;
+  function restoreState(savedData) {
+    if (!savedData) return;
+
+    // Support both new shape { breakthroughs, statBonusChoices } and old shape []
+    const savedBreakthroughs = Array.isArray(savedData) ? savedData : (savedData.breakthroughs || []);
+    const savedChoices = savedData.statBonusChoices || {};
 
     selectedBreakthroughs = [];
     savedBreakthroughs.forEach(btData => {
@@ -818,6 +1008,9 @@ const BreakthroughScene = (function() {
         selectedBreakthroughs.push(bt);
       }
     });
+
+    // Restore stat bonus choices
+    restoreStatBonusChoices(savedChoices);
 
     renderSelectedList();
     applyFilters();
@@ -860,5 +1053,5 @@ const BreakthroughScene = (function() {
     updateOverviewStats();
   }
 
-  return { init, getSelection, reset, toggleBreakthrough, refresh, restoreState, setMainExpPool, getExpFromMainPool, getCurrentSpiritCore };
+  return { init, getSelection, reset, toggleBreakthrough, refresh, restoreState, setMainExpPool, getExpFromMainPool, getCurrentSpiritCore, getStatBonuses, handleStatChoiceChange };
 })();

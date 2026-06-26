@@ -161,6 +161,24 @@
   // EVENT BINDING
   // ===========================================================================
   function bindEvents() {
+    // Nav toggle button
+    const navToggle = document.getElementById('nav-toggle');
+    if (navToggle) {
+      navToggle.addEventListener('click', () => toggleNav());
+    }
+
+    // Nav close button
+    const navClose = document.getElementById('nav-close');
+    if (navClose) {
+      navClose.addEventListener('click', () => closeNav());
+    }
+
+    // Nav backdrop click to close
+    const navBackdrop = document.getElementById('nav-backdrop');
+    if (navBackdrop) {
+      navBackdrop.addEventListener('click', () => closeNav());
+    }
+
     // Start button
     const startBtn = document.getElementById('btn-start');
     if (startBtn) {
@@ -219,6 +237,11 @@
         SummaryScene.exportExcel(character);
       }
 
+      // Export PDF button
+      if (e.target.id === 'btn-export-pdf') {
+        SummaryScene.exportPDF(character);
+      }
+
       // New character button
       if (e.target.id === 'btn-new-char') {
         resetAll(); // Already clears localStorage and hides load button internally
@@ -237,15 +260,51 @@
         }
       }
 
-      // Clickable progress step circles — jump to any step
-      const stepEl = e.target.closest('.progress-steps .step');
-      if (stepEl) {
-        const targetStep = parseInt(stepEl.dataset.step);
+      // Clickable nav sidebar step items — jump to any step
+      const navStepEl = e.target.closest('.nav-sidebar .nav-step');
+      if (navStepEl) {
+        const targetStep = parseInt(navStepEl.dataset.step);
         if (!isNaN(targetStep)) {
           goToStep(targetStep);
         }
       }
     });
+  }
+
+  // ===========================================================================
+  // SLIDE-OUT NAVIGATION
+  // ===========================================================================
+  function openNav() {
+    const sidebar = document.getElementById('nav-sidebar');
+    const backdrop = document.getElementById('nav-backdrop');
+    const toggle = document.getElementById('nav-toggle');
+    if (sidebar) sidebar.classList.remove('hidden');
+    if (backdrop) backdrop.classList.remove('hidden');
+    if (toggle) {
+      toggle.classList.add('active');
+      toggle.setAttribute('aria-expanded', 'true');
+    }
+  }
+
+  function closeNav() {
+    const sidebar = document.getElementById('nav-sidebar');
+    const backdrop = document.getElementById('nav-backdrop');
+    const toggle = document.getElementById('nav-toggle');
+    if (sidebar) sidebar.classList.add('hidden');
+    if (backdrop) backdrop.classList.add('hidden');
+    if (toggle) {
+      toggle.classList.remove('active');
+      toggle.setAttribute('aria-expanded', 'false');
+    }
+  }
+
+  function toggleNav() {
+    const sidebar = document.getElementById('nav-sidebar');
+    if (sidebar && !sidebar.classList.contains('hidden')) {
+      closeNav();
+    } else {
+      openNav();
+    }
   }
 
   // ===========================================================================
@@ -261,7 +320,6 @@
 
     // Show intro
     document.getElementById('step-intro').classList.add('active');
-    document.getElementById('progress-bar').classList.add('hidden');
 
     currentStep = -1;
 
@@ -275,6 +333,9 @@
         loadBtn.style.display = 'none';
       }
     }
+
+    // Update nav to intro state
+    updateNav(-1);
 
     // Animate intro
     if (window.gsap) {
@@ -325,9 +386,6 @@
   function showStep(stepIndex) {
     currentStep = stepIndex;
 
-    // Show progress bar
-    document.getElementById('progress-bar').classList.remove('hidden');
-
     // Show step
     const stepEl = document.getElementById(STEPS[stepIndex].id);
     stepEl.classList.add('active');
@@ -348,23 +406,16 @@
       }
     }
 
-    // Update progress
-    updateProgress(stepIndex);
+    // Update nav
+    updateNav(stepIndex);
 
     // Load step data
     loadStepData(stepIndex);
   }
 
-  function updateProgress(stepIndex) {
-    // Update progress bar fill
-    const fill = document.getElementById('progress-fill');
-    if (fill) {
-      const percent = ((stepIndex + 1) / STEPS.length) * 100;
-      fill.style.width = percent + '%';
-    }
-
-    // Update step indicators
-    document.querySelectorAll('.progress-steps .step').forEach((el, i) => {
+  function updateNav(stepIndex) {
+    // Update nav step indicators
+    document.querySelectorAll('.nav-sidebar .nav-step').forEach((el, i) => {
       el.classList.remove('active', 'completed', 'future');
       if (i === stepIndex) el.classList.add('active');
       else if (i < stepIndex) el.classList.add('completed');
@@ -401,13 +452,18 @@
         character.spiritCore = character.cls?.spiritCore ?? 0;
         break;
       case 3: // Breakthroughs
-        character.breakthroughs = BreakthroughScene.getSelection();
+        const btData = BreakthroughScene.getSelection();
+        character.breakthroughs = btData.breakthroughs || [];
+        character.statBonusChoices = btData.statBonusChoices || {};
+        character.breakthroughStatBonuses = BreakthroughScene.getStatBonuses();
         break;
       case 4: // Stats
         character.stats = StatsScene.getStats();
         character.baseStats = StatsScene.getBaseStats();
         character.humanChoices = StatsScene.getHumanChoices();
         character.raceBonuses = StatsScene.getRaceBonuses();
+        // Also refresh breakthrough bonuses in case they changed while on stats page
+        character.breakthroughStatBonuses = BreakthroughScene.getStatBonuses();
         break;
       case 5: // Skills
         character.skills = SkillsStepScene.getSkills();
@@ -480,7 +536,11 @@
         const classExpSpent = ClassSelectScene.getClassExpSpent ? ClassSelectScene.getClassExpSpent() : 0;
         BreakthroughScene.setMainExpPool(classExpRemaining, classExpSpent);
         if (character.breakthroughs && character.breakthroughs.length > 0) {
-          BreakthroughScene.restoreState(character.breakthroughs);
+          // Restore with stat bonus choices
+          BreakthroughScene.restoreState({
+            breakthroughs: character.breakthroughs,
+            statBonusChoices: character.statBonusChoices || {}
+          });
         } else {
           BreakthroughScene.refresh();
         }
@@ -489,6 +549,9 @@
         if (character.race) {
           StatsScene.setRaceData(character.race.name);
         }
+        // Apply breakthrough stat bonuses
+        const btSelection = BreakthroughScene.getSelection();
+        StatsScene.setBreakthroughBonuses(BreakthroughScene.getStatBonuses());
         // Restore stat assignments instead of resetting
         if (character.baseStats && Object.keys(character.baseStats).length > 0) {
           StatsScene.restoreState(
@@ -546,6 +609,8 @@
     character.ancestry = null;
     character.cls = null;
     character.breakthroughs = [];
+    character.statBonusChoices = {};
+    character.breakthroughStatBonuses = {};
     character.stats = {};
     character.baseStats = {};
     character.raceBonuses = {};

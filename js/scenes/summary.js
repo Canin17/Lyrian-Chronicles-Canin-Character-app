@@ -80,14 +80,27 @@ const SummaryScene = (function() {
     </div>`;
 
     // Main Stats
+    const raceBonuses = characterData.raceBonuses || {};
+    const btBonuses = characterData.breakthroughStatBonuses || {};
+    const baseStats = characterData.baseStats || {};
+
     html += `<div class="summary-section">
       <h3>Ability Scores</h3>
       <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem;">`;
 
     MAIN_STATS.forEach(def => {
+      const base = baseStats[def.id] ?? '-';
+      const rBonus = raceBonuses[def.id] || 0;
+      const bBonus = btBonuses[def.id] || 0;
+      const total = stats[def.id] ?? '-';
+      let bonusDetail = '';
+      if (rBonus > 0) bonusDetail += `<span style="color: var(--accent-gold);">+${rBonus} Race</span> `;
+      if (bBonus > 0) bonusDetail += `<span style="color: var(--meter-mana);">+${bBonus} BT</span>`;
+
       html += `<div style="text-align: center; padding: 0.5rem; background: var(--bg-primary); border-radius: 4px;">
         <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">${def.short || def.name}</div>
-        <div style="font-size: 1.5rem; color: var(--accent-gold-light); font-weight: bold;">${stats[def.id] ?? '-'}</div>
+        <div style="font-size: 1.5rem; color: var(--accent-gold-light); font-weight: bold;">${total}</div>
+        <div style="font-size: 0.65rem; color: var(--text-muted); margin-top: 2px;">Base ${base}${bonusDetail ? ' · ' + bonusDetail : ''}</div>
       </div>`;
     });
 
@@ -97,9 +110,18 @@ const SummaryScene = (function() {
     html += `<div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.5rem; margin-top: 0.5rem;">`;
 
     SUB_STATS.forEach(def => {
+      const base = baseStats[def.id] ?? '-';
+      const rBonus = raceBonuses[def.id] || 0;
+      const bBonus = btBonuses[def.id] || 0;
+      const total = stats[def.id] ?? '-';
+      let bonusDetail = '';
+      if (rBonus > 0) bonusDetail += `<span style="color: var(--accent-gold);">+${rBonus} Race</span> `;
+      if (bBonus > 0) bonusDetail += `<span style="color: var(--meter-mana);">+${bBonus} BT</span>`;
+
       html += `<div style="text-align: center; padding: 0.4rem; background: var(--bg-primary); border-radius: 4px;">
         <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">${def.name}</div>
-        <div style="font-size: 1.2rem; color: var(--accent-gold); font-weight: bold;">${stats[def.id] ?? '-'}</div>
+        <div style="font-size: 1.2rem; color: var(--accent-gold); font-weight: bold;">${total}</div>
+        <div style="font-size: 0.6rem; color: var(--text-muted); margin-top: 2px;">Base ${base}${bonusDetail ? ' · ' + bonusDetail : ''}</div>
       </div>`;
     });
 
@@ -728,10 +750,502 @@ const SummaryScene = (function() {
     }
   }
 
+  /**
+   * Export character data to a styled PDF character sheet.
+   * Uses jsPDF to generate a multi-page PDF matching the Lyrian Chronicles character sheet layout.
+   */
+  function exportPDF(characterData) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const W = 210, H = 297; // A4 in mm
+    const margin = 12;
+    const contentW = W - margin * 2;
+    let y = margin;
+
+    const { name, background, race, ancestry, cls, stats, skills, breakthroughs, inventory } = characterData;
+    const derived = stats ? calculateDerivedStats(stats) : {};
+    const speed = characterData.speed ?? 20;
+
+    // Helpers
+    const safe = (v) => (v != null && v !== '' ? String(v) : '-');
+    const drawRoundedRect = (x, yy, w, h, r, style, fill) => {
+      if (fill) {
+        doc.setFillColor(fill[0], fill[1], fill[2]);
+        doc.roundedRect(x, yy, w, h, r, r, 'F');
+      }
+      if (style) {
+        doc.setDrawColor(style[0], style[1], style[2]);
+        doc.setLineWidth(0.4);
+        doc.roundedRect(x, yy, w, h, r, r, 'S');
+      }
+    };
+    const drawRect = (x, yy, w, h, strokeColor) => {
+      doc.setDrawColor(strokeColor[0], strokeColor[1], strokeColor[2]);
+      doc.setLineWidth(0.3);
+      doc.rect(x, yy, w, h, 'S');
+    };
+    const sectionHeader = (text, x, yy, w) => {
+      doc.setFillColor(30, 60, 120);
+      doc.roundedRect(x, yy, w, 5, 1, 1, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'bold');
+      doc.text(text.toUpperCase(), x + w / 2, yy + 3.5, { align: 'center' });
+      doc.setTextColor(0, 0, 0);
+    };
+    const statBox = (x, yy, w, h, label, value, bgColor) => {
+      const bc = bgColor || [230, 235, 245];
+      drawRoundedRect(x, yy, w, h, 1, [80, 80, 80], bc);
+      doc.setFontSize(6);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(100, 100, 100);
+      doc.text(label, x + w / 2, yy + h * 0.38, { align: 'center' });
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(0, 0, 0);
+      doc.text(String(value), x + w / 2, yy + h * 0.72, { align: 'center' });
+      doc.setTextColor(0, 0, 0);
+    };
+
+    // ===== PAGE 1: Core Character Info =====
+
+    // --- Title Banner ---
+    doc.setFillColor(20, 40, 80);
+    doc.rect(0, 0, W, 16, 'F');
+    doc.setFillColor(255, 215, 0);
+    doc.rect(0, 14, W, 2, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('THE LYRIAN CHRONICLES', W / 2, 11, { align: 'center' });
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+    doc.text('ANGELS SWORD STUDIOS', W / 2, 15, { align: 'center' });
+    y = 20;
+
+    // --- Name Field ---
+    drawRoundedRect(margin, y, contentW, 8, 1, [60, 60, 60], [255, 255, 255]);
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(100, 100, 100);
+    doc.text('NAME:', margin + 2, y + 5.5);
+    doc.setFontSize(13);
+    doc.setTextColor(0, 0, 0);
+    doc.setFont('helvetica', 'bold');
+    doc.text(safe(name), margin + 18, y + 5.5);
+    y += 11;
+
+    // --- Personal Details (Right) + Core Info (Left) ---
+    const leftColX = margin;
+    const rightColX = margin + contentW / 2 + 2;
+    const colW = (contentW / 2) - 2;
+
+    // Core Info (HP, RP, Mana) — Left
+    const coreBoxH = 20;
+    sectionHeader('Core Info', leftColX, y, colW);
+    y += 6;
+    const coreItems = [
+      { label: 'HP', value: safe(derived.hp), temp: '' },
+      { label: 'RP', value: safe(derived.rp), temp: '' },
+      { label: 'Mana', value: safe(derived.mana), temp: '' }
+    ];
+    coreItems.forEach(item => {
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'bold');
+      doc.text(item.label + ':', leftColX + 2, y + 4);
+      doc.setFont('helvetica', 'normal');
+      doc.text(item.value, leftColX + 18, y + 4);
+      doc.setFontSize(6);
+      doc.setTextColor(120, 120, 120);
+      doc.text('Temp: ' + item.temp, leftColX + 42, y + 4);
+      doc.setTextColor(0, 0, 0);
+      y += 5;
+    });
+
+    // Personal Details — Right
+    sectionHeader('Personal Details', rightColX, y - 6, colW);
+    const pdY = y;
+    const personalFields = [
+      ['Spirit Core', safe(characterData.spiritCore ?? 0)],
+      ['Gender', safe(characterData.gender)],
+      ['Age', safe(characterData.age)],
+      ['Exp', safe(characterData.exp ?? 1000)],
+      ['Height', safe(characterData.height)],
+      ['Weight', safe(characterData.weight)],
+      ['Primary Race', safe(race ? race.name : null)],
+      ['Sub Race', safe(ancestry ? ancestry.name : null)]
+    ];
+    personalFields.forEach(([label, val], i) => {
+      const fy = pdY + (i * 4.5);
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'bold');
+      doc.text(label + ':', rightColX + 1, fy + 3);
+      doc.setFont('helvetica', 'normal');
+      doc.text(val, rightColX + 22, fy + 3);
+    });
+    y = pdY + personalFields.length * 4.5 + 2;
+
+    // --- Stats Section ---
+    const statsY = y;
+    const statsBoxW = colW;
+    const statsBoxH = 28;
+
+    // Main Stats — Left
+    sectionHeader('Main Stats', leftColX, statsY, statsBoxW);
+    const mainStatsY = statsY + 6;
+    const mainStatsH = 5.5;
+    const mainStatsGap = 1;
+    const mainLabels = [
+      ['Focus', stats.foc ?? '-'],
+      ['Agility', stats.agi ?? '-'],
+      ['Power', stats.pow ?? '-'],
+      ['Toughness', stats.tou ?? '-']
+    ];
+    mainLabels.forEach(([label, val], i) => {
+      statBox(leftColX + 2, mainStatsY + i * (mainStatsH + mainStatsGap), statsBoxW - 4, mainStatsH, label, val, [220, 228, 245]);
+    });
+
+    // Secondary Stats — Right
+    sectionHeader('Secondary Stats', rightColX, statsY, colW);
+    const subStatsY = statsY + 6;
+    const subStatsH = 4.5;
+    const subStatsGap = 0.8;
+    const subLabels = [
+      ['Fitness', stats.fitness ?? '-'],
+      ['Presence', stats.presence ?? '-'],
+      ['Cunning', stats.cunning ?? '-'],
+      ['Reason', stats.reason ?? '-'],
+      ['Awareness', stats.awareness ?? '-']
+    ];
+    subLabels.forEach(([label, val], i) => {
+      statBox(rightColX + 2, subStatsY + i * (subStatsH + subStatsGap), colW - 4, subStatsH, label, val, [220, 228, 245]);
+    });
+
+    y = statsY + Math.max((4 * (mainStatsH + mainStatsGap)), (5 * (subStatsH + subStatsGap))) + 4;
+
+    // --- Derived Stats Row ---
+    sectionHeader('Derived Stats', leftColX, y, contentW);
+    y += 6;
+    const derivedItems = [
+      ['Evasion', safe(derived.evasion)],
+      ['Dodge/Eva', safe(derived.dodgeEva)],
+      ['Potency', safe(derived.potency)],
+      ['Damage', safe(derived.damage)],
+      ['Initiative', safe(derived.initiative)],
+      ['Speed', safe(speed) + 'ft'],
+      ['Accuracy', safe(derived.accuracy)],
+      ['Save Bonus', safe(derived.saveBonus)]
+    ];
+    const derivedCols = 4;
+    const derivedBoxW = (contentW - 3) / derivedCols;
+    const derivedBoxH = 9;
+    derivedItems.forEach((item, i) => {
+      const col = i % derivedCols;
+      const row = Math.floor(i / derivedCols);
+      const dx = leftColX + col * (derivedBoxW + 1);
+      const dy = y + row * (derivedBoxH + 1);
+      statBox(dx, dy, derivedBoxW, derivedBoxH, item[0], item[1], [240, 242, 250]);
+    });
+    y += Math.ceil(derivedItems.length / derivedCols) * (derivedBoxH + 1) + 3;
+
+    // --- Class List ---
+    sectionHeader('Class List', leftColX, y, contentW);
+    y += 6;
+
+    // Table header
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'bold');
+    doc.setFillColor(240, 240, 250);
+    doc.rect(leftColX, y - 2.5, contentW, 5, 'F');
+    const classCols = [
+      { key: 'Class', x: leftColX + 2, w: 55 },
+      { key: 'Tier', x: leftColX + 60, w: 14 },
+      { key: 'Level', x: leftColX + 76, w: 14 },
+      { key: 'Cost', x: leftColX + 92, w: 14 },
+      { key: 'Role', x: leftColX + 108, w: contentW - 108 }
+    ];
+    classCols.forEach(c => doc.text(c.key, c.x, y));
+    y += 4;
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    if (cls && cls.all && cls.all.length > 0) {
+      cls.all.forEach(cEntry => {
+        const classObj = cEntry.class || {};
+        const tier = classObj.tier ? 'T' + classObj.tier : '-';
+        const level = cEntry.level || 1;
+        const expCost = (parseInt(classObj.tier) || 1) * 100 + Math.max(0, level - 1) * 100;
+        const role = safe(classObj.role);
+        classCols.forEach(c => {
+          const val = c.key === 'Class' ? safe(classObj.name) :
+                      c.key === 'Tier' ? tier :
+                      c.key === 'Level' ? String(level) :
+                      c.key === 'Cost' ? String(expCost) : role;
+          doc.text(val, c.x, y);
+        });
+        y += 4.5;
+      });
+    } else {
+      doc.setFontSize(7);
+      doc.setTextColor(150, 150, 150);
+      doc.text('No classes equipped', leftColX + 2, y);
+      doc.setTextColor(0, 0, 0);
+      y += 4;
+    }
+    y += 3;
+
+    // --- Worships / Resources ---
+    if (characterData.worships) {
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Worships: ', leftColX, y);
+      doc.setFont('helvetica', 'normal');
+      doc.text(safe(characterData.worships), leftColX + 22, y);
+      y += 5;
+    }
+    {
+      const baseClim = characterData.clim ?? 3000;
+      const hasRichParents = (characterData.breakthroughs || []).some(b => b && b.name && b.name.includes('Rich Parents'));
+      const totalClim = baseClim + (hasRichParents ? 3000 : 0);
+      doc.setFontSize(7);
+      doc.text('Starting Clim: ' + baseClim + (hasRichParents ? ' (+3000 Rich Parents)' : ''), leftColX, y);
+      y += 4;
+      doc.text('Total Clim: ' + totalClim + '  |  EXP: ' + (characterData.exp ?? 1000) + '  |  IP: ' + (characterData.ip ?? 3), leftColX, y);
+      y += 5;
+    }
+
+    // --- Injuries Box ---
+    const injBoxH = 18;
+    drawRoundedRect(leftColX, y, contentW, injBoxH, 1, [100, 100, 100], [255, 255, 255]);
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(150, 150, 150);
+    doc.text('INJURIES', leftColX + 2, y + 3.5);
+    doc.setTextColor(0, 0, 0);
+
+    // ===== PAGE 2: Skills =====
+    doc.addPage();
+    y = margin;
+
+    // Title
+    doc.setFillColor(20, 40, 80);
+    doc.rect(0, 0, W, 10, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('SKILLS', W / 2, 7, { align: 'center' });
+    doc.setTextColor(0, 0, 0);
+    y = 14;
+
+    if (skills && Array.isArray(skills)) {
+      const allBtBonuses = getBreakthroughSkillBonuses(characterData.breakthroughs || []);
+      const btSkillMap = {};
+      allBtBonuses.forEach(b => {
+        if (!btSkillMap[b.skill]) btSkillMap[b.skill] = [];
+        btSkillMap[b.skill].push(b);
+      });
+
+      skills.forEach(group => {
+        const groupSkills = group.skills;
+        const hasInvested = groupSkills.some(s => s.pts > 0);
+        const hasBtBonus = groupSkills.some(s => btSkillMap[s.name]);
+        if (!hasInvested && !hasBtBonus) return;
+
+        // Group header
+        sectionHeader(group.name + ' (Sub-Stat: ' + (stats[group.subStat] ?? '-') + ')', leftColX, y, contentW);
+        y += 6;
+
+        // Skill rows
+        groupSkills.forEach(skill => {
+          if (skill.pts <= 0 && !btSkillMap[skill.name]) return;
+          const expertise = skill.expertise ? ' [' + skill.expertise + ']' : '';
+          const bonuses = btSkillMap[skill.name] || [];
+          const btText = bonuses.length > 0 ? ' (BT: ' + bonuses.map(b => (b.bonus > 0 ? '+' : '') + b.bonus + ' ' + b.breakthroughName).join(', ') + ')' : '';
+          doc.setFontSize(8);
+          doc.setFont('helvetica', 'bold');
+          doc.text(skill.name + ':', leftColX + 4, y + 3);
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(80, 80, 200);
+          doc.text(String(skill.pts) + expertise + btText, leftColX + 38, y + 3);
+          doc.setTextColor(0, 0, 0);
+          y += 5;
+        });
+        y += 3;
+      });
+    }
+
+    // ===== PAGE 3: Breakthroughs =====
+    doc.addPage();
+    y = margin;
+
+    doc.setFillColor(20, 40, 80);
+    doc.rect(0, 0, W, 10, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('BREAKTHROUGHS', W / 2, 7, { align: 'center' });
+    doc.setTextColor(0, 0, 0);
+    y = 14;
+
+    if (breakthroughs && breakthroughs.length > 0) {
+      breakthroughs.forEach(bt => {
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'bold');
+        doc.text(bt.name || 'Unknown', leftColX, y + 3);
+        doc.setFontSize(7);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(100, 100, 100);
+        doc.text('Cost: ' + (bt.cost || 0) + ' EXP', leftColX + 60, y + 3);
+        if (bt.prerequisites) {
+          doc.text('Prereq: ' + bt.prerequisites, leftColX + 95, y + 3);
+        }
+        doc.setTextColor(0, 0, 0);
+        // Description if fits
+        if (bt.description) {
+          doc.setFontSize(7);
+          const descLines = doc.splitTextToSize(bt.description, contentW - 6);
+          descLines.forEach(line => {
+            y += 3.5;
+            if (y > H - margin) { doc.addPage(); y = margin; }
+            doc.text(line, leftColX + 2, y + 2);
+          });
+        }
+        y += 7;
+        if (y > H - margin - 10) { doc.addPage(); y = margin; }
+      });
+    } else {
+      doc.setFontSize(9);
+      doc.setTextColor(150, 150, 150);
+      doc.text('No breakthroughs selected', leftColX, y + 3);
+      doc.setTextColor(0, 0, 0);
+    }
+
+    // ===== PAGE 4: Inventory =====
+    doc.addPage();
+    y = margin;
+
+    doc.setFillColor(20, 40, 80);
+    doc.rect(0, 0, W, 10, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('INVENTORY & EQUIPMENT', W / 2, 7, { align: 'center' });
+    doc.setTextColor(0, 0, 0);
+    y = 14;
+
+    if (inventory && inventory.length > 0) {
+      // Table header
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'bold');
+      doc.setFillColor(240, 240, 250);
+      doc.rect(leftColX, y - 2.5, contentW, 5, 'F');
+      const invCols = [
+        { key: 'Item', x: leftColX + 2, w: 70 },
+        { key: 'Type', x: leftColX + 74, w: 30 },
+        { key: 'Qty', x: leftColX + 106, w: 10 },
+        { key: 'Burden', x: leftColX + 118, w: 14 },
+        { key: 'Cost', x: leftColX + 134, w: 18 },
+        { key: 'Total', x: leftColX + 154, w: 18 }
+      ];
+      invCols.forEach(c => doc.text(c.key, c.x, y));
+      y += 4;
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      let totalBurden = 0;
+      let totalCost = 0;
+      inventory.forEach(entry => {
+        const item = entry.item || {};
+        const qty = entry.quantity || 1;
+        const burden = (item.burdenCost || 0) * qty;
+        const cost = (item.climCost || 0) * qty;
+        totalBurden += burden;
+        totalCost += cost;
+
+        invCols.forEach(c => {
+          const val = c.key === 'Item' ? safe(item.name) :
+                      c.key === 'Type' ? safe(item.subType) :
+                      c.key === 'Qty' ? String(qty) :
+                      c.key === 'Burden' ? String(burden) :
+                      c.key === 'Cost' ? String(item.climCost || 0) :
+                      String(cost);
+          doc.text(val, c.x, y);
+        });
+        y += 4.5;
+        if (y > H - margin - 15) { doc.addPage(); y = margin; }
+      });
+
+      y += 3;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.text('Total Clim Spent: ' + totalCost, leftColX, y);
+      y += 5;
+      doc.text('Total Burden: ' + totalBurden, leftColX, y);
+    } else {
+      doc.setFontSize(9);
+      doc.setTextColor(150, 150, 150);
+      doc.text('No items purchased', leftColX, y + 3);
+      doc.setTextColor(0, 0, 0);
+    }
+
+    // ===== PAGE 5: Background =====
+    doc.addPage();
+    y = margin;
+
+    doc.setFillColor(20, 40, 80);
+    doc.rect(0, 0, W, 10, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('BACKGROUND & NOTES', W / 2, 7, { align: 'center' });
+    doc.setTextColor(0, 0, 0);
+    y = 14;
+
+    if (background) {
+      sectionHeader('Background Story', leftColX, y, contentW);
+      y += 6;
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      const bgLines = doc.splitTextToSize(background, contentW - 4);
+      bgLines.forEach(line => {
+        y += 4;
+        if (y > H - margin) { doc.addPage(); y = margin; }
+        doc.text(line, leftColX + 2, y);
+      });
+      y += 8;
+    }
+
+    // Notes area
+    sectionHeader('Notes', leftColX, y, contentW);
+    y += 6;
+    const notesH = H - y - margin;
+    drawRoundedRect(leftColX, y, contentW, notesH, 1, [100, 100, 100], [255, 255, 255]);
+    doc.setFontSize(7);
+    doc.setTextColor(180, 180, 180);
+    doc.text('(Use this space for campaign notes, character development, etc.)', leftColX + 4, y + 8);
+    doc.setTextColor(0, 0, 0);
+
+    // Footer on all pages
+    const totalPages = doc.internal.getNumberOfPages();
+    for (let p = 1; p <= totalPages; p++) {
+      doc.setPage(p);
+      doc.setFontSize(6);
+      doc.setTextColor(150, 150, 150);
+      doc.text('The Lyrian Chronicles - Character Sheet', margin, H - 5);
+      doc.text('Page ' + p + ' of ' + totalPages, W - margin, H - 5, { align: 'right' });
+      doc.text('Generated: ' + new Date().toLocaleDateString(), W / 2, H - 5, { align: 'center' });
+      doc.setTextColor(0, 0, 0);
+    }
+
+    // Save
+    const safeName = (name || 'character').replace(/[^a-zA-Z0-9_-]/g, '_');
+    doc.save(safeName + '_lyrian.pdf');
+  }
+
   function reset() {
     const container = document.getElementById('summary-content');
     if (container) container.innerHTML = '';
   }
 
-  return { render, exportJSON, exportExcel, reset };
+  return { render, exportJSON, exportExcel, exportPDF, reset };
 })();

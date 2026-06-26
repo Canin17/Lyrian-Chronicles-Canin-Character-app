@@ -15,6 +15,12 @@ const StatsScene = (function() {
   let humanSubBonus = 'fitness';
   let cachedRaceName = '';
 
+  // Breakthrough stat bonuses (from Primary/Secondary Stat Training)
+  let breakthroughBonuses = {
+    pow: 0, foc: 0, agi: 0, tou: 0,
+    fitness: 0, cunning: 0, reason: 0, awareness: 0, presence: 0
+  };
+
   function setRaceData(raceName) {
     cachedRaceName = raceName.toLowerCase();
   }
@@ -114,8 +120,9 @@ const StatsScene = (function() {
       const assigned = assignments[def.id];
       const bonuses = getRaceBonuses();
       const raceBonus = bonuses[def.id] || 0;
+      const btBonus = breakthroughBonuses[def.id] || 0;
       const baseVal = assigned != null ? assigned : 0;
-      const total = baseVal + raceBonus;
+      const total = baseVal + raceBonus + btBonus;
 
       // Build dropdown options
       let optionsHtml = '<option value="">—</option>';
@@ -132,6 +139,7 @@ const StatsScene = (function() {
 
       const displayValue = assigned != null ? total : '—';
       const bonusText = raceBonus > 0 && assigned != null ? ` <span class="race-bonus">(+${raceBonus})</span>` : '';
+      const btBonusText = btBonus > 0 && assigned != null ? ` <span class="bt-bonus">(+${btBonus})</span>` : '';
 
       box.innerHTML = `
         <div class="stat-name">${def.short || def.name}</div>
@@ -140,10 +148,11 @@ const StatsScene = (function() {
             ${optionsHtml}
           </select>
         </div>
-        <div class="stat-total">${displayValue}${bonusText}</div>
+        <div class="stat-total">${displayValue}${bonusText}${btBonusText}</div>
         <div class="stat-label-row">
           <span class="stat-base-label">Base</span>
           ${raceBonus > 0 ? '<span class="stat-bonus-label">Race +1</span>' : ''}
+          ${btBonus > 0 ? `<span class="stat-bt-label">BT +${btBonus}</span>` : ''}
         </div>
       `;
 
@@ -214,12 +223,12 @@ const StatsScene = (function() {
     const bonuses = getRaceBonuses();
     const finalStats = {};
 
-    // Combine main + sub assignments with race bonuses
+    // Combine main + sub assignments with race bonuses + breakthrough bonuses
     Object.keys(mainAssignments).forEach(k => {
-      finalStats[k] = (mainAssignments[k] != null ? mainAssignments[k] : 0) + (bonuses[k] || 0);
+      finalStats[k] = (mainAssignments[k] != null ? mainAssignments[k] : 0) + (bonuses[k] || 0) + (breakthroughBonuses[k] || 0);
     });
     Object.keys(subAssignments).forEach(k => {
-      finalStats[k] = (subAssignments[k] != null ? subAssignments[k] : 0) + (bonuses[k] || 0);
+      finalStats[k] = (subAssignments[k] != null ? subAssignments[k] : 0) + (bonuses[k] || 0) + (breakthroughBonuses[k] || 0);
     });
 
     const derived = calculateDerivedStats(finalStats);
@@ -271,20 +280,31 @@ const StatsScene = (function() {
   }
 
   /**
-   * Get final stats (base + race bonuses)
+   * Get final stats (base + race bonuses + breakthrough bonuses)
    */
   function getStats() {
     const bonuses = getRaceBonuses();
     const finalStats = {};
 
     Object.keys(mainAssignments).forEach(k => {
-      finalStats[k] = (mainAssignments[k] != null ? mainAssignments[k] : 0) + (bonuses[k] || 0);
+      finalStats[k] = (mainAssignments[k] != null ? mainAssignments[k] : 0) + (bonuses[k] || 0) + (breakthroughBonuses[k] || 0);
     });
     Object.keys(subAssignments).forEach(k => {
-      finalStats[k] = (subAssignments[k] != null ? subAssignments[k] : 0) + (bonuses[k] || 0);
+      finalStats[k] = (subAssignments[k] != null ? subAssignments[k] : 0) + (bonuses[k] || 0) + (breakthroughBonuses[k] || 0);
     });
 
     return finalStats;
+  }
+
+  /**
+   * Set breakthrough stat bonuses from the BreakthroughScene.
+   * Called when returning from breakthroughs step or when stat training choices change.
+   */
+  function setBreakthroughBonuses(bonuses) {
+    if (bonuses && typeof bonuses === 'object') {
+      breakthroughBonuses = { ...bonuses };
+    }
+    renderAll();
   }
 
   /**
@@ -358,6 +378,7 @@ const StatsScene = (function() {
     humanMainBonus = 'tou';
     humanSubBonus = 'fitness';
     cachedRaceName = '';
+    breakthroughBonuses = { pow: 0, foc: 0, agi: 0, tou: 0, fitness: 0, cunning: 0, reason: 0, awareness: 0, presence: 0 };
     // Clear human bonus listener guards so re-init can re-bind
     const mainSelect = document.getElementById('human-main-select');
     const subSelect = document.getElementById('human-sub-select');
@@ -366,5 +387,5 @@ const StatsScene = (function() {
     renderAll();
   }
 
-  return { init, getStats, getBaseStats, reset, setRaceData, getHumanChoices, getRaceBonuses, restoreState };
+  return { init, getStats, getBaseStats, reset, setRaceData, getHumanChoices, getRaceBonuses, restoreState, setBreakthroughBonuses };
 })();

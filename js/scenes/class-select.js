@@ -480,7 +480,7 @@ const ClassSelectScene = (function() {
   }
 
   function equipClass(cls) {
-    // Check eligibility before equipping
+    // Check eligibility — show warning if requirements not met, but still allow equip
     const charData = window.getCharacterData ? window.getCharacterData() : {};
     if (!isClassEligible(cls, charData)) {
       const reqEl = document.getElementById('classPreviewRequirements');
@@ -490,7 +490,7 @@ const ClassSelectScene = (function() {
           gsap.fromTo(reqEl, { scale: 1.05 }, { scale: 1, duration: 0.3 });
         }
       }
-      return;
+      // Allow equip despite unmet requirements (warning shown above)
     }
 
     const existing = equippedClasses.find(ec => ec.class.name === cls.name);
