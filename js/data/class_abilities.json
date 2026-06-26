@@ -14,7 +14,7 @@
     },
     "L4": {
       "name": "Arcane Barrier II",
-      "description": "You create a Magical Barrier that absorbs damage until it breaks.&nbsp; The barrier has HP equal to 15 + your Focus. The barrier has a Guard of 0 + your guard and any damage it takes is subtracted from the barrier\u2019s HP. When the barrier breaks, any remaining damage is subtracted from your HP. The barrier otherwise lasts until the start of your next turn or until you take any action other than the Block action. If using the Block action while the barrier is active, the guard of the barrier also increases.&nbsp; This spell does not provoke attacks of opportunity and does not protect against true damage."
+      "description": "You create a Magical Barrier that absorbs damage until it breaks.&nbsp; The barrier has HP equal to 15 + your Focus. The barrier has a Guard of 0 + your guard and any damage it takes is subtracted from the barrier’s HP. When the barrier breaks, any remaining damage is subtracted from your HP. The barrier otherwise lasts until the start of your next turn or until you take any action other than the Block action. If using the Block action while the barrier is active, the guard of the barrier also increases.&nbsp; This spell does not provoke attacks of opportunity and does not protect against true damage."
     },
     "L5": {
       "name": "Skills",
@@ -48,7 +48,7 @@
     },
     "L4": {
       "name": "Angel's Embrace",
-      "description": "You grant the target ally Angel\u2019s Embrace , which grants a Shield against the triggering attack that blocks damage equal to 5 + (2 x Toughness). This Spell does not provoke attacks of opportunity."
+      "description": "You grant the target ally Angel’s Embrace , which grants a Shield against the triggering attack that blocks damage equal to 5 + (2 x Toughness). This Spell does not provoke attacks of opportunity."
     },
     "L5": {
       "name": "Skills",
@@ -64,7 +64,7 @@
     },
     "L8": {
       "name": "Miracle: Sanctuary",
-      "description": "You create an immobile sphere of protection in a 5ft radius that prevents all entry into and out of it. The Shield has health points equal to 20 + Toughness x 8. Attacks and Magical Effects cannot be casted out of or into the Sanctuary, which functions as line-of-sight blocking for the purposes of abilities. Sanctuary lasts until the start of your next turn unless you pay Upkeep (1 Mana). The Spell also ends when the Shield\u2019s health points are reduced to zero. This spell does not provoke attacks of opportunity."
+      "description": "You create an immobile sphere of protection in a 5ft radius that prevents all entry into and out of it. The Shield has health points equal to 20 + Toughness x 8. Attacks and Magical Effects cannot be casted out of or into the Sanctuary, which functions as line-of-sight blocking for the purposes of abilities. Sanctuary lasts until the start of your next turn unless you pay Upkeep (1 Mana). The Spell also ends when the Shield’s health points are reduced to zero. This spell does not provoke attacks of opportunity."
     }
   },
   "Adventurer": {
@@ -74,7 +74,7 @@
     },
     "L2": {
       "name": "Power Jump",
-      "description": "You jump up to 60ft vertically straight up into the air.&nbsp; You can additionally move 5ft horizontally afterwards.&nbsp; Unless flying, you automatically land straight down from your position at the end of your turn or for 0 AP, this falling movement does not provoke attacks of opportunity and you don\u2019t take fall damage from it. If you land inside an occupied square, you are shunted 5ft into an empty square (your original one if possible). You cannot make any non-teleport movement actions while in the air unless you\u2019re flying, but can still take other actions (such as attacking) while airborne."
+      "description": "You jump up to 60ft vertically straight up into the air.&nbsp; You can additionally move 5ft horizontally afterwards.&nbsp; Unless flying, you automatically land straight down from your position at the end of your turn or for 0 AP, this falling movement does not provoke attacks of opportunity and you don’t take fall damage from it. If you land inside an occupied square, you are shunted 5ft into an empty square (your original one if possible). You cannot make any non-teleport movement actions while in the air unless you’re flying, but can still take other actions (such as attacking) while airborne."
     },
     "L3": {
       "name": "Mana Razor",
@@ -176,7 +176,7 @@
     },
     "L2": {
       "name": "Psychometry",
-      "description": "By touching the door to a room you gain information as to the physical layout of the room and objects within it as if you were able to see inside of the room.&nbsp; By reading the Auras of all creatures within the room, you can also get a general idea of any creatures within, which you see as blobs of light\u2014brighter for more powerful auras.&nbsp; You can also use this effect on containers as well to get a general idea of the layout within containers like backpacks, and chests.&nbsp; This ability can be used at unlimited range as long as a creature under the effect of Mind Connection touches the door or container."
+      "description": "By touching the door to a room you gain information as to the physical layout of the room and objects within it as if you were able to see inside of the room.&nbsp; By reading the Auras of all creatures within the room, you can also get a general idea of any creatures within, which you see as blobs of light—brighter for more powerful auras.&nbsp; You can also use this effect on containers as well to get a general idea of the layout within containers like backpacks, and chests.&nbsp; This ability can be used at unlimited range as long as a creature under the effect of Mind Connection touches the door or container."
     },
     "L3": {
       "name": "Conduit",
@@ -200,7 +200,7 @@
     },
     "L8": {
       "name": "Spirit Circuit Crash",
-      "description": "You send a wave of magic energy onto the target, afflicting them with Spirit Circuit Crash\u2014 jamming their Spirit Circuits.&nbsp; The target cannot use Secret Arts or any abilities that require mana until the end of their next turn.&nbsp; The target may choose to take damage equal to your heavy attack damage to cancel this effect. You can cast this through a creature affected by Mind Connection."
+      "description": "You send a wave of magic energy onto the target, afflicting them with Spirit Circuit Crash— jamming their Spirit Circuits.&nbsp; The target cannot use Secret Arts or any abilities that require mana until the end of their next turn.&nbsp; The target may choose to take damage equal to your heavy attack damage to cancel this effect. You can cast this through a creature affected by Mind Connection."
     }
   },
   "Agrarian": {
@@ -214,11 +214,11 @@
     },
     "L3": {
       "name": "Terracing",
-      "description": "You raise the ground around you in a 25x25ft square centered on yourself. The ground is raised upwards by 10ft. Can only be used on natural ground and cannot be used on ground that\u2019s already been raised. Overcharge: You may spend 1 AP and 1 Mana to raise it upwards by another 10ft."
+      "description": "You raise the ground around you in a 25x25ft square centered on yourself. The ground is raised upwards by 10ft. Can only be used on natural ground and cannot be used on ground that’s already been raised. Overcharge: You may spend 1 AP and 1 Mana to raise it upwards by another 10ft."
     },
     "L4": {
       "name": "Four Field System",
-      "description": "Make a crafting check. Afterwards, whenever you use an ability for crafting that you haven\u2019t used before in this crafting session, it gains a +2 bonus to the crafting points it gives."
+      "description": "Make a crafting check. Afterwards, whenever you use an ability for crafting that you haven’t used before in this crafting session, it gains a +2 bonus to the crafting points it gives."
     },
     "L5": {
       "name": "Skills",
@@ -308,11 +308,11 @@
   "Alkahest": {
     "L1": {
       "name": "Transmutation Tricks",
-      "description": "For 1 AP, You can create small items using transmuting to provide temporary comforts and curiosities\u2014 a cup to drink out of, a chair to sit down on, a figurine etc.  These items cannot have significant gameplay factors (such as a key or a tool).  If you\u2019d like to create something small to give away or sell, you must utilize x amount of commodities of whatever quantity and type the GM decides. You may use your transmuter abilities a second time during a craft or co craft. You may use the following abilities:"
+      "description": "For 1 AP, You can create small items using transmuting to provide temporary comforts and curiosities— a cup to drink out of, a chair to sit down on, a figurine etc.  These items cannot have significant gameplay factors (such as a key or a tool).  If you’d like to create something small to give away or sell, you must utilize x amount of commodities of whatever quantity and type the GM decides. You may use your transmuter abilities a second time during a craft or co craft. You may use the following abilities:"
     },
     "L2": {
       "name": "Transmute Effective Implement",
-      "description": "From the surrounding material you construct an \u201cEffective Implement\u201d, granting you a +5 to the skill of your choice.&nbsp; You must explain how this implement will be effective towards the check using the relevant skill (example:&nbsp; creating a springboard to jump higher with athletics) and the GM determines the validity or this ability has no effect.&nbsp; Does not work with crafting or gathering skills. This implement lasts until you have attempted the specific check it was created for.&nbsp; You may also spend 1 RP instead of 1 AP for this ability. Overcharge :&nbsp; You can spend 1 additional mana to increase the skill bonus to +10."
+      "description": "From the surrounding material you construct an “Effective Implement”, granting you a +5 to the skill of your choice.&nbsp; You must explain how this implement will be effective towards the check using the relevant skill (example:&nbsp; creating a springboard to jump higher with athletics) and the GM determines the validity or this ability has no effect.&nbsp; Does not work with crafting or gathering skills. This implement lasts until you have attempted the specific check it was created for.&nbsp; You may also spend 1 RP instead of 1 AP for this ability. Overcharge :&nbsp; You can spend 1 additional mana to increase the skill bonus to +10."
     },
     "L3": {
       "name": "Alchemical Detonation",
@@ -320,7 +320,7 @@
     },
     "L4": {
       "name": "Siphon Material",
-      "description": "Errand. You siphon the alloyed material from an item if possible, removing the effects that the original item would\u2019ve had.&nbsp;If you cannot remove the effect then the skill fails.&nbsp; You remove the alloy and regain its original form, while also maintaining the form of the item minus the effect. The special material is retrieved in raw units."
+      "description": "Errand. You siphon the alloyed material from an item if possible, removing the effects that the original item would’ve had.&nbsp;If you cannot remove the effect then the skill fails.&nbsp; You remove the alloy and regain its original form, while also maintaining the form of the item minus the effect. The special material is retrieved in raw units."
     },
     "L5": {
       "name": "Skills",
@@ -336,7 +336,7 @@
     },
     "L8": {
       "name": "Secret Art: Transmute Proto Armatae",
-      "description": "You touch the ground, transmuting a Proto Armatae of your own design.&nbsp; The Proto Armatae lifts you up and immediately encases you into its cockpit. &nbsp; The Proto Armatae is 15ft tall and is a large creature that occupies a 15ftx15ft space.&nbsp; All creatures and moveable objects surrounding the Proto Armatae are pushed back away from its zone of control in a burst of steam.&nbsp; The Armatae also gains a temporary shield with 20 HP that disappears at the start of your next turn. You must use your own actions to cause the Proto Armatae to move and attack.&nbsp; You can eject from a transmutation hatch on the top at the center of the Proto Armatae for 1 AP, in which the Proto Armatae stops functioning.&nbsp; When you re-enter you must close the hatch for 1 AP before the Proto Armatae functions again.&nbsp; The Proto Armatae has health equal to 15 + 5x Focus and it uses your AP and RP for actions.&nbsp; You can channel your Transmuter abilities through the Proto Armatae, and Transmute Weapon can create a giant sized weapon for the Armatae to use. You may also spend 1 RP to use this ability instead of the AP cost. Only usable once.&nbsp; You regain the use of this ability when you gain an Interlude Point. &nbsp; Proto Armatae HP: \u2013 Evasion: 9/19 Guard: 4/14 &nbsp; Mini Transmutation Cannon (Right Arm) Cost: 0 AP Range: 40ft Description:&nbsp; Fires a mini transmutation cannon of deconstructive energy making a light attack against a target.&nbsp; Doesn\u2019t provoke attacks of opportunity. &nbsp; Humanoid Gripper (Left Arm) Description: Humanoid Gripper can make all basic attacks.&nbsp; It is proficient in any transmuted weapon it holds.&nbsp; Its regular melee attacks deal light weapon damage and any transmuted weapon it wields gains the benefit of that weapon category."
+      "description": "You touch the ground, transmuting a Proto Armatae of your own design.&nbsp; The Proto Armatae lifts you up and immediately encases you into its cockpit. &nbsp; The Proto Armatae is 15ft tall and is a large creature that occupies a 15ftx15ft space.&nbsp; All creatures and moveable objects surrounding the Proto Armatae are pushed back away from its zone of control in a burst of steam.&nbsp; The Armatae also gains a temporary shield with 20 HP that disappears at the start of your next turn. You must use your own actions to cause the Proto Armatae to move and attack.&nbsp; You can eject from a transmutation hatch on the top at the center of the Proto Armatae for 1 AP, in which the Proto Armatae stops functioning.&nbsp; When you re-enter you must close the hatch for 1 AP before the Proto Armatae functions again.&nbsp; The Proto Armatae has health equal to 15 + 5x Focus and it uses your AP and RP for actions.&nbsp; You can channel your Transmuter abilities through the Proto Armatae, and Transmute Weapon can create a giant sized weapon for the Armatae to use. You may also spend 1 RP to use this ability instead of the AP cost. Only usable once.&nbsp; You regain the use of this ability when you gain an Interlude Point. &nbsp; Proto Armatae HP: – Evasion: 9/19 Guard: 4/14 &nbsp; Mini Transmutation Cannon (Right Arm) Cost: 0 AP Range: 40ft Description:&nbsp; Fires a mini transmutation cannon of deconstructive energy making a light attack against a target.&nbsp; Doesn’t provoke attacks of opportunity. &nbsp; Humanoid Gripper (Left Arm) Description: Humanoid Gripper can make all basic attacks.&nbsp; It is proficient in any transmuted weapon it holds.&nbsp; Its regular melee attacks deal light weapon damage and any transmuted weapon it wields gains the benefit of that weapon category."
     }
   },
   "Amanita": {
@@ -350,7 +350,7 @@
     },
     "L3": {
       "name": "Hyphal Force",
-      "description": "Your spore symbiote surges the host\u2019s muscles with temporary power. When the host of Spore Symbiote is making a melee attack, increase the damage by your Light Attack Damage.&nbsp;The extra damage dealt is Earth Damage. This spell does not provoke attacks of opportunity."
+      "description": "Your spore symbiote surges the host’s muscles with temporary power. When the host of Spore Symbiote is making a melee attack, increase the damage by your Light Attack Damage.&nbsp;The extra damage dealt is Earth Damage. This spell does not provoke attacks of opportunity."
     },
     "L4": {
       "name": "Spore Burst",
@@ -370,7 +370,7 @@
     },
     "L8": {
       "name": "Secret Art: Mushroomize",
-      "description": "You fill your target with mycelium from your spore symbiote, removing the Downed state from them and preventing them from entering the downed State while this effect lasts. Removing Spore Symbiote from the target cancels this effect. This effect ends at the start of your next turn unless you spend 1 mana to continue the effect. &nbsp;When paying upkeep, if the target is below 0 HP, heal the target for your power + 3. This effect ends if the target\u2019s HP is reduced to negative their maximum HP amount. You can use 1 RP instead of 2 AP to use this ability."
+      "description": "You fill your target with mycelium from your spore symbiote, removing the Downed state from them and preventing them from entering the downed State while this effect lasts. Removing Spore Symbiote from the target cancels this effect. This effect ends at the start of your next turn unless you spend 1 mana to continue the effect. &nbsp;When paying upkeep, if the target is below 0 HP, heal the target for your power + 3. This effect ends if the target’s HP is reduced to negative their maximum HP amount. You can use 1 RP instead of 2 AP to use this ability."
     }
   },
   "Angelblooded": {
@@ -418,7 +418,7 @@
     },
     "L3": {
       "name": "Half Restore",
-      "description": "You heal your summoned animal for 11 + Power x 2 HP. It also removes 1 negative effect from it. If the amount healed exceeds the target\u2019s maximum HP, any extra HP is converted into temporary HP."
+      "description": "You heal your summoned animal for 11 + Power x 2 HP. It also removes 1 negative effect from it. If the amount healed exceeds the target’s maximum HP, any extra HP is converted into temporary HP."
     },
     "L4": {
       "name": "Independent Action",
@@ -580,7 +580,7 @@
   "Armiger": {
     "L1": {
       "name": "Dimensional Armory",
-      "description": "You can create a pocket dimension with Dimensional Armory.  Creating the pocket dimension and establishing its door takes 1 week and costs 1 errand point.  The entry point can be any regular door that you fit through.  When the creator opens this door, they can decide instead to access the Dimensional Armory, which is a 15ft x 15ft closet.  This closet can hold up to 6 Burden worth of items.  Some magic items can be rejected by the dimensional armory (GM\u2019s discretion), such as Divine Arms not bonded to you.  If the owner of a Dimensional Armory dies, everything inside of it appears in the next unoccupied space possible next to the owner. Any burden reducing items (such as an alchemy rig) in the armory have no effect."
+      "description": "You can create a pocket dimension with Dimensional Armory.  Creating the pocket dimension and establishing its door takes 1 week and costs 1 errand point.  The entry point can be any regular door that you fit through.  When the creator opens this door, they can decide instead to access the Dimensional Armory, which is a 15ft x 15ft closet.  This closet can hold up to 6 Burden worth of items.  Some magic items can be rejected by the dimensional armory (GM’s discretion), such as Divine Arms not bonded to you.  If the owner of a Dimensional Armory dies, everything inside of it appears in the next unoccupied space possible next to the owner. Any burden reducing items (such as an alchemy rig) in the armory have no effect."
     },
     "L2": {
       "name": "Send To Armory",
@@ -592,7 +592,7 @@
     },
     "L4": {
       "name": "Dimensional Armory Expansion",
-      "description": "Your burden limit for your Dimensional Armory is increased by 4.&nbsp; Ahead of time, you designate one armor, one cloak and one weapon/shield or two weapons or one two-handed weapon that are inside of your Dimensional Armory as a \u201cdimensional set\u201d, this process takes 15 minutes of concentration.&nbsp; You can only have one dimensional set at a time."
+      "description": "Your burden limit for your Dimensional Armory is increased by 4.&nbsp; Ahead of time, you designate one armor, one cloak and one weapon/shield or two weapons or one two-handed weapon that are inside of your Dimensional Armory as a “dimensional set”, this process takes 15 minutes of concentration.&nbsp; You can only have one dimensional set at a time."
     },
     "L5": {
       "name": "Skills",
@@ -622,7 +622,7 @@
     },
     "L3": {
       "name": "Share Armor",
-      "description": "Your ally may treat their guard and block as if they were wearing your armor until the end of the current creature\u2019s turn. If multiple creatures of the same type move on the same initiative, it lasts through all of their turns. Any temporary increases to the guard/block of this armor (such as through reinforce armor) is not transferred over."
+      "description": "Your ally may treat their guard and block as if they were wearing your armor until the end of the current creature’s turn. If multiple creatures of the same type move on the same initiative, it lasts through all of their turns. Any temporary increases to the guard/block of this armor (such as through reinforce armor) is not transferred over."
     },
     "L4": {
       "name": "Thermal Quench",
@@ -830,7 +830,7 @@
     },
     "L4": {
       "name": "Shooting Form",
-      "description": "You transform a melee weapon you\u2019re holding into a Wand Channeling Weapon or return a transformed weapon back to normal. While transformed, the weapon keeps any relevant enchants and functions exactly like how a wand would. You are considered proficient in this wand, even if you normally wouldn\u2019t be and can fire Arcane Elemental shots with it, even if you normally wouldn\u2019t be able to. Lasts until the end of the encounter, for 5 minutes or until the weapon leaves your possession."
+      "description": "You transform a melee weapon you’re holding into a Wand Channeling Weapon or return a transformed weapon back to normal. While transformed, the weapon keeps any relevant enchants and functions exactly like how a wand would. You are considered proficient in this wand, even if you normally wouldn’t be and can fire Arcane Elemental shots with it, even if you normally wouldn’t be able to. Lasts until the end of the encounter, for 5 minutes or until the weapon leaves your possession."
     },
     "L5": {
       "name": "Skills",
@@ -864,7 +864,7 @@
     },
     "L4": {
       "name": "Unconventional Weapon",
-      "description": "You may treat the weapon you\u2019re currently wielding as a weapon of a different group for the next attack in addition to its normal group. In addition to receiving the base weapon properties of both weapon groups, this allows it to meet the requirements of abilities that require a certain group, and allows you to change its damage type to the chosen weapon\u2019s damage type. The GM may rule that some abilities still cannot be performed with your equipped weapon."
+      "description": "You may treat the weapon you’re currently wielding as a weapon of a different group for the next attack in addition to its normal group. In addition to receiving the base weapon properties of both weapon groups, this allows it to meet the requirements of abilities that require a certain group, and allows you to change its damage type to the chosen weapon’s damage type. The GM may rule that some abilities still cannot be performed with your equipped weapon."
     },
     "L5": {
       "name": "Skills",
@@ -886,7 +886,7 @@
   "Berserker": {
     "L1": {
       "name": "Fallen Friend",
-      "description": "When an Heroic tier ally reaches 0 HP, you may immediately enter Rage Stance for 0 AP and RP as well as 0 mana. You can use this even if you don\u2019t have the Rage ability yet."
+      "description": "When an Heroic tier ally reaches 0 HP, you may immediately enter Rage Stance for 0 AP and RP as well as 0 mana. You can use this even if you don’t have the Rage ability yet."
     },
     "L2": {
       "name": "Rage Stance",
@@ -966,7 +966,7 @@
     },
     "L4": {
       "name": "Focused Power",
-      "description": "When you\u2019re about to take the extra damage from Inexorable Shadow Stance, you may choose to maximize the damage instead of rolling. Affects both the self damage and the damage you deal with it."
+      "description": "When you’re about to take the extra damage from Inexorable Shadow Stance, you may choose to maximize the damage instead of rolling. Affects both the self damage and the damage you deal with it."
     },
     "L5": {
       "name": "Skills",
@@ -988,7 +988,7 @@
   "Blacksmith": {
     "L1": {
       "name": "Craft Weapons",
-      "description": "You gain Blacksmith Core Crafting Abilities. You can craft using the Iron and Tamahagane base materials, as well as any alloys. You may use an IP to perform an EP action tied to this key ability 4 times. You can use a Smith\u2019s Hammer as a crafting tool for blacksmithing crafts. You may also use it as a Bludgeoning weapon in which you are proficient."
+      "description": "You gain Blacksmith Core Crafting Abilities. You can craft using the Iron and Tamahagane base materials, as well as any alloys. You may use an IP to perform an EP action tied to this key ability 4 times. You can use a Smith’s Hammer as a crafting tool for blacksmithing crafts. You may also use it as a Bludgeoning weapon in which you are proficient."
     },
     "L2": {
       "name": "Repair Weapon",
@@ -1050,7 +1050,7 @@
     },
     "L8": {
       "name": "Secret Art: Life Sacrifice",
-      "description": "You lose HP until your HP reaches 1. Target ally within range recovers that much HP. Any HP that exceeds the target\u2019s max HP becomes temporary HP. This HP loss cannot be mitigated in any way and ignores temporary HP. This does not trigger effects that would trigger upon taking damage."
+      "description": "You lose HP until your HP reaches 1. Target ally within range recovers that much HP. Any HP that exceeds the target’s max HP becomes temporary HP. This HP loss cannot be mitigated in any way and ignores temporary HP. This does not trigger effects that would trigger upon taking damage."
     }
   },
   "Bodyguard": {
@@ -1060,7 +1060,7 @@
     },
     "L2": {
       "name": "Shelter",
-      "description": "The attack targeting your VIP instead targets you. You may use this even if you\u2019re also a target of the attack and both attacks will resolve against you. You also gain the benefits of the Block action against the triggering attack."
+      "description": "The attack targeting your VIP instead targets you. You may use this even if you’re also a target of the attack and both attacks will resolve against you. You also gain the benefits of the Block action against the triggering attack."
     },
     "L3": {
       "name": "Temporary Protection",
@@ -1220,7 +1220,7 @@
     },
     "L8": {
       "name": "Trample",
-      "description": "You may activate this after moving at least 20ft in a movement action to gain Trample until you stop moving. Abilities with the Teleport keyword do not apply for this, but declaring multiple AP to move at the same time counts as 1 action. While under the effects of trample, you don't provoke attacks of opportunity by moving and you can move into enemies that are at least one size smaller than your mount. An enemy may spend 1 RP to move out of the way to an empty spot within 5ft of them. If they don\u2019t move out of the way, you make a Sure Hit Light attack against them with your mount, using your mount\u2019s stats. On damage, you knock them prone into the square you came from and keep moving, occupying the square they were in. Otherwise your movement action ends. Each enemy can only be affected by trample once per activation of the ability, regardless of whether they are attacked or move out of it."
+      "description": "You may activate this after moving at least 20ft in a movement action to gain Trample until you stop moving. Abilities with the Teleport keyword do not apply for this, but declaring multiple AP to move at the same time counts as 1 action. While under the effects of trample, you don't provoke attacks of opportunity by moving and you can move into enemies that are at least one size smaller than your mount. An enemy may spend 1 RP to move out of the way to an empty spot within 5ft of them. If they don’t move out of the way, you make a Sure Hit Light attack against them with your mount, using your mount’s stats. On damage, you knock them prone into the square you came from and keep moving, occupying the square they were in. Otherwise your movement action ends. Each enemy can only be affected by trample once per activation of the ability, regardless of whether they are attacked or move out of it."
     }
   },
   "Chronofighter": {
@@ -1234,7 +1234,7 @@
     },
     "L3": {
       "name": "Delayed Hit",
-      "description": "You make a Heavy Attack against the target, but don\u2019t deal damage. On hit, even if it was guarded, the target takes Heavy Damage at the start of your next turn. (This delayed damage is calculated of the target\u2019s Guard at the time it\u2019s applied, not when the attack hit)"
+      "description": "You make a Heavy Attack against the target, but don’t deal damage. On hit, even if it was guarded, the target takes Heavy Damage at the start of your next turn. (This delayed damage is calculated of the target’s Guard at the time it’s applied, not when the attack hit)"
     },
     "L4": {
       "name": "Attacks from the Past",
@@ -1322,7 +1322,7 @@
     },
     "L8": {
       "name": "Secret Art: Titan Blade",
-      "description": "You greatly increase the size and weight of your weapons, then slam them down in a direction. You make a melee Heavy attack against all enemies in a 15ft wide line up to the range. On damage, a target is knocked prone. &nbsp; After the initial hit, a shockwave follows. You make another Heavy attack against any enemy still in the original line\u2019s range. This second attack has the Sure Hit and Full Pierce qualities against a prone target."
+      "description": "You greatly increase the size and weight of your weapons, then slam them down in a direction. You make a melee Heavy attack against all enemies in a 15ft wide line up to the range. On damage, a target is knocked prone. &nbsp; After the initial hit, a shockwave follows. You make another Heavy attack against any enemy still in the original line’s range. This second attack has the Sure Hit and Full Pierce qualities against a prone target."
     }
   },
   "Cryomancer": {
@@ -1374,7 +1374,7 @@
     },
     "L4": {
       "name": "Craft Pemmican",
-      "description": "Errand. You turn up to 1000u of food into 25 Pemmican Bars (40u of food per bar), which are incredibly shelf stable and easy to eat.&nbsp; They perform about the same as Military Rations but they are wrapped by special leaves that deter pests\u2014useful and consistent adventure food. You may also use this as an IP action to convert up to 2000u of food into 50 Pemmican bars."
+      "description": "Errand. You turn up to 1000u of food into 25 Pemmican Bars (40u of food per bar), which are incredibly shelf stable and easy to eat.&nbsp; They perform about the same as Military Rations but they are wrapped by special leaves that deter pests—useful and consistent adventure food. You may also use this as an IP action to convert up to 2000u of food into 50 Pemmican bars."
     },
     "L5": {
       "name": "Skills",
@@ -1390,7 +1390,7 @@
     },
     "L8": {
       "name": "Pepper Spray",
-      "description": "You reach into your pocket and pull out a handful of ground chili pepper that you throw in front of you in a 15ft cube.&nbsp;Inflicts all targets with&nbsp; Pepper Spray , causing Blinded 4 and the inability to smell.&nbsp; The target or an ally of the target within 5ft can spend 1 AP to wipe it off.&nbsp;Otherwise the effect ends at the end of the target\u2019s next turn. You may spend 1 RP and 1 additional mana instead of paying the AP cost."
+      "description": "You reach into your pocket and pull out a handful of ground chili pepper that you throw in front of you in a 15ft cube.&nbsp;Inflicts all targets with&nbsp; Pepper Spray , causing Blinded 4 and the inability to smell.&nbsp; The target or an ally of the target within 5ft can spend 1 AP to wipe it off.&nbsp;Otherwise the effect ends at the end of the target’s next turn. You may spend 1 RP and 1 additional mana instead of paying the AP cost."
     }
   },
   "Cultivator": {
@@ -1424,7 +1424,7 @@
     },
     "L8": {
       "name": "Sword Riding Art",
-      "description": "You jump onto a light sword, versatile melee weapon, greatshield, bayonet musket or two-handed melee weapon you\u2019re carrying and use it to move around. While riding on top of the sword, you gain Flight. You can fly this way for up to 5 minutes. If you take damage while flying higher than 5ft above the ground, your altitude drops by 20ft. If this would reduce your altitude to the point where you touch the ground, you may hop off your weapon and put it back into your hand if possible for 0 RP. After this happens, your Sword Riding ends. If the attack that reduced your HP came from a flying creature other than yourself, you do not lose altitude but instead become unbalanced. If you are knocked back by an effect, you must make a save against the attacker's potency. Else, you are blown off your sword."
+      "description": "You jump onto a light sword, versatile melee weapon, greatshield, bayonet musket or two-handed melee weapon you’re carrying and use it to move around. While riding on top of the sword, you gain Flight. You can fly this way for up to 5 minutes. If you take damage while flying higher than 5ft above the ground, your altitude drops by 20ft. If this would reduce your altitude to the point where you touch the ground, you may hop off your weapon and put it back into your hand if possible for 0 RP. After this happens, your Sword Riding ends. If the attack that reduced your HP came from a flying creature other than yourself, you do not lose altitude but instead become unbalanced. If you are knocked back by an effect, you must make a save against the attacker's potency. Else, you are blown off your sword."
     }
   },
   "Curse Knight": {
@@ -1506,7 +1506,7 @@
     },
     "L3": {
       "name": "Spiritual Reading",
-      "description": "You are able to check the aura of a creature or object within range.&nbsp; If you check a creature, you can see whether a creature is non-heroic, weaker than you, around the same as you, stronger than you or much stronger than you. The GM may also give you their Spirit Core value if it has one. You also are aware if someone is concealing their spirit core level, but can\u2019t get an accurate reading of their strength if they are. In addition, you are able to see their mana % until the end of the encounter. If you check an item, you can determine whether it\u2019s magical in nature. If it is, you may immediately make a Magic check against it to determine its effect as if you were using Decipher Magic with a +5 bonus."
+      "description": "You are able to check the aura of a creature or object within range.&nbsp; If you check a creature, you can see whether a creature is non-heroic, weaker than you, around the same as you, stronger than you or much stronger than you. The GM may also give you their Spirit Core value if it has one. You also are aware if someone is concealing their spirit core level, but can’t get an accurate reading of their strength if they are. In addition, you are able to see their mana % until the end of the encounter. If you check an item, you can determine whether it’s magical in nature. If it is, you may immediately make a Magic check against it to determine its effect as if you were using Decipher Magic with a +5 bonus."
     },
     "L4": {
       "name": "Talisman Recursion",
@@ -1526,7 +1526,7 @@
     },
     "L8": {
       "name": "Secret Art: Within This Ink, The Perfect Answer",
-      "description": "You draw and immediately use a special talisman. This talisman may have any spell in the base game on it (meaning it\u2019s on the website), though it cannot be a secret or esoteric art. Any costs for this spell must be paid as normal. You must pay the required calligraphy units as if you made the spell yourself. If you can\u2019t pay the required amount, you go into \u2018debt\u2019. While in debt, you cannot create any more talisman or use this ability. To clear the debt, you must pay the required amount of calligraphy units at any point. After you use this ability, you cannot do so again until the end of the arc."
+      "description": "You draw and immediately use a special talisman. This talisman may have any spell in the base game on it (meaning it’s on the website), though it cannot be a secret or esoteric art. Any costs for this spell must be paid as normal. You must pay the required calligraphy units as if you made the spell yourself. If you can’t pay the required amount, you go into ‘debt’. While in debt, you cannot create any more talisman or use this ability. To clear the debt, you must pay the required amount of calligraphy units at any point. After you use this ability, you cannot do so again until the end of the arc."
     }
   },
   "Dark Priest": {
@@ -1574,7 +1574,7 @@
     },
     "L3": {
       "name": "Countershot",
-      "description": "You may make a Precise Attack against the incoming attack. If your accuracy check matches or beats the enemy\u2019s accuracy check, you shoot down the incoming arrow and the attack is negated."
+      "description": "You may make a Precise Attack against the incoming attack. If your accuracy check matches or beats the enemy’s accuracy check, you shoot down the incoming arrow and the attack is negated."
     },
     "L4": {
       "name": "Aimed Shot",
@@ -1782,7 +1782,7 @@
     },
     "L4": {
       "name": "Static Discharge",
-      "description": "A single target in range must make a save or the Static stacks on them immediately discharge, triggering the Static effect as though it was the end of the target\u2019s turn. Whether the target succeeds at or fails the save, they lose all Static charges."
+      "description": "A single target in range must make a save or the Static stacks on them immediately discharge, triggering the Static effect as though it was the end of the target’s turn. Whether the target succeeds at or fails the save, they lose all Static charges."
     },
     "L5": {
       "name": "Skills",
@@ -1934,7 +1934,7 @@
     },
     "L8": {
       "name": "Secret Art: Divine Judgement",
-      "description": "You make a Heavy attack that deals Holy damage against the target. If your target\u2019s HP is lower than the max damage your attack would deal, this attack gains Full Pierce and does maximum damage instead of rolling. This calculation only involves your base damage (Base weapon damage + the power). Any other effects added to the damage such as Heavy Blade's bonus damage, Anathema on target etc do not affect the calculation and aren't maximized. An enemy reduced to 0 HP or lower with this ability is immediately killed."
+      "description": "You make a Heavy attack that deals Holy damage against the target. If your target’s HP is lower than the max damage your attack would deal, this attack gains Full Pierce and does maximum damage instead of rolling. This calculation only involves your base damage (Base weapon damage + the power). Any other effects added to the damage such as Heavy Blade's bonus damage, Anathema on target etc do not affect the calculation and aren't maximized. An enemy reduced to 0 HP or lower with this ability is immediately killed."
     }
   },
   "Exalted Shield": {
@@ -2002,7 +2002,7 @@
     },
     "L8": {
       "name": "Take it easy",
-      "description": "&nbsp;Do not make a gathering check. Instead, immediately collect 25% of the Outcrop\u2019s base material as a bonus (doesn\u2019t affect material totals), but no Node or Lucky progress is made."
+      "description": "&nbsp;Do not make a gathering check. Instead, immediately collect 25% of the Outcrop’s base material as a bonus (doesn’t affect material totals), but no Node or Lucky progress is made."
     }
   },
   "Executor": {
@@ -2012,7 +2012,7 @@
     },
     "L2": {
       "name": "Silentium",
-      "description": "You infuse a light thrown weapon with Sacred Power and Light Attack the target for Light Holy Damage. On damage the weapon disrupts the target\u2019s magic circuits, breaking concentration and preventing the target from using abilities with the Spell keyword. The lodged weapon can be removed for 1 RP or 2 AP, removing the disruption. Combo: If used after Eagle\u2019s Hunt, reduce the AP cost to 0 from 2."
+      "description": "You infuse a light thrown weapon with Sacred Power and Light Attack the target for Light Holy Damage. On damage the weapon disrupts the target’s magic circuits, breaking concentration and preventing the target from using abilities with the Spell keyword. The lodged weapon can be removed for 1 RP or 2 AP, removing the disruption. Combo: If used after Eagle’s Hunt, reduce the AP cost to 0 from 2."
     },
     "L3": {
       "name": "Eagle Hunt",
@@ -2035,7 +2035,7 @@
       "description": "You gain +1 to Power or Focus."
     },
     "L8": {
-      "name": "Ave Mar\u00eda",
+      "name": "Ave María",
       "description": "You attack with a swift double slash in the blink of an eye, making a Heavy Attack that deals Light damage + Heavy Holy damage."
     }
   },
@@ -2046,7 +2046,7 @@
     },
     "L2": {
       "name": "Faerie Light Eyes: Hold Person",
-      "description": "You gaze into the target\u2019s eyes and stun them for 1 turn, reducing their AP and RP to 0. While stunned, the target can also not take any actions."
+      "description": "You gaze into the target’s eyes and stun them for 1 turn, reducing their AP and RP to 0. While stunned, the target can also not take any actions."
     },
     "L3": {
       "name": "Faerie Light Eyes: Time Dilation",
@@ -2054,7 +2054,7 @@
     },
     "L4": {
       "name": "Faerie Light Eyes:  Empty",
-      "description": "You lock eyes with an enemy, casting an illusion onto the target\u2019s mind. Name an ability that the target had previously used in the current encounter. The target forgets the target ability, being unable to use it completely while the Illusion is in effect. This ability cannot target Secret Arts, Climax Arts or Esoteric Arts. Only one target may be under the effect of this illusion at a time. If the target is non-heroic and under the effect of Faerie Light Eyes: Hold Person, instead the target immediately is rendered insane permanently. An insane target takes no further combat actions. If used on a grunt under the effects of Hold Person, they do not need to meet the normal requirements for this ability. Does not work against Boss type enemies. Some abilities such as those granted by items, passives or racial abilities (such as flight) also cannot be removed by this ability (GM's discretion)."
+      "description": "You lock eyes with an enemy, casting an illusion onto the target’s mind. Name an ability that the target had previously used in the current encounter. The target forgets the target ability, being unable to use it completely while the Illusion is in effect. This ability cannot target Secret Arts, Climax Arts or Esoteric Arts. Only one target may be under the effect of this illusion at a time. If the target is non-heroic and under the effect of Faerie Light Eyes: Hold Person, instead the target immediately is rendered insane permanently. An insane target takes no further combat actions. If used on a grunt under the effects of Hold Person, they do not need to meet the normal requirements for this ability. Does not work against Boss type enemies. Some abilities such as those granted by items, passives or racial abilities (such as flight) also cannot be removed by this ability (GM's discretion)."
     },
     "L5": {
       "name": "Skills",
@@ -2070,7 +2070,7 @@
     },
     "L8": {
       "name": "Faerie Light Eyes: Golden Illusion",
-      "description": "You copy the target\u2019s ability that was forgotten and add it to your abilities until the end of the encounter. You must still fulfill all requirements to use this skill. This ability is generated from illusions and gains the keyword, Illusion. You can only have one Golden Illusion ability at a time. If the target stops being affected by Empty, you lose your Golden Illusion ability."
+      "description": "You copy the target’s ability that was forgotten and add it to your abilities until the end of the encounter. You must still fulfill all requirements to use this skill. This ability is generated from illusions and gains the keyword, Illusion. You can only have one Golden Illusion ability at a time. If the target stops being affected by Empty, you lose your Golden Illusion ability."
     }
   },
   "Farmer": {
@@ -2224,7 +2224,7 @@
     },
     "L4": {
       "name": "Flame Weapon",
-      "description": "You touch one willing ally\u2019s or your own weapon and enchant it with Fire. Until the end of the encounter, the weapon deals Fire Damage and grants a +1 Power Enchantment."
+      "description": "You touch one willing ally’s or your own weapon and enchant it with Fire. Until the end of the encounter, the weapon deals Fire Damage and grants a +1 Power Enchantment."
     },
     "L5": {
       "name": "Skills",
@@ -2243,7 +2243,7 @@
       "description": "You create a wall of Fire that is 30ft long, 5ft wide and 30ft high. This wall must be a straight line. Anyone passing through the wall or starting their turn in it takes Heavy Fire Damage. The wall lasts for 10 minutes or until canceled. Those in the wall when it is casted, may spend 1 RP to sidestep out of the wall. A person can only take this damage once per round."
     }
   },
-  "Flash Star Blade Style ": {
+  "Flash Star Blade Style": {
     "L1": {
       "name": "Lightning Weapon",
       "description": "When attacking with a weapon, you may choose to have the weapon deal Lightning Damage instead of its normal damage type. You must declare your chosen damage type before making the accuracy roll."
@@ -2258,7 +2258,7 @@
     },
     "L4": {
       "name": "Flash Star Style: Starlight Crescent Reversal",
-      "description": "You take advantage of the slow windup of the enemy\u2019s attack, countering with a Light attack of your own. You may still Dodge or Block the triggering attack after this counter."
+      "description": "You take advantage of the slow windup of the enemy’s attack, countering with a Light attack of your own. You may still Dodge or Block the triggering attack after this counter."
     },
     "L5": {
       "name": "Skills",
@@ -2314,7 +2314,7 @@
   "Forager": {
     "L1": {
       "name": "Forager's Path",
-      "description": "You gain proficiency in Giant Scissors and proficiency in your choice between Axes or Hori. You may use axes for harvesting foraging outcrops. You gain the ability to harvest Tier 1 Foraging Outcrops. You gain the ability to use natural item as replacements for an Adventurers Kit and Torches such as:  using the sun/moss as a compass, using vines as rope etc.  The material must be available (GM\u2019s discretion)"
+      "description": "You gain proficiency in Giant Scissors and proficiency in your choice between Axes or Hori. You may use axes for harvesting foraging outcrops. You gain the ability to harvest Tier 1 Foraging Outcrops. You gain the ability to use natural item as replacements for an Adventurers Kit and Torches such as:  using the sun/moss as a compass, using vines as rope etc.  The material must be available (GM’s discretion)"
     },
     "L2": {
       "name": "Verdant Instinct",
@@ -2322,11 +2322,11 @@
     },
     "L3": {
       "name": "Lifebeat Sense",
-      "description": "You can assess the approximate HP percentage of the target until the end of combat.&nbsp; (The DM should enable health bars for the unit, or you can ask for an approximate percentage). In addition, the target is afflicted by Expose 1, reducing the target\u2019s crit threshold by 1. (20 to crit becomes 19.) Expose is removed once the target is critically hit (regardless of if they defend or not)"
+      "description": "You can assess the approximate HP percentage of the target until the end of combat.&nbsp; (The DM should enable health bars for the unit, or you can ask for an approximate percentage). In addition, the target is afflicted by Expose 1, reducing the target’s crit threshold by 1. (20 to crit becomes 19.) Expose is removed once the target is critically hit (regardless of if they defend or not)"
     },
     "L4": {
       "name": "Divining Petalfall",
-      "description": "&nbsp;Make a gathering check with a +5 bonus. If the final dice value is even, add it to Node Points. If it\u2019s odd, add it to Lucky Points."
+      "description": "&nbsp;Make a gathering check with a +5 bonus. If the final dice value is even, add it to Node Points. If it’s odd, add it to Lucky Points."
     },
     "L5": {
       "name": "Skills",
@@ -2376,7 +2376,7 @@
     },
     "L8": {
       "name": "Secret Art: Shatter",
-      "description": "You make a Heavy Attack against the target using a Blacksmith\u2019s Hammer.&nbsp;If the target chooses to Block the attack, they gain 100 damage reduction against it.&nbsp;If they do, choose one equipped non-divine arms weapon in their hand that has equal or less crafted enhancements than your hammer and&nbsp;destroy that item, giving it the Broken condition."
+      "description": "You make a Heavy Attack against the target using a Blacksmith’s Hammer.&nbsp;If the target chooses to Block the attack, they gain 100 damage reduction against it.&nbsp;If they do, choose one equipped non-divine arms weapon in their hand that has equal or less crafted enhancements than your hammer and&nbsp;destroy that item, giving it the Broken condition."
     }
   },
   "Geomancer": {
@@ -2390,7 +2390,7 @@
     },
     "L3": {
       "name": "Fissure",
-      "description": "You slam the ground and create a 15ft wide fissure up to the target point. Those at the edges of the spell\u2019s range may spend 1 RP to Sidestep 5ft out of the effect. All caught in the effect fall down 20ft into the fissure and take falling damage as normal. The spell requires natural ground to be below the touching surface to function. It may work on the bottom floor of a house, but will fail if used higher up or in some dungeons."
+      "description": "You slam the ground and create a 15ft wide fissure up to the target point. Those at the edges of the spell’s range may spend 1 RP to Sidestep 5ft out of the effect. All caught in the effect fall down 20ft into the fissure and take falling damage as normal. The spell requires natural ground to be below the touching surface to function. It may work on the bottom floor of a house, but will fail if used higher up or in some dungeons."
     },
     "L4": {
       "name": "Seismic Shove",
@@ -2492,7 +2492,7 @@
     },
     "L3": {
       "name": "Earth Armor",
-      "description": "You touch a willing ally\u2019s armor and enchant it with earthen power. Until the end of the encounter, it grants a +1 guard and +4 block bonus."
+      "description": "You touch a willing ally’s armor and enchant it with earthen power. Until the end of the encounter, it grants a +1 guard and +4 block bonus."
     },
     "L4": {
       "name": "Earth Infusion",
@@ -2518,7 +2518,7 @@
   "Gravitect": {
     "L1": {
       "name": "Gravity Master",
-      "description": "When you push or pull an enemy on your turn, you may spend 1 mana to increase this distance by 10ft. You may also spend 1 mana to instead ignore the effects of 1 source of Immovable on a target you\u2019re attempting to push, unless that target is permanently Immovable."
+      "description": "When you push or pull an enemy on your turn, you may spend 1 mana to increase this distance by 10ft. You may also spend 1 mana to instead ignore the effects of 1 source of Immovable on a target you’re attempting to push, unless that target is permanently Immovable."
     },
     "L2": {
       "name": "Gravitational Push",
@@ -2530,7 +2530,7 @@
     },
     "L4": {
       "name": "Weight of the World",
-      "description": "You increase the target\u2019s gravity, reducing their elevation by 40ft. This may interrupt movement and if you reduce their elevation down to 0, you slam them into the ground dealing fall damage for the distance they failed to move and knocking them prone."
+      "description": "You increase the target’s gravity, reducing their elevation by 40ft. This may interrupt movement and if you reduce their elevation down to 0, you slam them into the ground dealing fall damage for the distance they failed to move and knocking them prone."
     },
     "L5": {
       "name": "Skills",
@@ -2560,7 +2560,7 @@
     },
     "L3": {
       "name": "Density Break",
-      "description": "You make a Precise attack that deals damage equal to the target\u2019s Toughness."
+      "description": "You make a Precise attack that deals damage equal to the target’s Toughness."
     },
     "L4": {
       "name": "Localized Collapse",
@@ -2960,7 +2960,7 @@
   "Hydromancer": {
     "L1": {
       "name": "Mage of the Tides",
-      "description": "You can use Blue Tide. You gain Elemental Mastery: Water You gain the ability to walk on water and skate across its surface\u2014every 10ft of water surface movement only costs 5ft of movement."
+      "description": "You can use Blue Tide. You gain Elemental Mastery: Water You gain the ability to walk on water and skate across its surface—every 10ft of water surface movement only costs 5ft of movement."
     },
     "L2": {
       "name": "Aqua Drill",
@@ -3022,7 +3022,7 @@
     },
     "L8": {
       "name": "Uke Nagashi",
-      "description": "Roll Heavy Damage and treat that as your Block against the attack that\u2019s targeting you. If you reduce the damage to 0, the attacker becomes Unbalanced. On hit effects and maces do not gain their effect if you reduce the damage to 0. After the attack is resolved, you may immediately make an Iai Strike against the attacker for 0 RP. This Iai Strike gains the Sure Hit keyword against an Unbalanced target.&nbsp;"
+      "description": "Roll Heavy Damage and treat that as your Block against the attack that’s targeting you. If you reduce the damage to 0, the attacker becomes Unbalanced. On hit effects and maces do not gain their effect if you reduce the damage to 0. After the attack is resolved, you may immediately make an Iai Strike against the attacker for 0 RP. This Iai Strike gains the Sure Hit keyword against an Unbalanced target.&nbsp;"
     }
   },
   "Idol": {
@@ -3056,7 +3056,7 @@
     },
     "L8": {
       "name": "Mashup",
-      "description": "You may activate another song with the Idol keyword. This song\u2019s AP cost is reduced by 2 and this song may go past your regular maximum song limits."
+      "description": "You may activate another song with the Idol keyword. This song’s AP cost is reduced by 2 and this song may go past your regular maximum song limits."
     }
   },
   "Jewel Idol": {
@@ -3066,15 +3066,15 @@
     },
     "L2": {
       "name": "Never Miss The Beat",
-      "description": "You begin singing a supportive song. Once per round per ally, when an ally fails to meet the base evasion with an attack, you may spend 2 Mana to add that ally\u2019s focus bonus for that attack. Upkeep : 1 AP"
+      "description": "You begin singing a supportive song. Once per round per ally, when an ally fails to meet the base evasion with an attack, you may spend 2 Mana to add that ally’s focus bonus for that attack. Upkeep : 1 AP"
     },
     "L3": {
       "name": "Until My Voice Breaks",
-      "description": "Whenever you\u2019re about to pay mana on one of your abilities with the Idol keyword, you may instead reduce your current and max HP by 8 for each mana you\u2019d spend. This max HP reduction lasts until the end of the encounter and cannot be removed."
+      "description": "Whenever you’re about to pay mana on one of your abilities with the Idol keyword, you may instead reduce your current and max HP by 8 for each mana you’d spend. This max HP reduction lasts until the end of the encounter and cannot be removed."
     },
     "L4": {
       "name": "Offbeat Recovery",
-      "description": "You give your ally\u2019s attack Lock On, but the damage is minimized (and cannot be maximized) and it loses Full Pierce, Block Crush and any on hit or on damage effects. If used after a target has already dodged, they may Block against that attack for free. Can be used when an ally misses an ability to make it not count as a miss for your Secret Art: Full Combo (but the attack does not actually gain Lock On)"
+      "description": "You give your ally’s attack Lock On, but the damage is minimized (and cannot be maximized) and it loses Full Pierce, Block Crush and any on hit or on damage effects. If used after a target has already dodged, they may Block against that attack for free. Can be used when an ally misses an ability to make it not count as a miss for your Secret Art: Full Combo (but the attack does not actually gain Lock On)"
     },
     "L5": {
       "name": "Skills",
@@ -3104,7 +3104,7 @@
     },
     "L3": {
       "name": "En-dama",
-      "description": "You throw a smoke bomb on the ground within range that blocks line of sight in a 5ft radius (15x15 area total) of where it was thrown. Targets inside or within 5ft of the smoke can only see up to 5ft into or out of the smoke. If you\u2019re inside of it at the point it's thrown, you may immediately take the Hide action. The smoke lasts until the start of your next turn. When it ends, if you are inside your smoke, you may immediately move up to your speed and you are considered hidden up until you finish that movement. If you end your movement in cover, you keep being Hidden from people you have cover from."
+      "description": "You throw a smoke bomb on the ground within range that blocks line of sight in a 5ft radius (15x15 area total) of where it was thrown. Targets inside or within 5ft of the smoke can only see up to 5ft into or out of the smoke. If you’re inside of it at the point it's thrown, you may immediately take the Hide action. The smoke lasts until the start of your next turn. When it ends, if you are inside your smoke, you may immediately move up to your speed and you are considered hidden up until you finish that movement. If you end your movement in cover, you keep being Hidden from people you have cover from."
     },
     "L4": {
       "name": "Kage Bunshin: Kyomei",
@@ -3138,7 +3138,7 @@
     },
     "L3": {
       "name": "Heavy Trample",
-      "description": "When using Trample, you may use your Toughness for the damage roll instead of your mount\u2019s power."
+      "description": "When using Trample, you may use your Toughness for the damage roll instead of your mount’s power."
     },
     "L4": {
       "name": "Armored Blow",
@@ -3206,7 +3206,7 @@
     },
     "L3": {
       "name": "Arcane Barrier",
-      "description": "You create a Magical Barrier that absorbs damage until it breaks.&nbsp;The barrier has HP equal to 15 + your Focus. The barrier has a Guard of 0 and any damage it takes is subtracted from the barrier\u2019s HP.&nbsp;When the barrier breaks, any remaining damage is subtracted from your HP.&nbsp;The barrier otherwise lasts until the start of your next turn or until you take any action other than the Block action. This spell does not provoke attacks of opportunity and does not protect against true damage."
+      "description": "You create a Magical Barrier that absorbs damage until it breaks.&nbsp;The barrier has HP equal to 15 + your Focus. The barrier has a Guard of 0 and any damage it takes is subtracted from the barrier’s HP.&nbsp;When the barrier breaks, any remaining damage is subtracted from your HP.&nbsp;The barrier otherwise lasts until the start of your next turn or until you take any action other than the Block action. This spell does not provoke attacks of opportunity and does not protect against true damage."
     },
     "L4": {
       "name": "Glittershards",
@@ -3263,14 +3263,14 @@
       "description": "You Sidestep up to your speed and can move through enemies for this movement. You and every ally you pass through are healed for 11 + (Power x 2). This movement must always be in a straight line, regardless of your mount type."
     }
   },
-  "Magitechnician ": {
+  "Magitechnician": {
     "L1": {
       "name": "Advanced Artificing",
       "description": "You gain Artificer Advanced Crafting Abilities"
     },
     "L2": {
       "name": "Craft Artificer's Glove",
-      "description": "You create a personalized Artificer\u2019s Glove that only you have proficiency with.&nbsp; Choose a glove type with properties of your choosing at the time of creation.&nbsp; You can modify this glove for an errand action to change the property, but you can only have one property at a time and only one Artificer\u2019s glove at a time. Gamma Glove (Hacker):&nbsp; Artifice Jamming. For 1 RP you can Jam a small shell artifice within 120ft causing it to malfunction and be unusable until the user spends 1 AP to clear the jam. Sigma Glove (Combat Artificer):&nbsp; Heat Sink.&nbsp; 0 RP, 1 mana.&nbsp; Your glove emits frost energy that saps heat from an artifice, allowing it to bypass the once per turn limit a single time.&nbsp; Overcharge: 1 RP, the mana cost becomes 0. Delta Glove (Specialist):&nbsp; &nbsp;The glove is specialized for an expertise skill granting you +10 in that skill.&nbsp; For instance, it might fire an arcane blast to propel you, granting you +10 to jumping. May not choose artisan or gathering skils."
+      "description": "You create a personalized Artificer’s Glove that only you have proficiency with.&nbsp; Choose a glove type with properties of your choosing at the time of creation.&nbsp; You can modify this glove for an errand action to change the property, but you can only have one property at a time and only one Artificer’s glove at a time. Gamma Glove (Hacker):&nbsp; Artifice Jamming. For 1 RP you can Jam a small shell artifice within 120ft causing it to malfunction and be unusable until the user spends 1 AP to clear the jam. Sigma Glove (Combat Artificer):&nbsp; Heat Sink.&nbsp; 0 RP, 1 mana.&nbsp; Your glove emits frost energy that saps heat from an artifice, allowing it to bypass the once per turn limit a single time.&nbsp; Overcharge: 1 RP, the mana cost becomes 0. Delta Glove (Specialist):&nbsp; &nbsp;The glove is specialized for an expertise skill granting you +10 in that skill.&nbsp; For instance, it might fire an arcane blast to propel you, granting you +10 to jumping. May not choose artisan or gathering skils."
     },
     "L3": {
       "name": "Reverse Polarity",
@@ -3328,7 +3328,7 @@
     },
     "L8": {
       "name": "Snack Time Everyone!~",
-      "description": "You present a tray of refreshing Health and Mana snacks to your allies. All allies within 5ft of you may spend 0 RP to eat a snack. Health: The ally may spend 2 Mana to heal for 15 HP. Mana: The ally recovers 1 Mana. This counts as a character\u2019s one food for the day and a character cannot benefit from this ability if they already had food. Does not count as a meal for the purposes of fending of starvation. You keep the tray of snacks up for 1 turn and a character walking within 5ft of you while it\u2019s up may also spend the 0 RP to eat a snack.&nbsp; Allies may also spend 0 AP to eat another snack. They can do this once per turn. Upkeep: 1 Mana, you keep the tray up for an additional turn."
+      "description": "You present a tray of refreshing Health and Mana snacks to your allies. All allies within 5ft of you may spend 0 RP to eat a snack. Health: The ally may spend 2 Mana to heal for 15 HP. Mana: The ally recovers 1 Mana. This counts as a character’s one food for the day and a character cannot benefit from this ability if they already had food. Does not count as a meal for the purposes of fending of starvation. You keep the tray of snacks up for 1 turn and a character walking within 5ft of you while it’s up may also spend the 0 RP to eat a snack.&nbsp; Allies may also spend 0 AP to eat another snack. They can do this once per turn. Upkeep: 1 Mana, you keep the tray up for an additional turn."
     }
   },
   "Marksman": {
@@ -3444,7 +3444,7 @@
     },
     "L3": {
       "name": "Procurement",
-      "description": "By spending an IP, you start the procurement process. Choose a target base item (no modifications) and an amount of that item.&nbsp;Determine the price of the total items and set it as the Procurement Target goal. Every time you gain an IP, you gain 500 points towards the Procurement goal. You may also spend an IP to add another 500 points towards the goal. When the procurement value is equal to the Procurement Target, you may immediately purchase the item. You must purchase immediately or you lose Procurement. You can cancel a Procurement at any time.&nbsp;The Procurement Target Limit is 1000 and for materials this is capped at materials with an ingot/block etc cost of \u22641000."
+      "description": "By spending an IP, you start the procurement process. Choose a target base item (no modifications) and an amount of that item.&nbsp;Determine the price of the total items and set it as the Procurement Target goal. Every time you gain an IP, you gain 500 points towards the Procurement goal. You may also spend an IP to add another 500 points towards the goal. When the procurement value is equal to the Procurement Target, you may immediately purchase the item. You must purchase immediately or you lose Procurement. You can cancel a Procurement at any time.&nbsp;The Procurement Target Limit is 1000 and for materials this is capped at materials with an ingot/block etc cost of ≤1000."
     },
     "L4": {
       "name": "Bulk Orders",
@@ -3470,11 +3470,11 @@
   "Mime": {
     "L1": {
       "name": "Mime's Journey",
-      "description": "You gain proficiency in 1 common and 1 specialized weapon You gain +5 skill points to spend in Art. You can exchange any skill point for 2 expertise points, but must spend them in this skill. As a mime, you\u2019re not allowed to speak. If you speak during an encounter, you cannot use any Mime abilities until the end of the encounter."
+      "description": "You gain proficiency in 1 common and 1 specialized weapon You gain +5 skill points to spend in Art. You can exchange any skill point for 2 expertise points, but must spend them in this skill. As a mime, you’re not allowed to speak. If you speak during an encounter, you cannot use any Mime abilities until the end of the encounter."
     },
     "L2": {
       "name": "Imaginary Weapon",
-      "description": "You \u2018draw\u2019 an imaginary weapon or shield in which you are proficient.&nbsp; This weapon works exactly like a normal weapon would, but only you can wield it and normal people can't see it."
+      "description": "You ‘draw’ an imaginary weapon or shield in which you are proficient.&nbsp; This weapon works exactly like a normal weapon would, but only you can wield it and normal people can't see it."
     },
     "L3": {
       "name": "Invisible Wall",
@@ -3498,7 +3498,7 @@
     },
     "L8": {
       "name": "Imaginary Consumables",
-      "description": "You \u2018draw\u2019 an imaginary basic consumable alchemy item or minor item that can cost no more than 100c per mana spent on this ability and no more than 500c total.&nbsp; This consumable works like regular consumables would, but only you can use it, normal people can\u2019t see it and it doesn\u2019t work with abilities that require you to use real consumables like counter-potion. Any items created with this ability only last until the end of the encounter, or for 5 minutes outside of one."
+      "description": "You ‘draw’ an imaginary basic consumable alchemy item or minor item that can cost no more than 100c per mana spent on this ability and no more than 500c total.&nbsp; This consumable works like regular consumables would, but only you can use it, normal people can’t see it and it doesn’t work with abilities that require you to use real consumables like counter-potion. Any items created with this ability only last until the end of the encounter, or for 5 minutes outside of one."
     }
   },
   "Miner": {
@@ -3528,7 +3528,7 @@
     },
     "L7": {
       "name": "Soul",
-      "description": "You gain +1 to Focus, Power or Toughness. In addition your Pickaxe proficiency gains: Superior Armor Pierce: Treats the enemy\u2019s Guard as if it was 1 lower."
+      "description": "You gain +1 to Focus, Power or Toughness. In addition your Pickaxe proficiency gains: Superior Armor Pierce: Treats the enemy’s Guard as if it was 1 lower."
     },
     "L8": {
       "name": "Rock Fang",
@@ -3566,7 +3566,7 @@
     },
     "L8": {
       "name": "Traveler's End",
-      "description": "You play the final tunes of the melody that signals the traveler\u2019s ending.&nbsp; While Traveler\u2019s End remains active, the Potency of your Mist of the Vale and Despair of Isolation is increased by 3. Your Mist of the Vale can no longer be removed and any effect that would remove it instead dispels Traveler\u2019s End. At any point after activating this song, you may spend 1 RP and 5 Mana to make a Sure Hit Heavy attack against all enemies within your Mist of the Vale. On killing blow, you regain 1 mana you spend on the attack (up to 5). Afterwards, the Mist of the Vale ends and cannot be reused in this encounter. Traveler\u2019s End otherwise lasts until the end of the encounter or until the Mist of the Vale is gone. Upkeep: 1 Mana"
+      "description": "You play the final tunes of the melody that signals the traveler’s ending.&nbsp; While Traveler’s End remains active, the Potency of your Mist of the Vale and Despair of Isolation is increased by 3. Your Mist of the Vale can no longer be removed and any effect that would remove it instead dispels Traveler’s End. At any point after activating this song, you may spend 1 RP and 5 Mana to make a Sure Hit Heavy attack against all enemies within your Mist of the Vale. On killing blow, you regain 1 mana you spend on the attack (up to 5). Afterwards, the Mist of the Vale ends and cannot be reused in this encounter. Traveler’s End otherwise lasts until the end of the encounter or until the Mist of the Vale is gone. Upkeep: 1 Mana"
     }
   },
   "Mogul": {
@@ -3750,7 +3750,7 @@
     },
     "L3": {
       "name": "Speak with dead",
-      "description": "You attempt to communicate with the soul of a person who has died recently. This requires you to perform a ritual that takes an hour, that must be performed next to the corpse or where the person died. You must be aware of the identity of the person you\u2019re trying to contact. Finally, you must have a tool such as an ouija board that allows the spirit to communicate with you. Even if the ritual succeeds, the spirit is not forced to answer your questions if hostile to you or it might answer in cryptic ways."
+      "description": "You attempt to communicate with the soul of a person who has died recently. This requires you to perform a ritual that takes an hour, that must be performed next to the corpse or where the person died. You must be aware of the identity of the person you’re trying to contact. Finally, you must have a tool such as an ouija board that allows the spirit to communicate with you. Even if the ritual succeeds, the spirit is not forced to answer your questions if hostile to you or it might answer in cryptic ways."
     },
     "L4": {
       "name": "Corpse Explosion",
@@ -3875,7 +3875,7 @@
       "description": "You focus on a single enemy and maintain a constant position from them. Whenever the target moves, you may move the same amount as they did (up to your movement speed) away from them for 0 RP. This movement does not provoke attacks of opportunity from the target, but does provoke from other enemies. &nbsp;Every time this happens, you may make a Light attack against the target with a ranged weapon. If the target spends multiple AP on a single movement action, you may make an amount of Light attacks equal to the AP they spent. Lasts until the start of your next turn or until you can no longer see the target."
     }
   },
-  "Onmyoji ": {
+  "Onmyoji": {
     "L1": {
       "name": "Expert Scribe",
       "description": "You gain +5 points in Art: Calligraphy expertise skill. This is not doubled for expertise bonus. You may draw scrolls, talismans or similar objects for 0 AP once per turn. When you do, reduce the AP cost of that talisman by 1. Even if you do not consume the talisman, it only benefits from the AP reduction once per turn."
@@ -4008,7 +4008,7 @@
     },
     "L8": {
       "name": "Steal Heart",
-      "description": "The target must make a save or become Charmed until the end of the encounter. If you use this on a Grunt level enemy and you charm them, you may choose their actions when it's their turn in addition to Charm\u2019s normal effect. You may only have 1 target charmed at the same time."
+      "description": "The target must make a save or become Charmed until the end of the encounter. If you use this on a Grunt level enemy and you charm them, you may choose their actions when it's their turn in addition to Charm’s normal effect. You may only have 1 target charmed at the same time."
     }
   },
   "Phosphomancer": {
@@ -4086,7 +4086,7 @@
     },
     "L2": {
       "name": "Sacrament",
-      "description": "You touch one willing ally\u2019s or your own weapon and bless it. Until the end of the encounter, the weapon deals Holy Damage and grants a +1 Power Enchantment."
+      "description": "You touch one willing ally’s or your own weapon and bless it. Until the end of the encounter, the weapon deals Holy Damage and grants a +1 Power Enchantment."
     },
     "L3": {
       "name": "Purify",
@@ -4110,7 +4110,7 @@
     },
     "L8": {
       "name": "Secret Art:  Revitalize",
-      "description": "You pray for a Downed ally. The ally\u2019s HP becomes 0 and then heals for your Power x 3. They may stand up from prone after this healing. Overcharge: You may pay X extra mana to make the target heal + 7 HP for every additional point of mana spent.&nbsp; This ability does not work on Mortally Wounded allies."
+      "description": "You pray for a Downed ally. The ally’s HP becomes 0 and then heals for your Power x 3. They may stand up from prone after this healing. Overcharge: You may pay X extra mana to make the target heal + 7 HP for every additional point of mana spent.&nbsp; This ability does not work on Mortally Wounded allies."
     }
   },
   "Protector": {
@@ -4184,7 +4184,7 @@
   "Pyromaster": {
     "L1": {
       "name": "Eternal Flames",
-      "description": "When you would apply Burning on your turn, you instead apply Hellfire. Hellfire functions like Burning, but it can no longer be removed the normal way if not removed before the end of the target\u2019s next turn. Hellfire is automatically removed at the end of the encounter. If you apply Hellfire to a target that is already burning, you deal extra fire damage equal to your Power."
+      "description": "When you would apply Burning on your turn, you instead apply Hellfire. Hellfire functions like Burning, but it can no longer be removed the normal way if not removed before the end of the target’s next turn. Hellfire is automatically removed at the end of the encounter. If you apply Hellfire to a target that is already burning, you deal extra fire damage equal to your Power."
     },
     "L2": {
       "name": "Blast Wave",
@@ -4222,7 +4222,7 @@
     },
     "L2": {
       "name": "Track",
-      "description": "You find any tracks that aren\u2019t hidden. Once you find tracks, you can follow them at normal speed without having to make checks."
+      "description": "You find any tracks that aren’t hidden. Once you find tracks, you can follow them at normal speed without having to make checks."
     },
     "L3": {
       "name": "Guided Aim",
@@ -4252,11 +4252,11 @@
   "Reaver": {
     "L1": {
       "name": "Overwhelming Critical",
-      "description": "When you roll a critical hit you may use Aftershock even if the attack didn\u2019t miss. This use doesn\u2019t count against the normal use limit of it and this effect still applies even if the critical hit was blocked or otherwise defended against."
+      "description": "When you roll a critical hit you may use Aftershock even if the attack didn’t miss. This use doesn’t count against the normal use limit of it and this effect still applies even if the critical hit was blocked or otherwise defended against."
     },
     "L2": {
       "name": "Sweeping Stance",
-      "description": "You enter a stance in which you spin your weapon around in a circular motion and lash out against any enemy that approaches. When an enemy enters your weapon\u2019s range you may make an Attack of Opportunity against them. An enemy moving while already being in your attack range does not provoke. Your weapon's range for these attacks of opportunities is increased by 5ft (This does not affect your normal threaten range). The stance lasts until you make an attack that isn\u2019t an Attack of Opportunity."
+      "description": "You enter a stance in which you spin your weapon around in a circular motion and lash out against any enemy that approaches. When an enemy enters your weapon’s range you may make an Attack of Opportunity against them. An enemy moving while already being in your attack range does not provoke. Your weapon's range for these attacks of opportunities is increased by 5ft (This does not affect your normal threaten range). The stance lasts until you make an attack that isn’t an Attack of Opportunity."
     },
     "L3": {
       "name": "Full Power Swing",
@@ -4422,7 +4422,7 @@
   "Scout": {
     "L1": {
       "name": "Independent Actor",
-      "description": "When working alone (No known allies within 300ft of you) you gain a +10 bonus to Perception, Insight, Survival and Stealth checks. Must be alone for at least 15 minutes to gain this benefit. You gain a +5 bonus in Art (Cartography) expertise. This is not doubled for expertise bonus. You may use Scout\u2019s Retreat."
+      "description": "When working alone (No known allies within 300ft of you) you gain a +10 bonus to Perception, Insight, Survival and Stealth checks. Must be alone for at least 15 minutes to gain this benefit. You gain a +5 bonus in Art (Cartography) expertise. This is not doubled for expertise bonus. You may use Scout’s Retreat."
     },
     "L2": {
       "name": "Squadsight",
@@ -4528,7 +4528,7 @@
     },
     "L2": {
       "name": "Hide in Shadows",
-      "description": "You jump into a target\u2019s shadow. If you were hidden before using this ability, you remain hidden inside the shadow. Else, the target or any other enemy may attack the shadow as if they were attacking you. If you take damage, you are forced out. While you\u2019re inside the shadow, you travel with the target when it moves, including if it teleports, but cannot take actions other than exiting it. You may exit the shadow willingly for 0 RP. When you exit it, if you were hidden, your next basic attack that turn against the target whose shadow you were hiding in gains Full Pierce."
+      "description": "You jump into a target’s shadow. If you were hidden before using this ability, you remain hidden inside the shadow. Else, the target or any other enemy may attack the shadow as if they were attacking you. If you take damage, you are forced out. While you’re inside the shadow, you travel with the target when it moves, including if it teleports, but cannot take actions other than exiting it. You may exit the shadow willingly for 0 RP. When you exit it, if you were hidden, your next basic attack that turn against the target whose shadow you were hiding in gains Full Pierce."
     },
     "L3": {
       "name": "Darkness",
@@ -4596,7 +4596,7 @@
     },
     "L2": {
       "name": "Lifesense",
-      "description": "You know the direction your Soulmate is in and if you\u2019re within 300 feet of them, you know their exact location. You also know their current HP, Mana and RP."
+      "description": "You know the direction your Soulmate is in and if you’re within 300 feet of them, you know their exact location. You also know their current HP, Mana and RP."
     },
     "L3": {
       "name": "Faithful Shield",
@@ -4664,7 +4664,7 @@
     },
     "L2": {
       "name": "True Death",
-      "description": "Damage from melee weapon attacks made by you also reduces the target\u2019s max HP by the same amount. This lasts until the end of the encounter."
+      "description": "Damage from melee weapon attacks made by you also reduces the target’s max HP by the same amount. This lasts until the end of the encounter."
     },
     "L3": {
       "name": "Line of Death",
@@ -4688,13 +4688,13 @@
     },
     "L8": {
       "name": "Secret Art: Seventeen Dissection",
-      "description": "You deal 17 true damage to the target. If this damage lowers the target\u2019s HP to 0 or lower, they immediately die. If the target of this attack is a non-heroic unit, they instantly die regardless of their remaining HP."
+      "description": "You deal 17 true damage to the target. If this damage lowers the target’s HP to 0 or lower, they immediately die. If the target of this attack is a non-heroic unit, they instantly die regardless of their remaining HP."
     }
   },
   "Sky Knight": {
     "L1": {
       "name": "Air Stability",
-      "description": "The cavalier\u2019s Rider & Mount As One ability applies even while flying. Any damage you take while flying on a flying mount will cause you to lose altitude as if your mount took damage."
+      "description": "The cavalier’s Rider & Mount As One ability applies even while flying. Any damage you take while flying on a flying mount will cause you to lose altitude as if your mount took damage."
     },
     "L2": {
       "name": "Aerial Crashdown",
@@ -4722,7 +4722,7 @@
     },
     "L8": {
       "name": "Secret Art: Mythical Awakening",
-      "description": "You channel your power into your mount, allowing it to unleash a devastating attack based on what type of mount it is. Pegasus: Bellerophon: You Sidestep towards a target within 60ft and make a Heavy attack against it. This attack has Lock-on and costs 1 RP and 2 Mana Wyvern: Reginliev: You make a Heavy attack against all enemies in a 5ft wide line up to a point within 60ft. You also make a Heavy attack against all enemies within 10ft of the selected point, though enemies can also take an attack from this ability once. This attack costs 2 AP and 2 Mana. Dragonfly: Darting Mirage: You move at incredible speed and create several illusionary afterimages in your wake. Until the start of your next turn, every attack against you or your mount that is not a critical hit or does not have the Sure Hit keyword &nbsp;automatically misses. This is an Illusion effect. This ability costs 0 AP and 4 Mana. All these attacks are made with your mount\u2019s stats instead of your own."
+      "description": "You channel your power into your mount, allowing it to unleash a devastating attack based on what type of mount it is. Pegasus: Bellerophon: You Sidestep towards a target within 60ft and make a Heavy attack against it. This attack has Lock-on and costs 1 RP and 2 Mana Wyvern: Reginliev: You make a Heavy attack against all enemies in a 5ft wide line up to a point within 60ft. You also make a Heavy attack against all enemies within 10ft of the selected point, though enemies can also take an attack from this ability once. This attack costs 2 AP and 2 Mana. Dragonfly: Darting Mirage: You move at incredible speed and create several illusionary afterimages in your wake. Until the start of your next turn, every attack against you or your mount that is not a critical hit or does not have the Sure Hit keyword &nbsp;automatically misses. This is an Illusion effect. This ability costs 0 AP and 4 Mana. All these attacks are made with your mount’s stats instead of your own."
     }
   },
   "Sky Talon Style": {
@@ -4736,7 +4736,7 @@
     },
     "L3": {
       "name": "Heavenfall Descent",
-      "description": "You crash to the ground without taking falling damage and make a Light attack against all enemies within 5ft of you. May target a point on the floor as long as it\u2019s within 20ft of you horizontally."
+      "description": "You crash to the ground without taking falling damage and make a Light attack against all enemies within 5ft of you. May target a point on the floor as long as it’s within 20ft of you horizontally."
     },
     "L4": {
       "name": "Swift Wind Palm",
@@ -4766,7 +4766,7 @@
     },
     "L2": {
       "name": "Penetrating Shot",
-      "description": "You may make a Heavy Attack against the target. This attack penetrates through thin layers of cover such as wood planks (GM\u2019s decision), negating the bonus it would give."
+      "description": "You may make a Heavy Attack against the target. This attack penetrates through thin layers of cover such as wood planks (GM’s decision), negating the bonus it would give."
     },
     "L3": {
       "name": "Concealed Shot",
@@ -4830,7 +4830,7 @@
   "Spearmaster": {
     "L1": {
       "name": "Versatile Range",
-      "description": "You may treat your polearm\u2019s threatened range as 5ft instead of 5-10ft. You must declare this during your turn and it lasts until the start of your next turn."
+      "description": "You may treat your polearm’s threatened range as 5ft instead of 5-10ft. You must declare this during your turn and it lasts until the start of your next turn."
     },
     "L2": {
       "name": "Draw-In",
@@ -4868,7 +4868,7 @@
     },
     "L2": {
       "name": "Spellblade's Preparation",
-      "description": "You unsheathe your weapon and enchant your weapon with an element you've mastered. Your weapon now deals the chosen element\u2019s damage instead of its normal damage. If you are not holding the enchanted weapon at the start of your turn, your weapon loses this benefit. The weapon gains a +1 Power bonus to attacks until the end of the encounter."
+      "description": "You unsheathe your weapon and enchant your weapon with an element you've mastered. Your weapon now deals the chosen element’s damage instead of its normal damage. If you are not holding the enchanted weapon at the start of your turn, your weapon loses this benefit. The weapon gains a +1 Power bonus to attacks until the end of the encounter."
     },
     "L3": {
       "name": "Elemental Sweep",
@@ -4902,7 +4902,7 @@
     },
     "L2": {
       "name": "Imbue Weapon",
-      "description": "You enchant your melee weapon with an element you mastered. Your weapon now deals the chosen element\u2019s damage instead of its normal damage. If you are not holding the enchanted weapon at the start of your turn, your weapon loses this benefit."
+      "description": "You enchant your melee weapon with an element you mastered. Your weapon now deals the chosen element’s damage instead of its normal damage. If you are not holding the enchanted weapon at the start of your turn, your weapon loses this benefit."
     },
     "L3": {
       "name": "Elemental Strike",
@@ -4932,7 +4932,7 @@
   "Starcaller": {
     "L1": {
       "name": "Celestial Artillery",
-      "description": "When attacking an enemy that\u2019s further than 80ft away, your spells with the Celestial keyword gain the Artillery keyword. You may use Comet."
+      "description": "When attacking an enemy that’s further than 80ft away, your spells with the Celestial keyword gain the Artillery keyword. You may use Comet."
     },
     "L2": {
       "name": "Starfall",
@@ -5008,7 +5008,7 @@
     },
     "L3": {
       "name": "Feigned Retreat",
-      "description": "All allies in a 15x15ft square within range may Sidestep up to their speed towards you.&nbsp; If they successfully left an enemy\u2019s melee range and are not in an enemy\u2019s melee range after moving, then the first time an enemy enters their melee range before the start of their next turn, they may make an Attack of Opportunity against that enemy."
+      "description": "All allies in a 15x15ft square within range may Sidestep up to their speed towards you.&nbsp; If they successfully left an enemy’s melee range and are not in an enemy’s melee range after moving, then the first time an enemy enters their melee range before the start of their next turn, they may make an Attack of Opportunity against that enemy."
     },
     "L4": {
       "name": "Anvil Tactics",
@@ -5042,7 +5042,7 @@
     },
     "L3": {
       "name": "Summon Lesser Eidolon",
-      "description": "Your contracted Eidolon hears your call and sends their minions to fight for you.&nbsp;The summon called and costs are dependent on your attunement.&nbsp;Lasts up to 5 minutes.&nbsp;You must pay the upkeep cost under the Summon\u2019s&nbsp; Summon Skill or the Summon vanishes. Unless the summon has a skill that says otherwise, a summon acts after you on initiative, but cannot act the round it is summoned except for RP actions."
+      "description": "Your contracted Eidolon hears your call and sends their minions to fight for you.&nbsp;The summon called and costs are dependent on your attunement.&nbsp;Lasts up to 5 minutes.&nbsp;You must pay the upkeep cost under the Summon’s&nbsp; Summon Skill or the Summon vanishes. Unless the summon has a skill that says otherwise, a summon acts after you on initiative, but cannot act the round it is summoned except for RP actions."
     },
     "L4": {
       "name": "Unsummon",
@@ -5062,7 +5062,7 @@
     },
     "L8": {
       "name": "Secret Art: Summon Eidolon",
-      "description": "Your contracted Eidolon hears your call and sends a proxy of themselves to fight for you.&nbsp; The Eidolon called and the costs are dependent on your attunement.&nbsp; Lasts up to 5 minutes.&nbsp; You must pay the upkeep cost under the Eidolon\u2019s&nbsp; Summon Skill or the Eidolon vanishes. Unless the summon has a skill that says otherwise, a summon acts after you on initiative, but cannot act the round it is summoned, except for RP actions. Overcharge : You may spend 5 mana to give your summon the ability to act on the turn it is summoned."
+      "description": "Your contracted Eidolon hears your call and sends a proxy of themselves to fight for you.&nbsp; The Eidolon called and the costs are dependent on your attunement.&nbsp; Lasts up to 5 minutes.&nbsp; You must pay the upkeep cost under the Eidolon’s&nbsp; Summon Skill or the Eidolon vanishes. Unless the summon has a skill that says otherwise, a summon acts after you on initiative, but cannot act the round it is summoned, except for RP actions. Overcharge : You may spend 5 mana to give your summon the ability to act on the turn it is summoned."
     }
   },
   "Swashbuckler": {
@@ -5106,7 +5106,7 @@
     },
     "L2": {
       "name": "Mark of Justice",
-      "description": "You mark a single enemy, inflicting Mark of Justice on them. A marked enemy\u2019s movement speed is reduced to 20ft. Abilities that allow for movement cannot move the target for more than 20ft per use. Secret Arts and Esoteric Arts are not affected by this. You can only have a single enemy marked by this at the same time. It lasts until the end of the encounter. Does not work on vehicles. A marked target may spend 1 mana per AP/RP of the action (with a minimum of 1 mana even for 0 AP abilities) to temporarily ignore the restricting effect for a movement action."
+      "description": "You mark a single enemy, inflicting Mark of Justice on them. A marked enemy’s movement speed is reduced to 20ft. Abilities that allow for movement cannot move the target for more than 20ft per use. Secret Arts and Esoteric Arts are not affected by this. You can only have a single enemy marked by this at the same time. It lasts until the end of the encounter. Does not work on vehicles. A marked target may spend 1 mana per AP/RP of the action (with a minimum of 1 mana even for 0 AP abilities) to temporarily ignore the restricting effect for a movement action."
     },
     "L3": {
       "name": "Justice Blade",
@@ -5130,7 +5130,7 @@
     },
     "L8": {
       "name": "Divine Smite",
-      "description": "You may make a Heavy Attack that deals Holy Damage against the target. If your target\u2019s HP is lower than the max damage your attack would deal, this attack gains Full Pierce and does maximum damage instead of rolling. This calculation only involves your base damage (Base weapon damage + the power). Any other effects added to the damage such as Heavy Blade's bonus damage, Anathema on target etc do not affect the calculation and aren't maximized."
+      "description": "You may make a Heavy Attack that deals Holy Damage against the target. If your target’s HP is lower than the max damage your attack would deal, this attack gains Full Pierce and does maximum damage instead of rolling. This calculation only involves your base damage (Base weapon damage + the power). Any other effects added to the damage such as Heavy Blade's bonus damage, Anathema on target etc do not affect the calculation and aren't maximized."
     }
   },
   "Sword Saint": {
@@ -5238,7 +5238,7 @@
   "Temporal Trickster": {
     "L1": {
       "name": "Mending",
-      "description": "You may spend an EP to restore a Broken item. Some items (such as consumables) cannot be repaired (GM\u2019s discretion)."
+      "description": "You may spend an EP to restore a Broken item. Some items (such as consumables) cannot be repaired (GM’s discretion)."
     },
     "L2": {
       "name": "Position Rewind",
@@ -5300,7 +5300,7 @@
     },
     "L8": {
       "name": "Spellsteal",
-      "description": "You attempt to steal an effect from the target, removing it from the target and applying it to yourself for the same duration, provided you meet the requirements (if any). You must pay mana equal to the effects original mana cost. Effects granted through stances, transformations and permanent effects cannot be stolen. After stealing an effect, you can\u2019t use this again until the stolen effect has ended. The stolen effect also cannot be re-applied on the target until it has faded from you. You must have seen the effect be applied or otherwise identified an effect before you can steal it."
+      "description": "You attempt to steal an effect from the target, removing it from the target and applying it to yourself for the same duration, provided you meet the requirements (if any). You must pay mana equal to the effects original mana cost. Effects granted through stances, transformations and permanent effects cannot be stolen. After stealing an effect, you can’t use this again until the stolen effect has ended. The stolen effect also cannot be re-applied on the target until it has faded from you. You must have seen the effect be applied or otherwise identified an effect before you can steal it."
     }
   },
   "Timberwright": {
@@ -5340,7 +5340,7 @@
   "Time Thief": {
     "L1": {
       "name": "Thefts of the past",
-      "description": "When making a check with the Roguecraft skill, you may treat the object or person you\u2019re interacting with as being up to an hour in the past. This may allow you to steal things not currently carried, open doors before they were locked and more. Does not work in combat and an item that is consumed cannot be stolen. Using the Delay encounter start action does not consume your encounter start action use and you may use it multiple times."
+      "description": "When making a check with the Roguecraft skill, you may treat the object or person you’re interacting with as being up to an hour in the past. This may allow you to steal things not currently carried, open doors before they were locked and more. Does not work in combat and an item that is consumed cannot be stolen. Using the Delay encounter start action does not consume your encounter start action use and you may use it multiple times."
     },
     "L2": {
       "name": "Start Dash",
@@ -5450,11 +5450,11 @@
     },
     "L3": {
       "name": "Place Trap",
-      "description": "You choose to spend either 1 minute or 1 hour to place an undetermined trap in an area. You may only have 2 traps placed at a time in this way. When an enemy comes within 20ft of you, you may spend 0 RP to determine the effects of a trap and trigger it. If you spent 1 minute, you may choose a Simple Trap. If you spent 1 hour, you may choose either a Simple Trap or a Complex Trap. Log Swing (Simple): The target takes Light bludgeoning damage and is knocked back 20ft. Snare (Simple) : You place up to 3 snare traps, each within 20ft of each other. When triggered, the target\u2019s movement is interrupted and they fall prone. Net (Complex): The target is caught in a net and raised up into the air. It remains rooted there until the net is destroyed by dealing 15 damage, after which the target falls prone on the ground below it. Pitfall (Complex): The target falls down a 5x5, 20ft deep pit and takes falling damage as normal. A used trap cannot be reused. Setting a trap consumes a Trapper's Trap."
+      "description": "You choose to spend either 1 minute or 1 hour to place an undetermined trap in an area. You may only have 2 traps placed at a time in this way. When an enemy comes within 20ft of you, you may spend 0 RP to determine the effects of a trap and trigger it. If you spent 1 minute, you may choose a Simple Trap. If you spent 1 hour, you may choose either a Simple Trap or a Complex Trap. Log Swing (Simple): The target takes Light bludgeoning damage and is knocked back 20ft. Snare (Simple) : You place up to 3 snare traps, each within 20ft of each other. When triggered, the target’s movement is interrupted and they fall prone. Net (Complex): The target is caught in a net and raised up into the air. It remains rooted there until the net is destroyed by dealing 15 damage, after which the target falls prone on the ground below it. Pitfall (Complex): The target falls down a 5x5, 20ft deep pit and takes falling damage as normal. A used trap cannot be reused. Setting a trap consumes a Trapper's Trap."
     },
     "L4": {
       "name": "Ambush Trapper",
-      "description": "You may use Place Trap\u2019s 0 RP effect once this encounter, even if you didn\u2019t spend the time to set it up. The GM may rule that the pitfall and net options are unavailable based on the situation. These activations still cost a Trap when used (but not if you don't use them)."
+      "description": "You may use Place Trap’s 0 RP effect once this encounter, even if you didn’t spend the time to set it up. The GM may rule that the pitfall and net options are unavailable based on the situation. These activations still cost a Trap when used (but not if you don't use them)."
     },
     "L5": {
       "name": "Skills",
@@ -5476,7 +5476,7 @@
   "Trickster": {
     "L1": {
       "name": "Perfect Mimicry",
-      "description": "When given enough preparation time and enough knowledge about the subject, you are able to perfectly impersonate another person (GM\u2019s discretion on what is \u2018enough\u2019). When disguised in this way, other people are unable to see through your disguise through normal means unless you act or say things that are strange enough to draw suspicions. This disguise is partially magical in nature, but cannot make up for obvious size or shape differences."
+      "description": "When given enough preparation time and enough knowledge about the subject, you are able to perfectly impersonate another person (GM’s discretion on what is ‘enough’). When disguised in this way, other people are unable to see through your disguise through normal means unless you act or say things that are strange enough to draw suspicions. This disguise is partially magical in nature, but cannot make up for obvious size or shape differences."
     },
     "L2": {
       "name": "Assign Decoy",
@@ -5510,7 +5510,7 @@
   "True Shinigami Eyes": {
     "L1": {
       "name": "Improved Death Perception",
-      "description": "You can see the death of non-living things allowing you to automatically do maximum, full pierce damage against objects. You apply 1 Mark of Death every time you hit an enemy with \u2018Lines of Death\u2019 or \u2018Point of Death\u2019 up to a maximum of 7 marks."
+      "description": "You can see the death of non-living things allowing you to automatically do maximum, full pierce damage against objects. You apply 1 Mark of Death every time you hit an enemy with ‘Lines of Death’ or ‘Point of Death’ up to a maximum of 7 marks."
     },
     "L2": {
       "name": "Cut Away",
@@ -5586,7 +5586,7 @@
     },
     "L3": {
       "name": "Feeding Frenzy",
-      "description": "You may use this after reducing an enemy\u2019s hit points to 0 or less. You may immediately use your Vampire Bite ability for 0 RP against the enemy you downed."
+      "description": "You may use this after reducing an enemy’s hit points to 0 or less. You may immediately use your Vampire Bite ability for 0 RP against the enemy you downed."
     },
     "L4": {
       "name": "Vampiric Domination",
@@ -5688,7 +5688,7 @@
     },
     "L3": {
       "name": "Deadly Venom",
-      "description": "You make a Light attack against the target. On damage, you worsen the target\u2019s Toxic, letting it stack and adding +1 stack to it. Stacks a maximum of 3 times. A Toxic with more than 1 stack deals damage at the end of the target\u2019s turn rather than the start."
+      "description": "You make a Light attack against the target. On damage, you worsen the target’s Toxic, letting it stack and adding +1 stack to it. Stacks a maximum of 3 times. A Toxic with more than 1 stack deals damage at the end of the target’s turn rather than the start."
     },
     "L4": {
       "name": "Maximum Dose",
@@ -5752,7 +5752,7 @@
     },
     "L2": {
       "name": "Two Point Strike",
-      "description": "You may make a Light Attack against the target. On damage, you apply Wave Palm I.&nbsp; Wave Palm increases the mana cost of the afflicted target\u2019s next action that uses mana by an amount equal to the amount of stacks applied. If the triggering attack makes the number of total stacks exceed the target's current mana, they lose mana equal to the amount of total stacks and take true damage equal to triple this amount. Wave Palm does not stack with itself, use only the higher value. If the target has no mana, they immediately take true damage as if their stacks exceeded their current mana. When the Wave Palm effect triggers, either by increasing the mana cost or by dealing the true damage, the Wave Palm effect is removed."
+      "description": "You may make a Light Attack against the target. On damage, you apply Wave Palm I.&nbsp; Wave Palm increases the mana cost of the afflicted target’s next action that uses mana by an amount equal to the amount of stacks applied. If the triggering attack makes the number of total stacks exceed the target's current mana, they lose mana equal to the amount of total stacks and take true damage equal to triple this amount. Wave Palm does not stack with itself, use only the higher value. If the target has no mana, they immediately take true damage as if their stacks exceeded their current mana. When the Wave Palm effect triggers, either by increasing the mana cost or by dealing the true damage, the Wave Palm effect is removed."
     },
     "L3": {
       "name": "Mystic Eyes of Life Perception",
@@ -5776,7 +5776,7 @@
     },
     "L8": {
       "name": "Four Point Strike",
-      "description": "You may make a Light Attack against the target. On damage, you apply Wave Palm II.&nbsp; Combo: If used after Two Point Strike or against a target afflicted with Wave Palm I, the mana cost is reduced by 2 and the AP cost by 1. If the target is afflicted with Wave Palm I, you apply Wave Palm III instead of Wave Palm II. Wave Palm increases the mana cost of the afflicted target\u2019s next action that uses mana by an amount equal to the amount of stacks applied. If the triggering attack makes the number of total stacks exceed the target's current mana, they lose mana equal to the amount of total stacks and take true damage equal to triple this amount. Wave Palm does not stack with itself, use only the higher value. If the target has no mana, they immediately take true damage as if their stacks exceeded their current mana. When the Wave Palm effect triggers, either by increasing the mana cost or by dealing the true damage, the Wave Palm effect is removed. &nbsp;"
+      "description": "You may make a Light Attack against the target. On damage, you apply Wave Palm II.&nbsp; Combo: If used after Two Point Strike or against a target afflicted with Wave Palm I, the mana cost is reduced by 2 and the AP cost by 1. If the target is afflicted with Wave Palm I, you apply Wave Palm III instead of Wave Palm II. Wave Palm increases the mana cost of the afflicted target’s next action that uses mana by an amount equal to the amount of stacks applied. If the triggering attack makes the number of total stacks exceed the target's current mana, they lose mana equal to the amount of total stacks and take true damage equal to triple this amount. Wave Palm does not stack with itself, use only the higher value. If the target has no mana, they immediately take true damage as if their stacks exceeded their current mana. When the Wave Palm effect triggers, either by increasing the mana cost or by dealing the true damage, the Wave Palm effect is removed. &nbsp;"
     }
   },
   "Wildheart": {
@@ -5892,7 +5892,7 @@
     },
     "L3": {
       "name": "Wind Wall",
-      "description": "You create a wall of wind that is 30ft long, 5ft wide and 10ft high that slows down all ranged weapon attacks passing through it, treating them as having only half the normal range. This wall must be a straight line. These attacks also lose the Lock On, Sure Hit, Half Pierce, Guard Crush and Full Pierce keywords. In addition, the targets of those attacks are treated as having +2 Evasion and +1 Guard. Any Spells that are considered attacks (those that require an accuracy roll against a person that isn\u2019t using the Block reaction) that pass through the wall also suffer this penalty."
+      "description": "You create a wall of wind that is 30ft long, 5ft wide and 10ft high that slows down all ranged weapon attacks passing through it, treating them as having only half the normal range. This wall must be a straight line. These attacks also lose the Lock On, Sure Hit, Half Pierce, Guard Crush and Full Pierce keywords. In addition, the targets of those attacks are treated as having +2 Evasion and +1 Guard. Any Spells that are considered attacks (those that require an accuracy roll against a person that isn’t using the Block reaction) that pass through the wall also suffer this penalty."
     },
     "L4": {
       "name": "Wind-Empowered Aim",
@@ -5913,6 +5913,210 @@
     "L8": {
       "name": "Wind Shield",
       "description": "You grant the target &nbsp;1 RP that must be spent on the basic Dodge or Block action against the triggering attack as well as Wind Shield . Wind Shield grants a bonus to Dodge equal to your Focus against the triggering attack. The triggering attack can also no longer benefit from Lock On or Sure Hit"
+    }
+  },
+  "Aerial Mage": {
+    "L1": {
+      "name": "Aerial Mage",
+      "description": "You are an Aerial Mage, specializing in aerial combat and mobility."
+    },
+    "L2": {
+      "name": "Take Off",
+      "description": "Immediately mount and blast off into the sky equal to double your movement.  Cannot be used if you are the target of an attack during the Encounter Start round."
+    },
+    "L3": {
+      "name": "Skills",
+      "description": "You gain +5 skill points to spend on Appraise, Medicine, Magic, Religion, History, Flight, Artifice or Common Knowledge. You can exchange any skill point for 2 expertise points, but must spend them in these skills."
+    },
+    "L4": {
+      "name": "Airheart Gravity Turn",
+      "description": "You drop 25 feet altitude in order to immediately change direction. Can be used mid movement, all leftover movement can carry over into the new direction."
+    },
+    "L5": {
+      "name": "Heart",
+      "description": "You gain +1 to Reason."
+    },
+    "L6": {
+      "name": "Barrel Roll",
+      "description": "You take the Dodge action and remove Lock On from the attack. You may spend an additional RP to automatically make the attack miss you, even if the attack has Sure Hit."
+    },
+    "L7": {
+      "name": "Soul",
+      "description": "You gain +1 to Focus, Power or Agility."
+    },
+    "L8": {
+      "name": "Secret Art: Arlan Heaven's Fall Dive",
+      "description": "Your next Airship shot gains Sure Hit and Full Pierce."
+    }
+  },
+  "Cannoneer": {
+    "L1": {
+      "name": "Cannon Expert",
+      "description": "You are a Cannoneer, specializing in heavy artillery and explosive damage."
+    },
+    "L2": {
+      "name": "Cannonball",
+      "description": "You make 2 heavy attacks against the target and a light attack against all other enemies within 5ft of the target."
+    },
+    "L3": {
+      "name": "Skills",
+      "description": "You gain +5 skill points to spend on Athletics, Artifice, Perception, Survival, Intimidation or Common Knowledge. You can exchange any skill point for 2 expertise points, but must spend them in these skills."
+    },
+    "L4": {
+      "name": "High Power Shell",
+      "description": "You make a Heavy attack against the target. On damage, they are pushed back 10ft. You are pushed back 5ft away from the target regardless of whether it hits or not."
+    },
+    "L5": {
+      "name": "Heart",
+      "description": "You gain +1 to Fitness, Cunning, Reason, Awareness or Presence."
+    },
+    "L6": {
+      "name": "Armor Crushing Shell",
+      "description": "You make a Light attack against the target. On damage, you apply Sunder 2 until the start of your next turn."
+    },
+    "L7": {
+      "name": "Soul",
+      "description": "You gain +1 to Focus or Power."
+    },
+    "L8": {
+      "name": "Quantum Bomb",
+      "description": "You make a Heavy attack against the target."
+    }
+  },
+  "Fae Knight": {
+    "L1": {
+      "name": "Knight of Yddrasil",
+      "description": "You are a Fae Knight, blessed by the fey courts with enchanted martial abilities."
+    },
+    "L2": {
+      "name": "Fae Knight Style: Oak Stance",
+      "description": "You enter Fae Knight Style: Oak Stance. Weapons with  Fluttering Blade can move up to 20ft as a part of an attack.  Your Fluttering Blade does not provoke attacks of opportunity."
+    },
+    "L3": {
+      "name": "Skills",
+      "description": "You gain +5 skill points to spend on Athletics, Magic, Medicine, Negotiation, Intimidation, Insight or Common Knowledge. You can exchange any skill point for 2 expertise points, but must spend them in these skills."
+    },
+    "L4": {
+      "name": "Fae Knight Style: Devouring Locust",
+      "description": "Your Fluttering Blade moves in a straight line up to 60ft. Make a light attack that affects every target that the Blade passes through."
+    },
+    "L5": {
+      "name": "Heart",
+      "description": "You gain +1 to Fitness, Cunning, Reason, Awareness or Presence."
+    },
+    "L6": {
+      "name": "Fae Knight Style: Second Plague",
+      "description": "Your Fluttering Blade returns to your hand in the fastest possible path (typically a straight line), it avoids obstacles in the most direct way possible. Make a light attack that affects every target that the blade passes through. Deactivates Fluttering Blade when it returns to you. Combo : If used after Devouring Locust, reduce the AP cost by 1."
+    },
+    "L7": {
+      "name": "Soul",
+      "description": "You gain +1 to Focus, Power or Agility."
+    },
+    "L8": {
+      "name": "Fae Knight Style: Petal Swirl Flash",
+      "description": "You teleport to an enemy within range. Make a melee Light (1 AP), Heavy (2 AP) or Precise attack (2 AP) against that enemy. Afterwards, you regain the use of your Faerie Flash allowing you to use it again this encounter."
+    }
+  },
+  "Medic": {
+    "L1": {
+      "name": "Medic's Journey",
+      "description": "You are a Medic, specializing in battlefield medicine and emergency treatment."
+    },
+    "L2": {
+      "name": "First Aid",
+      "description": "You grant an ally  First Aid X , where X is the damage they took. When an ally has  First Aid applied by you, you may spend 1 AP while within 5ft of them to remove all First Aid and heal the target for your Focus up to the First Aid value."
+    },
+    "L3": {
+      "name": "Skills",
+      "description": "You gain +5 skill points to spend on Athletics, Linguistics, History, Medicine or Common Knowledge. You can exchange any skill point for 2 expertise points, but must spend them in these skills."
+    },
+    "L4": {
+      "name": "Code Blue",
+      "description": "You may sidestep up to your speed towards an ally and must end this movement within 5ft of them. Your next Painkiller Injection or the AP spending of First Aid used this turn has its AP cost reduced by 1."
+    },
+    "L5": {
+      "name": "Heart",
+      "description": "You gain +1 to Fitness or Reason."
+    },
+    "L6": {
+      "name": "Field Medic",
+      "description": "Medical and Surgery kits (including any upgraded versions) you carry have their burden reduced by 1, down to a minimum of 0."
+    },
+    "L7": {
+      "name": "Soul",
+      "description": "You gain +1 to Focus or Toughness."
+    },
+    "L8": {
+      "name": "Painkiller Injection",
+      "description": "You grant a willing ally temporary HP until the start of your next turn equal to your Focus x X.  The target cannot benefit from this ability again until the end of your next turn."
+    }
+  },
+  "Naturalist": {
+    "L1": {
+      "name": "Natural Cycle",
+      "description": "You are a Naturalist, drawing upon the power of nature to heal and protect."
+    },
+    "L2": {
+      "name": "Full Bloom",
+      "description": "You consume Regrowth on the target, removing the buff and healing the target immediately for twice its regular value."
+    },
+    "L3": {
+      "name": "Skills",
+      "description": "You gain +5 skill points to spend on Athletics, Medicine, Magic, Survival, Animal Husbandry or Common Knowledge. You can exchange any skill point for 2 expertise points, but must spend them in these skills."
+    },
+    "L4": {
+      "name": "Wild Bloom",
+      "description": "You apply Regrowth to up to 5 (including yourself) allies within range."
+    },
+    "L5": {
+      "name": "Heart",
+      "description": "You gain +1 to Fitness, Reason or Awareness."
+    },
+    "L6": {
+      "name": "Healing Seed",
+      "description": "The next time Regrowth naturally triggers on that ally and heals them, it also removes all stacks of a debuff on the target. If the debuff has Persist, you pay this additional mana cost when the Regrowth triggers and not upon using this ability."
+    },
+    "L7": {
+      "name": "Soul",
+      "description": "You gain +1 to Focus or Agility."
+    },
+    "L8": {
+      "name": "Sudden Growth",
+      "description": "You trigger the healing of your Regrowth."
+    }
+  },
+  "Fae Knight: Willow Style": {
+    "L1": {
+      "name": "Fae Knight Style: Willow Stance",
+      "description": "You enter Fae Knight Style: Willow Stance. Increasing your Fluttering Blade Limit to 2. Shields can be used as Fluttering Blades while in Willow Stance.  For 1 mana, all Fluttering Blades created in Willow Stance this turn can be enhanced with  Heavy Spin , allowing them to be used for some Willow abilities but they no longer gain your focus as extra evasion.  Heavy Spin blades also deal 5d6 upgraded heavy attack damage, even if they were originally a one-handed weapon."
+    },
+    "L2": {
+      "name": "Fae Knight Style: Carapace",
+      "description": "One of your Fluttering Blades returns to you and interferes with the attack. You may take the dodge or block action against the attack.  This cancels Fluttering Blade on that weapon."
+    },
+    "L3": {
+      "name": "Skills",
+      "description": "You gain +5 skill points to spend on Athletics, Magic, Medicine, Negotiation, Intimidation, Insight or Common Knowledge. You can exchange any skill point for 2 expertise points, but must spend them in these skills."
+    },
+    "L4": {
+      "name": "Fae Knight Style: Gadfly",
+      "description": "Sends a Fluttering Blade to harass the target within 90ft of you, making a light attack against them.  The Fluttering Blade then occupies the same space as the target and follows them throughout all movement, including teleportation.  Gadfly makes an attack of opportunity every time the target attacks a target besides Gadfly. You can upgrade this attack of opportunity to a heavy attack for 1 RP or 1 Mana."
+    },
+    "L5": {
+      "name": "Heart",
+      "description": "You gain +1 to Fitness, Cunning, Reason, Awareness or Presence."
+    },
+    "L6": {
+      "name": "Fae Knight Style: Megasoma",
+      "description": "You direct a Heavy Spin Fluttering Blade at a target within 30ft of you, making a Heavy attack and cancelling Fluttering Blade on that weapon afterwards. Cannot be used on a Fluttering Blade that was created this turn."
+    },
+    "L7": {
+      "name": "Soul",
+      "description": "You gain +1 to Focus, Power or Agility."
+    },
+    "L8": {
+      "name": "Faerie Flash",
+      "description": "You Teleport up to twice your Speed to an unoccupied space that you can see. Can only be used once per encounter."
     }
   }
 }

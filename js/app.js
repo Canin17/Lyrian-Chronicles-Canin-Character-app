@@ -82,6 +82,25 @@
   let currentStep = -1; // -1 = intro screen
 
   // ===========================================================================
+  // CLIM CALCULATION
+  // ===========================================================================
+  function calculateTotalClim(startingClim, breakthroughs) {
+    let total = startingClim || 3000;
+
+    // Apply breakthrough CLIM bonuses
+    if (Array.isArray(breakthroughs)) {
+      breakthroughs.forEach(b => {
+        // "Rich Parents" gives +3000 Clim
+        if (b && b.name && b.name.includes('Rich Parents')) {
+          total += 3000;
+        }
+      });
+    }
+
+    return total;
+  }
+
+  // ===========================================================================
   // INITIALIZATION
   // ===========================================================================
   async function init() {
@@ -502,7 +521,7 @@
           cls: character.cls,
           breakthroughs: character.breakthroughs,
           stats: character.stats,
-          clim: character.clim
+          clim: calculateTotalClim(character.clim, character.breakthroughs)
         });
         if (character.inventory) {
           EquipmentScene.restoreState(character.inventory);

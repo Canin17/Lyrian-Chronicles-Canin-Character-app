@@ -3537,6 +3537,30 @@ body {
   color: var(--accent-gold-light);
 }
 
+.eq-shelf-remove-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  margin-left: auto;
+  border: none;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.eq-shelf-remove-btn:hover {
+  background: var(--accent-red, #c0392b);
+  color: #fff;
+}
+
 /* Equipment Workspace Columns */
 .equipment-workspace {
   display: block;
@@ -3612,6 +3636,67 @@ body {
   outline: none;
   border-color: var(--accent-gold-light);
   box-shadow: 0 0 8px rgba(196, 163, 90, 0.3);
+}
+
+/* Sort Row */
+.equipment-sort-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.25rem 0;
+}
+
+.equipment-sort-row .filter-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.eq-sort-select {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  border-radius: 4px;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.eq-sort-select:hover {
+  border-color: var(--accent-gold);
+}
+
+.eq-sort-select:focus {
+  outline: none;
+  border-color: var(--accent-gold-light);
+  box-shadow: 0 0 8px rgba(196, 163, 90, 0.3);
+}
+
+/* Show Unknown Price Toggle */
+.eq-show-unknown-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.eq-show-unknown-label input[type="checkbox"] {
+  accent-color: var(--accent-gold);
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+}
+
+.eq-show-unknown-label:hover {
+  color: var(--text-primary);
 }
 
 /* Grid layout — compact, like class grid */
@@ -4191,6 +4276,33 @@ body {
 .eq-summary-footer-weight strong {
   color: var(--accent-gold-light);
   font-size: 0.9rem;
+}
+
+/* Toast notifications (equipment errors/warnings) */
+.eq-toast {
+  pointer-events: none;
+}
+.eq-toast-error {
+  background: var(--accent-red, #c0392b) !important;
+  color: #fff !important;
+}
+.eq-toast-info {
+  background: var(--bg-primary, #1a1a2e) !important;
+  color: var(--text-primary, #eee) !important;
+  border: 1px solid var(--accent-gold, #d4a017) !important;
+}
+
+/* Fallback icons when no image URL is available */
+.eq-shelf-item-icon-fallback,
+.eq-detail-img-fallback {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-tertiary, #2a2a3e) !important;
+  color: var(--accent-gold, #d4a017) !important;
+  font-size: 1.2rem;
+  font-weight: bold;
+  text-transform: uppercase;
 }
 
 /* Animations */

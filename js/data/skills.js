@@ -201,7 +201,7 @@ const CLASS_SKILL_DATA = {
   'Priest': ['Medicine', 'Magic', 'Religion', 'Insight', 'Negotiation', 'Common Knowledge'],
   'Medic': ['Medicine', 'Magic', 'Religion', 'Insight', 'Negotiation', 'Common Knowledge'],
   'Idol': ['Art', 'Negotiation', 'Intimidation', 'Insight', 'Deception', 'Common Knowledge'],
-  'Maid': ['Medicine', 'Cooking', 'Negotiation', 'Insight', 'Perception', 'Common Knowledge'],
+  'Maid': ['Medicine', 'Negotiation', 'Insight', 'Perception', 'Common Knowledge'],
   'Aetherie': ['Magic', 'Religion', 'History', 'Insight', 'Medicine', 'Common Knowledge'],
 
   // Controller / Mage → Magic, Religion, History, Artifice, Common Knowledge, Flight

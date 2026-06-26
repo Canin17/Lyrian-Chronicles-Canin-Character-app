@@ -45,7 +45,16 @@ const SummaryScene = (function() {
     if (characterData.worships) {
       html += `<div class="summary-row"><span class="summary-label">Worships</span><span class="summary-value">${window.escapeHtml(characterData.worships)}</span></div>`;
     }
-    html += `<div class="summary-row"><span class="summary-label">Starting Clim</span><span class="summary-value">${characterData.clim ?? 3000}</span></div>`;
+    {
+      const baseClim = characterData.clim ?? 3000;
+      const hasRichParents = characterData.breakthroughs?.some(b => b?.name?.includes('Rich Parents'));
+      const richBonus = hasRichParents ? 3000 : 0;
+      const totalClim = baseClim + richBonus;
+      html += `<div class="summary-row"><span class="summary-label">Starting Clim</span><span class="summary-value">${baseClim}${hasRichParents ? ' <span style="font-size:0.75rem; color: var(--accent-gold-light);">(+3000 Rich Parents)</span>' : ''}</span></div>`;
+      if (hasRichParents) {
+        html += `<div class="summary-row"><span class="summary-label">Total Clim Available</span><span class="summary-value" style="color: var(--accent-gold-light);">${totalClim}</span></div>`;
+      }
+    }
     html += `<div class="summary-row"><span class="summary-label">Starting EXP</span><span class="summary-value">${characterData.exp ?? 1000}</span></div>`;
     html += `<div class="summary-row"><span class="summary-label">Starting IP</span><span class="summary-value">${characterData.ip ?? 3}</span></div>`;
 
@@ -192,11 +201,14 @@ const SummaryScene = (function() {
           <span>Qty · Burden · Cost</span>
         </div>`;
       
+      // Burden: any item with burdenCost > 0 counts toward the limit
+      const itemCountsAsBurden = (item) => (item.burdenCost || 0) > 0;
+
       let totalBurden = 0;
       let totalCost = 0;
       
       characterData.inventory.forEach(entry => {
-        const itemWeight = (entry.item.burdenCost || 0) * entry.quantity;
+        const itemWeight = itemCountsAsBurden(entry.item) ? (entry.item.burdenCost || 0) * entry.quantity : 0;
         const itemCost = (entry.item.climCost || 0) * entry.quantity;
         totalBurden += itemWeight;
         totalCost += itemCost;
@@ -207,9 +219,13 @@ const SummaryScene = (function() {
         </div>`;
       });
       
+      // Burden: official flat limit of 10, over = Rooted
+      const BURDEN_LIMIT = 10;
+      const burdenOver = totalBurden > BURDEN_LIMIT;
+
       html += `<div style="display: flex; justify-content: space-between; margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px dashed var(--bg-tertiary); font-size: 0.85rem; color: var(--text-muted);">
         <span>Total Clim Spent: <strong style="color: var(--accent-gold-light);">${totalCost} Clim</strong></span>
-        <span>Total Burden Weight: <strong style="color: var(--accent-gold-light);">${totalBurden} Burden</strong></span>
+        <span>Total Burden: <strong style="color: ${burdenOver ? 'var(--accent-red)' : 'var(--accent-gold-light)'};">${totalBurden} / ${BURDEN_LIMIT}</strong></span>
       </div>`;
       
       html += `</div>`;
@@ -639,7 +655,27 @@ const SummaryScene = (function() {
         }
       }
 
-      // 9. Fill Backstory
+      // 9. Fill Expedition Inventory (rows 2-31, columns A-F)
+      // Combat Loadout (columns G-H, rows 5-31) is intentionally left untouched
+      const invSheet = workbook.getWorksheet('Inventory');
+      if (invSheet && characterData.inventory && characterData.inventory.length > 0) {
+        characterData.inventory.forEach((entry, i) => {
+          const row = 2 + i; // Start at row 2
+          if (row <= 31) { // Expedition Inventory section ends at row 31
+            const item = entry.item || {};
+            invSheet.getCell(`A${row}`).value = item.name || '';
+            invSheet.getCell(`B${row}`).value = entry.quantity || 1;
+            // Burden cost (numeric)
+            invSheet.getCell(`C${row}`).value = item.burdenCost || 0;
+            // Clim cost (numeric price per item)
+            invSheet.getCell(`D${row}`).value = item.climCost || 0;
+            // Description
+            invSheet.getCell(`F${row}`).value = item.description || '';
+          }
+        });
+      }
+
+      // 10. Fill Backstory
       if (characterData.background && backstorySheet) {
         backstorySheet.getCell('A1').value = characterData.background;
       }

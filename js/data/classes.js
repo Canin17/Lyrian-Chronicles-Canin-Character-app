@@ -706,7 +706,7 @@ const CLASS_DATA = [  {
   },
   {
     "id": "69ea4f7a6be32fced492fc03",
-    "name": "Flash Star Blade Style ",
+    "name": "Flash Star Blade Style",
     "description": "A blade style originating from Raijin swordmasters. &nbsp;A notable practicioner of Flash Star Blade Style is Rin Tatsugami of Madeline.",
     "role": "Striker",
     "tier": "2",
@@ -1006,7 +1006,7 @@ const CLASS_DATA = [  {
   },
   {
     "id": "69ea4f7a6be32fced492fc20",
-    "name": "Magitechnician ",
+    "name": "Magitechnician",
     "description": "Expert Magitechnicans are the true pioneers of artificing, creating new inventions out of piles of metal parts and magical fuel. &nbsp;The most famous of which is the world renown artificer only known as \"Angel\". &nbsp;During the annual Magitechnician Fair held by the Riannon Institute of Alchemy in Mothergreen, a mysterious artifice arrived as an entry. &nbsp;It was a common Buster Weapon, but it was the intense modifications made to its efficiency that were the awe of all adventurers that laid eyes upon it. &nbsp;Despite winning the 1st prize at the fair, no one came to claim the prize... and had become known as the \"Angel-Type\" Buster Artifice\u2014named after the pseudonym used by the crafter.Once an artifice only used by fighters, the Angel-Type Buster Artifice started to spread amongst more defensively oriented users\u2014often placed on daggers for quick, practical deployment. &nbsp;Despite the speculations as to Angel's identity, few suspected the creator was a local from their own town. Their inability to discover Angel's true identity was due to preconceived notions of who or what a renowned artificer should look like.In reality, \"Angel\" was one of the early members of the Angel's Sword Guild\u2014a notorious Adventurer's guild that created trouble wherever they went. &nbsp;But quietly hidden away in her workshop, surrounded by plush toys and scattered mechanical parts, Ayrara Ravness\u2014a young Fae who appears no older than a ten-year old human crafts some of the most innovative artifices in Axia. &nbsp;She rarely takes commissions from outsiders, instead preferring to work exclusively with those whom her whims favor. &nbsp;In truth, more often than not, her workshop finds itself closed due to the insistence of her half-sister Elly, who continually drags her away on yet another adventure.&nbsp;",
     "role": "Artisan/Utility",
     "tier": "2",
@@ -1206,7 +1206,7 @@ const CLASS_DATA = [  {
   },
   {
     "id": "69ea4f7a6be32fced492fbed",
-    "name": "Onmyoji ",
+    "name": "Onmyoji",
     "description": "Scribes who use magic paper and ink to create magic talismans imbued with spells.",
     "role": "Specialist",
     "tier": "2",
@@ -1873,7 +1873,7 @@ const CLASS_INDEX = {
   "Fighter": 63,
   "Five Harmonies Style": 64,
   "Flame Sentinel": 65,
-  "Flash Star Blade Style ": 66,
+  "Flash Star Blade Style": 66,
   "Flowing Wind Style": 67,
   "Forager": 68,
   "Forgemaster": 69,
@@ -1903,7 +1903,7 @@ const CLASS_INDEX = {
   "Lancer": 93,
   "Mage": 94,
   "Mage Knight": 95,
-  "Magitechnician ": 96,
+  "Magitechnician": 96,
   "Maid": 97,
   "Marksman": 98,
   "Martial Artist": 99,
@@ -1921,7 +1921,7 @@ const CLASS_INDEX = {
   "Necromaster": 111,
   "Ninja": 112,
   "Nomad": 113,
-  "Onmyoji ": 114,
+  "Onmyoji": 114,
   "Oracle": 115,
   "Peltast": 116,
   "Phantom Thief": 117,
@@ -4471,7 +4471,7 @@ const CLASS_ABILITIES_DATA = {
       "description": "You create a wall of Fire that is 30ft long, 5ft wide and 30ft high. This wall must be a straight line. Anyone passing through the wall or starting their turn in it takes Heavy Fire Damage. The wall lasts for 10 minutes or until canceled. Those in the wall when it is casted, may spend 1 RP to sidestep out of the wall. A person can only take this damage once per round."
     }
   },
-  "Flash Star Blade Style ": {
+  "Flash Star Blade Style": {
     "L1": {
       "name": "Lightning Weapon",
       "description": "When attacking with a weapon, you may choose to have the weapon deal Lightning Damage instead of its normal damage type. You must declare your chosen damage type before making the accuracy roll."
@@ -5493,7 +5493,7 @@ const CLASS_ABILITIES_DATA = {
       "description": "You Sidestep up to your speed and can move through enemies for this movement. You and every ally you pass through are healed for 11 + (Power x 2). This movement must always be in a straight line, regardless of your mount type."
     }
   },
-  "Magitechnician ": {
+  "Magitechnician": {
     "L1": {
       "name": "Advanced Artificing",
       "description": "You gain Artificer Advanced Crafting Abilities"
@@ -6223,7 +6223,7 @@ const CLASS_ABILITIES_DATA = {
       "description": "You focus on a single enemy and maintain a constant position from them. Whenever the target moves, you may move the same amount as they did (up to your movement speed) away from them for 0 RP. This movement does not provoke attacks of opportunity from the target, but does provoke from other enemies. &nbsp;Every time this happens, you may make a Light attack against the target with a ranged weapon. If the target spends multiple AP on a single movement action, you may make an amount of Light attacks equal to the AP they spent. Lasts until the start of your next turn or until you can no longer see the target."
     }
   },
-  "Onmyoji ": {
+  "Onmyoji": {
     "L1": {
       "name": "Expert Scribe",
       "description": "You gain +5 points in Art: Calligraphy expertise skill. This is not doubled for expertise bonus."

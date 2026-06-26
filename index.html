@@ -558,24 +558,16 @@
           <!-- Sticky Header -->
           <div class="equipment-sticky-header">
             <div class="sticky-stat">
-              <span class="sticky-label">Total Clim Available</span>
-              <span class="sticky-value" id="eq-clim-total">3000 Clim</span>
+              <span class="sticky-label">Remaining Clim</span>
+              <span class="sticky-value" id="eq-clim-remaining">3000 Clim</span>
             </div>
             <div class="sticky-stat">
               <span class="sticky-label">Clim Spent</span>
               <span class="sticky-value" id="eq-clim-spent">0 Clim</span>
             </div>
             <div class="sticky-stat">
-              <span class="sticky-label">Remaining Clim</span>
-              <span class="sticky-value" id="eq-clim-remaining">3000 Clim</span>
-            </div>
-            <div class="sticky-stat">
-              <span class="sticky-label">Regular Burden</span>
-              <span class="sticky-value" id="eq-burden-regular">0 / 10</span>
-            </div>
-            <div class="sticky-stat">
-              <span class="sticky-label">Combat Burden</span>
-              <span class="sticky-value" id="eq-burden-combat">0 / 5</span>
+              <span class="sticky-label">Burden</span>
+              <span class="sticky-value" id="eq-burden">0 / 10</span>
             </div>
           </div>
 
@@ -608,6 +600,20 @@
               <!-- Search Bar -->
               <div class="equipment-search-row">
                 <input type="text" id="equipment-search-input" placeholder="Search items by name, subtype, or rules description..." class="eq-search-field">
+              </div>
+
+              <!-- Sort by Price + Show Unknown -->
+              <div class="equipment-sort-row">
+                <span class="filter-label">Sort by Price:</span>
+                <select id="equipment-sort-select" class="eq-sort-select">
+                  <option value="default">Default</option>
+                  <option value="asc">Lowest First</option>
+                  <option value="desc">Highest First</option>
+                </select>
+                <label class="eq-show-unknown-label">
+                  <input type="checkbox" id="equipment-show-unknown">
+                  <span>Show unknown price</span>
+                </label>
               </div>
 
               <!-- Item Grid -->
