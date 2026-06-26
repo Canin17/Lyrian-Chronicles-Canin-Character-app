@@ -99,7 +99,7 @@ const ClassSelectScene = (function() {
   // IMAGE LOADING — shared helper for preview + grid
   // ===========================================================================
   function loadClassImage(imgEl, wrapperEl, name, opts = {}) {
-    const { width = '80px', height = '160px', onFallback } = opts;
+    const { width = '80px', height = '160px', onFallback, skipInlineStyles } = opts;
 
     if (!imgEl) return;
 
@@ -107,7 +107,7 @@ const ClassSelectScene = (function() {
     if (!opts.src) {
       imgEl.removeAttribute('src');
       imgEl.alt = name.charAt(0);
-      if (wrapperEl) {
+      if (wrapperEl && !skipInlineStyles) {
         wrapperEl.style.aspectRatio = 'auto';
         wrapperEl.style.width = width;
         wrapperEl.style.height = height;
@@ -119,7 +119,7 @@ const ClassSelectScene = (function() {
     let loaded = false;
 
     const setAspectRatio = () => {
-      if (imgEl.naturalWidth && imgEl.naturalHeight) {
+      if (imgEl.naturalWidth && imgEl.naturalHeight && !skipInlineStyles) {
         const ratio = imgEl.naturalWidth / imgEl.naturalHeight;
         if (wrapperEl) {
           wrapperEl.style.aspectRatio = `${ratio}`;
@@ -131,7 +131,7 @@ const ClassSelectScene = (function() {
 
     const showFallback = () => {
       loaded = true;
-      if (wrapperEl) {
+      if (wrapperEl && !skipInlineStyles) {
         wrapperEl.style.aspectRatio = 'auto';
         wrapperEl.style.width = width;
         wrapperEl.style.height = height;
@@ -543,12 +543,17 @@ const ClassSelectScene = (function() {
     const panel = document.getElementById('class-overview-panel');
     if (panel) panel.style.display = '';
 
+    // Scroll the step panel to the top smoothly
+    const stepPanel = document.querySelector('#step-class .step-panel');
+    if (stepPanel) stepPanel.scrollTo({ top: 0, behavior: 'smooth' });
+
     // Update image using shared helper
     const imgEl = document.getElementById('classPreviewImage');
     const wrapperEl = document.getElementById('classPreviewImageWrapper');
     loadClassImage(imgEl, wrapperEl, cls.name, {
       src: cls.image || null,
-      staleCheck: () => previewClass && previewClass.image !== clsImage
+      staleCheck: () => previewClass && previewClass.image !== clsImage,
+      skipInlineStyles: true
     });
 
     // Update name badge
