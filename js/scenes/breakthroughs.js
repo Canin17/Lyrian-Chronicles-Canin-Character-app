@@ -149,8 +149,8 @@ const BreakthroughScene = (function() {
     // "Must be a human and only a human"
     // "Must be a Nio, Bullfolk or Bearfolk"
     // NOTE: "Must be an Unknown Paladin that follows Eisen" is a CLASS requirement, not a race
-    // NOTE: "Must be a summoner and have visited the eidolon" — class requirement, be permissive
-    const raceMatch = clause.match(/(?:must\s+)?(?:be|choose)\s+(?:(?:a|an)\s+)?([\w-][\w\s,-]*?[\w-])(?:\s+race\.?|\.)?(?:$)/i);
+    // NOTE: "Must be a summoner and have visited the eidolon" — class requirement
+    const raceMatch = clause.match(/(?:must\s+)?(?:be|choose)\s+(?:(?:a|an)\s+)?([\w-][\w\s,-]*?[\w-])(?:\s+race\.?|\.?)?(?:$)/i);
     if (raceMatch && !lower.includes('mastered') && !lower.includes('maxed')) {
       let neededRaceStr = raceMatch[1].trim();
 
@@ -190,9 +190,7 @@ const BreakthroughScene = (function() {
       if (hasClassReq) {
         return true;
       }
-
-      // If none of the options match known races/ancestries, it's likely a class
-      // requirement (e.g., "summoner", "paladin") — be permissive
+      // If none of the options match known races/ancestries, check if they're class names
       const knownRacesCheck = ['human', 'demon', 'fae', 'chimera', 'angel', 'youkai'];
       const knownAncestriesCheck = [
         'bearfolk', 'bullfolk', 'catfolk', 'centaur', 'cowfolk', 'dogfolk',
@@ -209,7 +207,15 @@ const BreakthroughScene = (function() {
         !knownRacesCheck.includes(opt) && !knownAncestriesCheck.some(a => opt.includes(a) || a.includes(opt))
       );
       if (allUnrecognized) {
-        return true; // Likely a class requirement — be permissive
+        // Check if these are class requirements (e.g., "summoner", "paladin", "necromancer")
+        const equipped = cls ? (cls.all || []) : [];
+        const hasClassReq = options.some(opt =>
+          equipped.some(ec => (ec.class?.name || '').toLowerCase() === opt)
+        );
+        if (hasClassReq) {
+          return true; // Player has the required class
+        }
+        return false; // Class requirement not met
       }
 
       return options.some(opt => checkRaceMatch(opt, race, ancestry));
