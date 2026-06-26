@@ -276,9 +276,11 @@ const ClassSelectScene = (function() {
 
     // "Must have the X breakthrough"
     if (lower.includes('breakthrough')) {
-      const btMatch = clause.match(/(?:must have|requires)\s+(?:the\s+)?(.+?)(?:\.|$)/i);
+      const btMatch = clause.match(/(?:must have|requires)\s+(?:the\s+)?(.+?)(?:\s+breakthrough)?(?:\.|$)/i);
       if (btMatch) {
-        const btName = btMatch[1].trim().toLowerCase();
+        let btName = btMatch[1].trim().toLowerCase();
+        // Strip trailing "breakthrough" word if present
+        btName = btName.replace(/\s+breakthrough\s*$/i, '');
         return breakthroughs.some(bt => bt.name.toLowerCase() === btName);
       }
       return false;
