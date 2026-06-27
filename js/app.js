@@ -223,28 +223,59 @@
       startBtn.addEventListener('click', () => goToStep(0));
     }
 
-    // Load saved character button
-    const loadBtn = document.getElementById('btn-load-saved');
-    if (loadBtn) {
-      loadBtn.addEventListener('click', () => {
-        if (loadFromLocalStorage()) {
-          // Navigate to the saved step — loadStepData will restore scene state
-          let savedStep = 0;
-          try { savedStep = parseInt(localStorage.getItem(STORAGE_KEY + '-step')) || 0; } catch {}
-          goToStep(Math.max(0, Math.min(savedStep, STEPS.length - 1)));
+    // Import button — file picker with type detection
+    const importBtn = document.getElementById('btn-import');
+    if (importBtn) {
+      importBtn.addEventListener('click', () => {
+        const fi = document.getElementById('import-file-input');
+        if (fi) fi.click();
+      });
+    }
+
+    const importFileInput = document.getElementById('import-file-input');
+    if (importFileInput) {
+      importFileInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        importFileInput.value = '';
+        const ext = file.name.split('.').pop().toLowerCase();
+        if (ext === 'json') {
+          try {
+            const raw = JSON.parse(await file.text());
+            // ponytail: unwrap { character: { ... } } envelope from exportJSON; merge known + extra keys
+            const data = raw.character || raw;
+            Object.keys(character).forEach(k => { if (data[k] !== undefined) character[k] = data[k]; });
+            // ponytail: fields added at runtime but not in skeleton — restore on import
+            const extra = ['inventory', 'climSpent', 'remainingClim', 'statBonusChoices', 'breakthroughStatBonuses', 'breakthroughProficiencies'];
+            extra.forEach(k => { if (data[k] !== undefined) character[k] = data[k]; });
+            saveToLocalStorage();
+            goToStep(7);
+          } catch (err) {
+            showImportError('Invalid JSON: ' + err.message);
+          }
+        } else if (ext === 'xlsx') {
+          window._importCharacter = character;
+          if (await SummaryScene.importExcel(file)) {
+            saveToLocalStorage();
+            goToStep(7);
+          }
+        } else {
+          showImportError('Cannot import .' + ext + ' files. Use JSON or Excel (.xlsx).');
         }
       });
     }
 
-    // Check for saved character on init
-    try {
-      const savedRaw = localStorage.getItem(STORAGE_KEY);
-      if (savedRaw) {
-        const loadBtn = document.getElementById('btn-load-saved');
-        if (loadBtn) loadBtn.style.display = 'inline-block';
-      }
-    } catch {
-      // localStorage unavailable — silently fail
+    function showImportError(msg) {
+      const el = document.querySelector('.intro-content');
+      if (!el) return;
+      const old = el.querySelector('.import-error-banner');
+      if (old) old.remove();
+      const b = document.createElement('div');
+      b.className = 'import-error-banner';
+      b.style.cssText = 'background:#dc3545;color:#fff;padding:0.75rem 1rem;border-radius:4px;margin-top:1rem;font-size:0.9rem;';
+      b.textContent = msg;
+      el.appendChild(b);
+      setTimeout(() => b.remove(), 8000);
     }
 
     // Navigation buttons (delegated)
@@ -360,17 +391,6 @@
     document.getElementById('step-intro').classList.add('active');
 
     currentStep = -1;
-
-    // Show/hide load button based on saved data (safe localStorage access)
-    const loadBtn = document.getElementById('btn-load-saved');
-    if (loadBtn) {
-      try {
-        const hasSaved = localStorage.getItem(STORAGE_KEY);
-        loadBtn.style.display = hasSaved ? 'inline-block' : 'none';
-      } catch {
-        loadBtn.style.display = 'none';
-      }
-    }
 
     // Update nav to intro state
     updateNav(-1);
@@ -734,8 +754,6 @@
 
     // Clear saved character
     clearLocalStorage();
-    const loadBtn = document.getElementById('btn-load-saved');
-    if (loadBtn) loadBtn.style.display = 'none';
 
     // Clear beforeunload warning flag since character is reset
     updateProgressFlag();
@@ -770,24 +788,6 @@
     } catch (e) {
       // quota exceeded or private browsing — silently fail
       console.warn('[App] Could not save to localStorage:', e.message);
-    }
-  }
-
-  function loadFromLocalStorage() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return false;
-      const data = JSON.parse(raw);
-      // Restore character data
-      Object.keys(character).forEach(key => {
-        if (data[key] !== undefined) {
-          character[key] = data[key];
-        }
-      });
-      return true;
-    } catch (e) {
-      console.warn('[App] Could not load from localStorage:', e.message);
-      return false;
     }
   }
 

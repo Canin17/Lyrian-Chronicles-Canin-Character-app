@@ -341,6 +341,83 @@ const SummaryScene = (function() {
   }
 
   function exportJSON(characterData) {
+    // ponytail: mirror Excel export — gather abilities, proficiencies, crafting skills
+    const classes = characterData.cls?.all || [];
+
+    // Proficiencies (aggregated from all sources, same as Excel)
+    const allProfs = new Set();
+    if (characterData.race) {
+      (characterData.race.proficiencies || []).forEach(p => allProfs.add(p));
+      (characterData.ancestry?.proficiencies || []).forEach(p => allProfs.add(p));
+    }
+    classes.forEach(clsEntry => {
+      const className = clsEntry.class?.name;
+      if (className && typeof CLASS_ABILITIES_DATA === 'object') {
+        const classAbilities = CLASS_ABILITIES_DATA[className];
+        if (classAbilities?.L1?.proficiencies) {
+          classAbilities.L1.proficiencies.forEach(p => allProfs.add(p));
+        }
+      }
+    });
+    (characterData.breakthroughs || []).forEach(bt => {
+      (bt.proficiencies || []).forEach(p => allProfs.add(p));
+    });
+
+    // Abilities (full detail, same as Excel)
+    const allAbilities = [];
+    const writtenAbilities = new Set();
+    classes.forEach(clsEntry => {
+      const classObj = clsEntry.class || {};
+      const className = classObj.name;
+      const level = clsEntry.level || 1;
+      const classAbilities = typeof CLASS_ABILITIES_DATA === 'object' ? CLASS_ABILITIES_DATA[className] : null;
+      if (!classAbilities) return;
+      for (let lvl = 1; lvl <= Math.min(level, 8); lvl++) {
+        const abilityKey = `L${lvl}`;
+        const classAbility = classAbilities[abilityKey];
+        if (!classAbility) continue;
+        const abilityName = classAbility.name;
+        if (writtenAbilities.has(abilityName)) continue;
+        writtenAbilities.add(abilityName);
+        // Enrich from ABILITIES_DB
+        const fullAbility = typeof ABILITIES_DB === 'object' ? (ABILITIES_DB[abilityName] || null) : null;
+        const costs = [];
+        if (fullAbility) {
+          if (fullAbility.manaCost) costs.push(`Mana: ${fullAbility.manaCost}`);
+          if (fullAbility.apCost) costs.push(`AP: ${fullAbility.apCost}`);
+          if (fullAbility.rpCost) costs.push(`RP: ${fullAbility.rpCost}`);
+        }
+        allAbilities.push({
+          name: abilityName,
+          level: lvl,
+          class: className,
+          cost: costs.join(' | ') || '',
+          keywords: fullAbility ? (fullAbility.keywords || []) : [],
+          range: fullAbility?.range || '',
+          requirement: fullAbility?.requirement || '',
+          type: fullAbility?.type || 'unknown',
+          description: fullAbility?.description || classAbility.description || '',
+          keyBenefits: classAbility.keyBenefits || [],
+          proficiencies: classAbility.proficiencies || []
+        });
+      }
+    });
+
+    // Crafting skills (same map as Excel)
+    const classToCraftingSkill = {
+      'Blacksmith': 'Blacksmith', 'Alchemist': 'Alchemist', 'Alchemeister': 'Alchemist',
+      'Armorsmith': 'Armorsmith', 'Master Armorer': 'Armorsmith', 'Artificer': 'Artificer',
+      'Carpenter': 'Carpenter', 'Culinarian': 'Culinarian', 'Forgemaster': 'Blacksmith',
+      'Agrarian': 'Farmer', 'Farmer': 'Farmer', 'Timberwright': 'Carpenter', 'Transmuter': 'Transmuter'
+    };
+    const craftingSkills = new Set();
+    classes.forEach(clsEntry => {
+      const classObj = clsEntry.class || {};
+      if (clsEntry.level >= 1 && classToCraftingSkill[classObj.name]) {
+        craftingSkills.add(classToCraftingSkill[classObj.name]);
+      }
+    });
+
     const exportData = {
       system: 'lyrian-chronicles',
       version: '1.0.0',
@@ -358,11 +435,13 @@ const SummaryScene = (function() {
         ip: characterData.ip,
         race: characterData.race ? {
           id: characterData.race.id,
-          name: characterData.race.name
+          name: characterData.race.name,
+          proficiencies: characterData.race.proficiencies || []
         } : null,
         ancestry: characterData.ancestry ? {
           ancestryId: characterData.ancestry.ancestryId,
-          name: characterData.ancestry.name
+          name: characterData.ancestry.name,
+          proficiencies: characterData.ancestry.proficiencies || []
         } : null,
         class: characterData.cls ? {
           all: characterData.cls.all ? characterData.cls.all.map(c => ({
@@ -382,12 +461,19 @@ const SummaryScene = (function() {
         spiritCore: characterData.spiritCore,
         skills: characterData.skills,
         breakthroughs: characterData.breakthroughs || [],
+        breakthroughStatBonuses: characterData.breakthroughStatBonuses || {},
+        breakthroughProficiencies: characterData.breakthroughProficiencies || [],
+        statBonusChoices: characterData.statBonusChoices || {},
         inventory: characterData.inventory || [],
         climSpent: characterData.climSpent || 0,
         remainingClim: characterData.remainingClim ?? characterData.clim,
         mirane: characterData.mirane,
         oldArmorCalc: characterData.oldArmorCalc,
-        speed: characterData.speed ?? 20
+        speed: characterData.speed ?? 20,
+        // Aggregated data (same as Excel sheets)
+        proficiencies: Array.from(allProfs),
+        abilities: allAbilities,
+        craftingSkills: Array.from(craftingSkills)
       }
     };
 
@@ -1454,10 +1540,121 @@ const SummaryScene = (function() {
     doc.save(safeName + '_lyrian.pdf');
   }
 
+  // ponytail: O(n²) name scans — fine for <200 items, map cache if it hurts
+  function _find(arr, name) {
+    if (!name || !Array.isArray(arr)) return null;
+    const n = name.toLowerCase();
+    return arr.find(x => (x.name||'').toLowerCase() === n) || null;
+  }
+
+  /**
+   * Import character data from a Mirane CCS Excel file.
+   * Populates window._importCharacter (the global character object).
+   */
+  async function importExcel(file) {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        try {
+          const wb = new ExcelJS.Workbook();
+          await wb.xlsx.load(ev.target.result);
+          const core = wb.getWorksheet('Core');
+          if (!core) throw new Error('No "Core" sheet found.');
+
+          // ponytail: safe cell read — handles null, formula objects, empty strings
+          const v = (s, r) => { const c = s.getCell(r); const x = c.value; if (!x) return null; if (typeof x === 'object' && x.result !== undefined) return x.result; return x; };
+          const T = (s, r) => String(v(s, r) || '');
+          const N = (s, r) => Number(v(s, r) || 0);
+          const tgt = window._importCharacter;
+
+          // Identity
+          tgt.name = T(core, 'B2');
+          tgt.race = _find(RACE_DATA, T(core, 'D2'));
+          tgt.ancestry = (function() { const a = ANCESTRY_MAP[tgt.race?.name]; return a ? _find(a, T(core, 'D3')) : null; })();
+          tgt.gender = T(core, 'B3');
+          tgt.age = T(core, 'B4');
+          tgt.height = T(core, 'B5');
+          tgt.weight = T(core, 'B6');
+          tgt.worships = T(core, 'B7');
+          tgt.spiritCore = N(core, 'C5');
+          tgt.speed = N(core, 'H6') || 20;
+          tgt.exp = N(core, 'D4') || 1000;
+          tgt.mirane = v(core, 'A58') !== false;
+          tgt.oldArmorCalc = !!v(core, 'K30');
+
+          // Background
+          const bs = wb.getWorksheet('Backstory');
+          tgt.background = bs ? T(bs, 'A1') : '';
+
+          // Clim
+          const ex = wb.getWorksheet('EXP & Transactions');
+          if (ex) {
+            tgt.clim = N(ex, 'F2') || 3000;
+            tgt.climSpent = Math.abs(N(ex, 'F4'));
+          }
+
+          // Stats
+          tgt.baseStats = { foc:N(core,'A45'), pow:N(core,'A46'), agi:N(core,'A47'), tou:N(core,'A48'), fitness:N(core,'C45'), cunning:N(core,'C46'), reason:N(core,'C47'), awareness:N(core,'C48'), presence:N(core,'C49') };
+          tgt.raceBonuses = { foc:N(core,'F45'), pow:N(core,'F46'), agi:N(core,'F47'), tou:N(core,'F48'), fitness:N(core,'H45'), cunning:N(core,'H46'), reason:N(core,'H47'), awareness:N(core,'H48'), presence:N(core,'H49') };
+          tgt.stats = {};
+          Object.keys(tgt.baseStats).forEach(k => tgt.stats[k] = (tgt.baseStats[k]||0) + (tgt.raceBonuses[k]||0));
+
+          // Classes
+          const classes = [];
+          for (let r = 15; r <= 35; r++) {
+            const nm = T(core, `A${r}`);
+            if (!nm) break;
+            const ts = T(core, `B${r}`);
+            const tm = ts.match(/(\d+)/);
+            const co = _find(CLASS_DATA, nm);
+            classes.push({ class: co || { name: nm, tier: tm ? tm[1] : '1' }, level: N(core,`C${r}`)||1 });
+          }
+          if (classes.length) tgt.cls = { primary: classes[0], all: classes, spiritCore: tgt.spiritCore };
+
+          // Breakthroughs
+          const bts = wb.getWorksheet('Breakthrough');
+          if (bts) {
+            tgt.breakthroughs = [];
+            for (let r = 2; r <= 58; r++) {
+              const nm = T(bts, `A${r}`);
+              if (!nm) break;
+              const bo = _find(BREAKTHROUGH_DATA, nm);
+              tgt.breakthroughs.push({ id: bo?.id || nm, name: nm, cost: N(bts,`B${r}`), prerequisites: T(bts,`C${r}`), description: T(bts,`D${r}`) });
+            }
+          }
+
+          // Skills
+          const RM = {9:'Athletics',10:'Riding',11:'Stealth',12:'Deception',13:'Roguecraft',14:'Medicine',15:'Common Knowledge',16:'Linguistics',17:'Magic',18:'Religion',19:'Appraise',20:'History',21:'Flight',22:'Artifice',23:'Perception',24:'Insight',25:'Survival',26:'Animal Husbandry',27:'Art',28:'Negotiation',29:'Intimidation'};
+          const impSk = {};
+          for (const [r,sn] of Object.entries(RM)) { const p = N(core,`H${r}`); const e = T(core,`I${r}`); if (p||e) impSk[sn]={pts:p,expertise:e}; }
+          tgt.skills = SKILL_GROUPS.map(g => ({ name:g.name, subStat:g.subStat, skills: g.skills.map(s => ({ name:s.name, pts:impSk[s.name]?.pts||0, expertise:impSk[s.name]?.expertise||'' })) }));
+
+          // Inventory
+          const iv = wb.getWorksheet('Inventory');
+          if (iv) {
+            tgt.inventory = [];
+            for (let r = 2; r <= 31; r++) {
+              const nm = T(iv, `A${r}`);
+              if (!nm) break;
+              const io = _find(ITEMS_DATA, nm);
+              tgt.inventory.push({ item: io || { name:nm, burdenCost:N(iv,`C${r}`), climCost:N(iv,`D${r}`), description:T(iv,`F${r}`) }, quantity: N(iv,`B${r}`)||1 });
+            }
+          }
+
+          resolve(true);
+        } catch (err) {
+          console.error('Import failed:', err);
+          resolve(false);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    });
+  }
+
   function reset() {
     const container = document.getElementById('summary-content');
     if (container) container.innerHTML = '';
   }
 
-  return { render, exportJSON, exportExcel, exportPDF, reset };
+  return { render, exportJSON, exportExcel, exportPDF, importExcel, reset };
 })();

@@ -1111,6 +1111,9 @@ const ClassSelectScene = (function() {
 
     renderEquippedClasses();
     filterClasses();
+    // Re-enable Continue button if classes were restored
+    const nextBtn = document.getElementById('btn-class-next');
+    if (nextBtn) nextBtn.disabled = equippedClasses.length === 0;
   }
 
   /**
