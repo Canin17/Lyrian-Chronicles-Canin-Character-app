@@ -438,8 +438,8 @@ const SummaryScene = (function() {
         coreSheet.getCell('B2').value = characterData.name || 'Unnamed';
         coreSheet.getCell('D2').value = characterData.race ? characterData.race.name : 'None';
         coreSheet.getCell('D3').value = characterData.ancestry ? characterData.ancestry.name : 'None';
-        // Identity extras (data goes in column B to avoid overwriting labels in column A)
-        coreSheet.getCell('A3').value = characterData.gender || '';
+        // Identity extras (column B = values, column A = labels — don't overwrite A3 "Gender")
+        coreSheet.getCell('B3').value = characterData.gender || '';
         coreSheet.getCell('B4').value = characterData.age || '';
         coreSheet.getCell('B5').value = characterData.height || '';
         coreSheet.getCell('B6').value = characterData.weight || '';
@@ -448,16 +448,37 @@ const SummaryScene = (function() {
         coreSheet.getCell('C5').value = characterData.spiritCore ?? 0;
         // Base Speed (from ancestry traits)
         coreSheet.getCell('H6').value = characterData.speed ?? 20;
-        // Breakthrough count
-        coreSheet.getCell('D7').value = (characterData.breakthroughs || []).length;
-        // Starting Clim (default 3000)
-        coreSheet.getCell('A54').value = characterData.clim ?? 3000;
-        // Starting EXP (default 1000)
+        // ponytail: skip D7 — it's =SUM(Breakthrough!B2:B58), auto-computed from sheet 7
+        // ponytail: skip A55 — it's =SUM('EXP & Transactions'!F2), auto-computed
+        // Starting EXP — write to D4 as number (overrides formula; user-set value takes priority)
         coreSheet.getCell('D4').value = characterData.exp ?? 1000;
-        // Mirane flag
-        coreSheet.getCell('A57').value = characterData.mirane !== false ? 'Yes' : 'No';
+        // Mirane flag — A58 is the checkbox (TRUE/FALSE), A57 is the "Mirane?" label
+        coreSheet.getCell('A58').value = characterData.mirane !== false;
+        // Pure Human checkbox (B49) — affects EXP calc in 'EXP & Transactions'!C2
+        // ponytail: pureHuman field not tracked in code; infer: Human race with no Hybrid breakthrough
+        const HYBRID_IDS = new Set(['69ea4f7a6be32fced492fb56', '69ea4f7a6be32fced492fb57']); // Human-Chimera, Faerie-Chimera
+        const hasHybrid = (characterData.breakthroughs || []).some(b => HYBRID_IDS.has(b?.id));
+        coreSheet.getCell('B49').value = characterData.race?.name === 'Human' && !hasHybrid;
+        // Slow Starter checkbox (B50) — adds 500 to EXP calc in 'EXP & Transactions'!C2
+        const SLOW_STARTER_ID = '69ea4f7a6be32fced492fb88';
+        const hasSlowStarter = (characterData.breakthroughs || []).some(b => b?.id === SLOW_STARTER_ID);
+        coreSheet.getCell('B50').value = hasSlowStarter;
         // Old Armor Calc
-        coreSheet.getCell('K30').value = characterData.oldArmorCalc ? 'Yes' : 'No';
+        coreSheet.getCell('K30').value = characterData.oldArmorCalc;
+      }
+
+      // 4b. EXP & Transactions — override starting Clim with custom value from web app
+      const expSheet = workbook.getWorksheet('EXP & Transactions');
+      if (expSheet) {
+        // F2 formula: =IF(Core!A58, 4000, 3000) + IF(COUNTIF(Breakthrough!A:A,"Rich Parents")>0, 3000, 0)
+        // Web app may have custom Clim; replace formula with computed value
+        const baseClim = characterData.clim ?? 3000;
+        const RICH_PARENTS_ID = '69ea4f7a6be32fced492fb97';
+        const hasRichParents = (characterData.breakthroughs || []).some(b => b?.id === RICH_PARENTS_ID);
+        const richBonus = hasRichParents ? 3000 : 0;
+        expSheet.getCell('F2').value = baseClim + richBonus;
+        // F4: Character Creation Purchases (Clim spent on gear)
+        expSheet.getCell('F4').value = -(characterData.climSpent || 0);
       }
 
       // 5. Fill Base Stats & Race Bonuses (Character Creation Arrays)
@@ -508,6 +529,93 @@ const SummaryScene = (function() {
         coreSheet.getCell('H49').value = bonuses.presence ?? 0;
       }
 
+      // 5b. Starter Skill Points tracking
+      if (coreSheet) {
+        // B51: Starter Skill Points Spent — sum all skill pts from character
+        let totalSkillPts = 0;
+        if (characterData.skills && Array.isArray(characterData.skills)) {
+          characterData.skills.forEach(g => {
+            if (g.skills) g.skills.forEach(s => { totalSkillPts += s.pts || 0; });
+          });
+        }
+        coreSheet.getCell('B51').value = totalSkillPts;
+      }
+
+      // 5c. Stat adjustments (rows 32-35) — derived from racial/breakthrough bonuses
+      // These feed the derived stat formulas. Web app doesn't track these granularly,
+      // so we compute them from the difference between final stats and base+racial.
+      if (coreSheet) {
+        const finalStats = characterData.stats || {};
+        const btBonuses = characterData.breakthroughStatBonuses || {};
+
+        // Evasion bonus (E33) — Agility-based evasion from racial/breakthrough sources
+        const agiBase = base.agi ?? 0;
+        const agiRace = bonuses.agi ?? 0;
+        const agiBt = btBonuses.agi ?? 0;
+        const agiFinal = finalStats.agi ?? 0;
+        // Evasion = 7 + Agility + E33 + equipment. The "E33" captures non-standard evasion mods.
+        // ponytail: web app doesn't track evasion-specific mods separately; leave E33 as 0
+        coreSheet.getCell('E33').value = 0;
+
+        // Dodge bonus (H33) — same logic
+        coreSheet.getCell('H33').value = 0;
+
+        // Mana adjustment (K34) — mana = 6 + Power + K34
+        const powBt = btBonuses.pow ?? 0;
+        const manaAdj = powBt; // ponytail: mana mods from breakthroughs that don't go through Power
+        coreSheet.getCell('K34').value = manaAdj;
+
+        // Toughness adjustments (M34 positive, N34 negative)
+        coreSheet.getCell('M34').value = 0;
+        coreSheet.getCell('N34').value = 0;
+
+        // Agility adjustments (O34 positive, P34 negative)
+        coreSheet.getCell('O34').value = 0;
+        coreSheet.getCell('P34').value = 0;
+
+        // RP adjustment (E35) — negative RP from penalties
+        coreSheet.getCell('E35').value = 0;
+
+        // Save bonus (G34)
+        coreSheet.getCell('G34').value = 0;
+
+        // Initiative adjustment (H35)
+        coreSheet.getCell('H35').value = 0;
+      }
+
+      // 5d. Equipment slot checkboxes (M38-P42) — inferred from inventory item types
+      if (coreSheet && characterData.inventory && characterData.inventory.length > 0) {
+        const slotMap = {
+          'Main Hand': 'N38', 'Off Hand': 'N41', 'Head': 'N39',
+          'Muscle': 'N40', 'Spirit Circuit': 'N41', 'Leg': 'N42',
+          'Armor': 'N40', // ponytail: Armor → Muscle slot checkbox
+          'Wound': 'O39', 'Eye': 'O40', 'Laceration': 'O41', 'Foot': 'O42'
+        };
+        // ponytail: web app inventory items have type/subType; map common equipment slots
+        characterData.inventory.forEach(entry => {
+          const item = entry.item || {};
+          const slot = item.slot || item.subType;
+          if (slot && slotMap[slot]) {
+            coreSheet.getCell(slotMap[slot]).value = true;
+          }
+        });
+      }
+
+      // 5e. Weapon section (A37-A42) — write weapon names from inventory
+      if (coreSheet && characterData.inventory && characterData.inventory.length > 0) {
+        const WEAPON_SUBTYPES = new Set(['Weapon', 'Specialized Weapon', 'Artisan Weapon']);
+        let weaponRow = 37;
+        characterData.inventory.forEach(entry => {
+          const item = entry.item || {};
+          if (WEAPON_SUBTYPES.has(item.subType) && weaponRow <= 42) {
+            coreSheet.getCell(`A${weaponRow}`).value = item.name || '';
+            weaponRow++;
+          }
+        });
+      }
+
+      // 5e. Injuries (M38-P42) — character creator doesn't track injuries; leave unchecked
+
       // 6. Fill Equipped Classes (with Tier and EXP)
       if (characterData.cls && coreSheet) {
         const classes = characterData.cls.all || [];
@@ -516,7 +624,7 @@ const SummaryScene = (function() {
           if (row <= 35) {
             const classObj = clsEntry.class || {};
             coreSheet.getCell(`A${row}`).value = classObj.name || 'Unknown';
-            coreSheet.getCell(`B${row}`).value = classObj.tier ?? '';
+            coreSheet.getCell(`B${row}`).value = classObj.tier ? `Tier ${classObj.tier}` : '';
             coreSheet.getCell(`C${row}`).value = clsEntry.level || 1;
             // Calculate class EXP cost: tier*100 + (level-1)*100
             const tier = parseInt(classObj.tier) || 1;
@@ -758,7 +866,40 @@ const SummaryScene = (function() {
       // Combat Loadout (columns G-H, rows 5-31) is intentionally left untouched
       const invSheet = workbook.getWorksheet('Inventory');
       if (invSheet && characterData.inventory && characterData.inventory.length > 0) {
-        characterData.inventory.forEach((entry, i) => {
+        // ponytail: Kit expansion — unpack kits into their contained items
+        const KIT_ITEMS = {
+          "Adventurer's Kit": ['Backpack', 'Flint and steel', 'Rope', 'Notebook', 'Pen', 'Compass', 'Bedroll', 'Torches', 'Hand Mirror'],
+          "Camping Kit": ['Tent', 'Bedroll', 'Bedroll', 'Bedroll', 'Bedroll', 'Bedroll', 'Tinder', 'Flint and steel', 'Camping mat'],
+          "Cartographer's Kit": ['Compass', 'Gridded parchment', 'Graphite pencils', 'Measuring rod', 'Protractor', 'Travel logbook'],
+          "Culinary Kit": ['Cooking knives', 'Pot', 'Pan', 'Preserved food'],
+          "Medical Kit": ['Bandages', 'Salves', 'Alcohol', 'Scissors', 'Knife'],
+          "Surgery Kit": ['Stitches', 'Bandages'],
+          "Advanced Surgery Kit": ['Stitches', 'Bandages'],
+          "Artificer's Kit": ['Artificer tools'],
+          "Equipment Patching Kit": ['Patching materials'],
+          "Research Kit": ['Bottles/vials/containers'],
+        };
+
+        // Build expanded inventory: replace kits with their contained items
+        const expandedInventory = [];
+        characterData.inventory.forEach(entry => {
+          const item = entry.item || {};
+          const kitItems = KIT_ITEMS[item.name];
+          if (kitItems) {
+            // Expand kit into individual items
+            kitItems.forEach(kitItemName => {
+              expandedInventory.push({
+                item: { name: kitItemName, burdenCost: 0, climCost: 0, description: `From ${item.name}` },
+                quantity: 1
+              });
+            });
+          } else {
+            expandedInventory.push(entry);
+          }
+        });
+
+        // Write expanded inventory to sheet
+        expandedInventory.forEach((entry, i) => {
           const row = 2 + i; // Start at row 2
           if (row <= 31) { // Expedition Inventory section ends at row 31
             const item = entry.item || {};

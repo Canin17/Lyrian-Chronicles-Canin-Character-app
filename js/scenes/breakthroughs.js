@@ -38,12 +38,15 @@ const BreakthroughScene = (function() {
     const breakthroughs = charData.breakthroughs || [];
 
     // Split on period into clauses, evaluate ALL (AND logic)
-    const clauses = req.split(/\.\\s*/).map(s => s.trim()).filter(Boolean);
-    return clauses.every(clause => evaluateBreakthroughClause(clause, charData, race, ancestry, cls, breakthroughs));
+    const clauses = req.split(/\.\s*/).map(s => s.trim()).filter(Boolean);
+    return clauses.every(clause => evaluateBreakthroughClause(clause, charData, race, ancestry, cls, breakthroughs, bt));
   }
 
   // Evaluates a single breakthrough clause. Returns true if satisfied.
-  function evaluateBreakthroughClause(clause, charData, race, ancestry, cls, breakthroughs) {
+  // ponytail: single source of truth for mastery level; was duplicated on lines 71, 83
+  const MASTERY_LEVEL = 8;
+
+  function evaluateBreakthroughClause(clause, charData, race, ancestry, cls, breakthroughs, bt) {
     const lower = clause.toLowerCase();
 
     // "Requires GM Approval" - always allowed in character creator
@@ -68,7 +71,7 @@ const BreakthroughScene = (function() {
         return options.some(opt =>
           equipped.some(ec => {
             const name = (ec.class?.name || '').toLowerCase();
-            return name === opt && ec.level >= 8; // mastery = level 8 (7 abilities bought)
+            return name === opt && ec.level >= MASTERY_LEVEL;
           })
         );
       }
@@ -80,7 +83,7 @@ const BreakthroughScene = (function() {
         return options.some(opt =>
           equipped.some(ec => {
             const name = (ec.class?.name || '').toLowerCase();
-            return name === opt && ec.level >= 8; // mastery = level 8 (7 abilities bought)
+            return name === opt && ec.level >= MASTERY_LEVEL;
           })
         );
       }
@@ -210,12 +213,15 @@ const BreakthroughScene = (function() {
     }
 
     // "You must be proficient with X" / "proficient in X"
+    // ponytail: added (?:you\s+)? prefix + split on "and" for "Light and Medium armor"
     if (lower.includes('proficient')) {
-      const profMatch = clause.match(/(?:must be|be)\s+(?:a|an)?\s+proficient\s+with\s+(.+?)(?:\.|$)/i);
+      const profMatch = clause.match(/(?:you\s+)?(?:must\s+)?be\s+(?:(?:a|an)\s+)?proficient\s+with\s+(.+?)(?:\.|$)/i);
       if (profMatch) {
-        const neededProf = profMatch[1].trim().toLowerCase();
+        const neededProfs = profMatch[1].trim().split(/\s+and\s+/i).map(s => s.trim().toLowerCase());
         const charProfs = getCharacterProficiencies();
-        return charProfs.some(p => p.toLowerCase() === neededProf);
+        return neededProfs.every(np =>
+          charProfs.some(p => p.toLowerCase().includes(np))
+        );
       }
       return false;
     }
@@ -234,8 +240,9 @@ const BreakthroughScene = (function() {
       return checkRaceMatch(cleanLower, race, ancestry);
     }
 
-    // Unknown clause - be permissive (don't block the user)
-    return true;
+    // ponytail: unknown clauses now warn + fail instead of silent pass — visible in console for data fixes
+    console.warn(`[Breakthrough] Unparsed prerequisite clause: "${clause}" on "${bt.name || '?'}"`);
+    return false;
   }
 
   // Helper: get all character proficiencies (race + ancestry + class + breakthroughs)
