@@ -7,7 +7,10 @@ const BREAKTHROUGH_DATA = [
     "prerequisites": "Must be a spiderfolk.",
     "category": "Racial",
     "description": "You may have up to 8 Mystic Eyes instead of the regular 2.",
-    "effects": [{"name": "8 Eyes (Spiderfolk)", "description": "You may have up to 8 Mystic Eyes instead of the regular 2."}]
+    "effects": [{"name": "8 Eyes (Spiderfolk)", "description": "You may have up to 8 Mystic Eyes instead of the regular 2."}],
+    "mechanics": {
+      "mysticEyesLimit": 8
+    }
   },
   {
     "id": "69ea4f7a6be32fced492fb8a",
@@ -25,7 +28,15 @@ const BREAKTHROUGH_DATA = [
     "prerequisites": "Must be a spiderfolk. Can only be taken at character creation.",
     "category": "Racial",
     "description": "You lose your extra arms racial ability. In exchange, you become Large size and your max burden is increased by 2. When attempting to move through 5ft wide spaces, it is considered difficult terrain for you and many humanoid buildings will struggle to accommodate you. You also suffer a -10 penalty to swimming checks, but you may climb through your spider climb ability at your normal speed instead of half speed. In addition, you count as mounted for the purposes of abilities that require you to be mounted. This does not let you be a mount to other creatures.",
-    "effects": [{"name": "Arachne (Spiderfolk)", "description": "You lose your extra arms racial ability. In exchange, you become Large size and your max burden is increased by 2. When attempting to move through 5ft wide spaces, it is considered difficult terrain for you and many humanoid buildings will struggle to accommodate you. You also suffer a -10 penalty to swimming checks, but you may climb through your spider climb ability at your normal speed instead of half speed. In addition, you count as mounted for the purposes of abilities that require you to be mounted. This does not let you be a mount to other creatures."}]
+    "effects": [{"name": "Arachne (Spiderfolk)", "description": "You lose your extra arms racial ability. In exchange, you become Large size and your max burden is increased by 2. When attempting to move through 5ft wide spaces, it is considered difficult terrain for you and many humanoid buildings will struggle to accommodate you. You also suffer a -10 penalty to swimming checks, but you may climb through your spider climb ability at your normal speed instead of half speed. In addition, you count as mounted for the purposes of abilities that require you to be mounted. This does not let you be a mount to other creatures."}],
+    "mechanics": {
+      "size": "Large",
+      "burdenBonus": 2,
+      "climbingSpeed": "normal",
+      "mounted": true,
+      "swimmingPenalty": -10,
+      "losesAbility": "Extra Arms"
+    }
   },
   {
     "id": "69ea4f7a6be32fced492fb84",
@@ -132,8 +143,16 @@ const BREAKTHROUGH_DATA = [
     "cost": 300,
     "prerequisites": "Must be taken at character creation or after being killed by a vampire's bite.",
     "category": "Racial",
-    "description": "You rise as a vampire, an immortal creature that feeds on the blood of living creatures and immediately gain the Vampire racial style class and its key ability. Your race changes to \u2018Vampire\u2019, but you keep the benefits of your previous race. As a vampire, you no longer age and your physical appearance changes slightly. Your skin becomes more pale and you grow a pair of fangs. You still need to eat, drink and breathe as normal. A vampire\u2019s spirit core is cracked, making it difficult for it to regenerate mana naturally and requiring it to obtain it from other creatures. You no longer regenerate mana from eating (including potions), resting and can no longer use the Draw Mana encounter conclusion action. You still recover full mana at the start of a new arc. You are weak to sunlight. Every round you spend in sunlight without proper protection you take 10 true damage and your maximum HP is lowered by 10. Your maximum HP remains lowered until you finish a rest. You may carry a parasol or similar object in one hand to protect yourself from the sun and can do so even in combat. In addition to these drawbacks, you no longer receive Wounds unless the damage that reduced your HP to 0 was fire, holy or true damage. You also gain 60ft Darkvision. Darkvision lets you see in total darkness, even if there's no source of light.",
-    "effects": [{"name": "Curse of Vampirism", "description": "You rise as a vampire, an immortal creature that feeds on the blood of living creatures and immediately gain the Vampire racial style class and its key ability. Your race changes to ‘Vampire’, but you keep the benefits of your previous race. As a vampire, you no longer age and your physical appearance changes slightly. Your skin becomes more pale and you grow a pair of fangs. You still need to eat, drink and breathe as normal. A vampire’s spirit core is cracked, making it difficult for it to regenerate mana naturally and requiring it to obtain it from other creatures. You no longer regenerate mana from eating (including potions), resting and can no longer use the Draw Mana encounter conclusion action. You still recover full mana at the start of a new arc. You are weak to sunlight. Every round you spend in sunlight without proper protection you take 10 true damage and your maximum HP is lowered by 10. Your maximum HP remains lowered until you finish a rest. You may carry a parasol or similar object in one hand to protect yourself from the sun and can do so even in combat. In addition to these drawbacks, you no longer receive Wounds unless the damage that reduced your HP to 0 was fire, holy or true damage. You also gain 60ft Darkvision. Darkvision lets you see in total darkness, even if there's no source of light."}]
+    "description": "You rise as a vampire, an immortal creature that feeds on the blood of living creatures and immediately gain the Vampire racial style class and its key ability. Your race changes to 'Vampire', but you keep the benefits of your previous race. As a vampire, you no longer age and your physical appearance changes slightly. Your skin becomes more pale and you grow a pair of fangs. You still need to eat, drink and breathe as normal. A vampire's spirit core is cracked, making it difficult for it to regenerate mana naturally and requiring it to obtain it from other creatures. You no longer regenerate mana from eating (including potions), resting and can no longer use the Draw Mana encounter conclusion action. You still recover full mana at the start of a new arc. You are weak to sunlight. Every round you spend in sunlight without proper protection you take 10 true damage and your maximum HP is lowered by 10. Your maximum HP remains lowered until you finish a rest. You may carry a parasol or similar object in one hand to protect yourself from the sun and can do so even in combat. In addition to these drawbacks, you no longer receive Wounds unless the damage that reduced your HP to 0 was fire, holy or true damage. You also gain 60ft Darkvision. Darkvision lets you see in total darkness, even if there's no source of light.",
+    "effects": [{"name": "Curse of Vampirism", "description": "You rise as a vampire, an immortal creature that feeds on the blood of living creatures and immediately gain the Vampire racial style class and its key ability. Your race changes to 'Vampire', but you keep the benefits of your previous race. As a vampire, you no longer age and your physical appearance changes slightly. Your skin becomes more pale and you grow a pair of fangs. You still need to eat, drink and breathe as normal. A vampire's spirit core is cracked, making it difficult for it to regenerate mana naturally and requiring it to obtain it from other creatures. You no longer regenerate mana from eating (including potions), resting and can no longer use the Draw Mana encounter conclusion action. You still recover full mana at the start of a new arc. You are weak to sunlight. Every round you spend in sunlight without proper protection you take 10 true damage and your maximum HP is lowered by 10. Your maximum HP remains lowered until you finish a rest. You may carry a parasol or similar object in one hand to protect yourself from the sun and can do so even in combat. In addition to these drawbacks, you no longer receive Wounds unless the damage that reduced your HP to 0 was fire, holy or true damage. You also gain 60ft Darkvision. Darkvision lets you see in total darkness, even if there's no source of light."}],
+    "mechanics": {
+      "raceChange": "Vampire",
+      "darkvision": 60,
+      "sunlightWeakness": true,
+      "noManaRegen": true,
+      "noWounds": true,
+      "woundExceptions": ["fire", "holy", "true"]
+    }
   },
   {
     "id": "69ea4f7a6be32fced492fba8",
@@ -277,7 +296,10 @@ const BREAKTHROUGH_DATA = [
     "prerequisites": "Must be Centaur or Arachne Spiderfolk",
     "category": "Racial",
     "description": "Your base movement speed increases by 5ft.",
-    "effects": [{"name": "Fast Movement (Centaur)", "description": "Your base movement speed increases by 5ft."}]
+    "effects": [{"name": "Fast Movement (Centaur)", "description": "Your base movement speed increases by 5ft."}],
+    "mechanics": {
+      "movementSpeedBonus": 5
+    }
   },
   {
     "id": "69ea4f7a6be32fced492fb77",
@@ -322,7 +344,11 @@ const BREAKTHROUGH_DATA = [
     "prerequisites": "Must be a Catfolk.",
     "category": "Racial",
     "description": "When spending at least 3 AP of movement, your base movement speed is increased to 40ft instead of 25.",
-    "effects": [{"name": "Four Paw Sprint (Catfolk)", "description": "When spending at least 3 AP of movement, your base movement speed is increased to 40ft instead of 25."}]
+    "effects": [{"name": "Four Paw Sprint (Catfolk)", "description": "When spending at least 3 AP of movement, your base movement speed is increased to 40ft instead of 25."}],
+    "mechanics": {
+      "movementSpeedBonus": 15,
+      "condition": "3+ AP movement"
+    }
   },
   {
     "id": "69ea4f7a6be32fced492fb61",
@@ -405,7 +431,10 @@ const BREAKTHROUGH_DATA = [
     "prerequisites": "Must be a Nio, Bullfolk or Bearfolk.",
     "category": "Racial",
     "description": "Your size becomes Large.",
-    "effects": [{"name": "Large Specimen (Nio, Bullfolk or Bearfolk)", "description": "Your size becomes Large."}]
+    "effects": [{"name": "Large Specimen (Nio, Bullfolk or Bearfolk)", "description": "Your size becomes Large."}],
+    "mechanics": {
+      "size": "Large"
+    }
   },
   {
     "id": "69ea4f7a6be32fced492fb5e",
@@ -497,7 +526,10 @@ const BREAKTHROUGH_DATA = [
     "prerequisites": "",
     "category": "General",
     "description": "Increases your in-combat burden capacity by 1.",
-    "effects": [{"name": "Organized Inventory", "description": "Increases your in-combat burden capacity by 1."}]
+    "effects": [{"name": "Organized Inventory", "description": "Increases your in-combat burden capacity by 1."}],
+    "mechanics": {
+      "combatBurdenBonus": 1
+    }
   },
   {
     "id": "69ea4f7a6be32fced492fb72",
@@ -506,7 +538,10 @@ const BREAKTHROUGH_DATA = [
     "prerequisites": "Must have the Organized Inventory breakthrough",
     "category": "General",
     "description": "Your in-combat Burden capacity is increased by 1.",
-    "effects": [{"name": "Organized Inventory II", "description": "Your in-combat Burden capacity is increased by 1."}]
+    "effects": [{"name": "Organized Inventory II", "description": "Your in-combat Burden capacity is increased by 1."}],
+    "mechanics": {
+      "combatBurdenBonus": 1
+    }
   },
   {
     "id": "69ea4f7a6be32fced492fb73",
@@ -515,7 +550,10 @@ const BREAKTHROUGH_DATA = [
     "prerequisites": "Must have the Organized Inventory II breakthrough",
     "category": "General",
     "description": "Your in-combat Burden capacity is increased by 1.",
-    "effects": [{"name": "Organized Inventory III", "description": "Your in-combat Burden capacity is increased by 1."}]
+    "effects": [{"name": "Organized Inventory III", "description": "Your in-combat Burden capacity is increased by 1."}],
+    "mechanics": {
+      "combatBurdenBonus": 1
+    }
   },
   {
     "id": "69ea4f7a6be32fced492fb86",
@@ -569,7 +607,15 @@ const BREAKTHROUGH_DATA = [
     "prerequisites": "",
     "category": "General",
     "description": "You gain a +1 bonus to Focus, Power, Agility or Toughness. This breakthrough can be selected multiple times. The effects stack. Each time you take this breakthrough the cost increases by 100, up to a maximum of 700.",
-    "effects": [{"name": "Primary Stat Training", "description": "You gain a +1 bonus to Focus, Power, Agility or Toughness. This breakthrough can be selected multiple times. The effects stack. Each time you take this breakthrough the cost increases by 100, up to a maximum of 700."}]
+    "effects": [{"name": "Primary Stat Training", "description": "You gain a +1 bonus to Focus, Power, Agility or Toughness. This breakthrough can be selected multiple times. The effects stack. Each time you take this breakthrough the cost increases by 100, up to a maximum of 700."}],
+    "mechanics": {
+      "statBonus": {
+        "type": "primary",
+        "value": 1,
+        "stats": ["Focus", "Power", "Agility", "Toughness"],
+        "selectable": true
+      }
+    }
   },
   {
     "id": "69ea4f7a6be32fced492fb91",
@@ -578,7 +624,10 @@ const BREAKTHROUGH_DATA = [
     "prerequisites": "Must be Phoenix, Mothfolk, Lizardfolk or Willowisp race.",
     "category": "Racial",
     "description": "You may use Flight.",
-    "effects": [{"name": "Racial Flight", "description": "You may use Flight."}]
+    "effects": [{"name": "Racial Flight", "description": "You may use Flight."}],
+    "mechanics": {
+      "flight": true
+    }
   },
   {
     "id": "69ea4f7a6be32fced492fb7a",

@@ -1,9 +1,9 @@
 // Lyrian Chronicles RPG - Skills Data
-// 5 skill groups, 17 main skills total
+// 5 skill groups, 21 skills total
 // Source: Lyrian Chronicles system rulebook
 // Per-source allocation tracking with restricted skill lists
 
-/* exported SKILL_GROUPS, SKILL_GRANTING_BREAKTHROUGHS, EXPERTISE_MULTIPLIER, BASE_SKILL_POINTS, calculateAvailableSkillPoints, getRemainingPoints, deepCloneSkillGroups, canAddExpertise, isCraftingGatheringSkill, getEffectiveSkillCap, getRaceSkillPoints, SKILL_EXPERTISE_EXAMPLES, parseExpertiseString, serializeExpertiseArray, calculateExpertisePoints, BREAKTHROUGH_SKILL_BONUSES, getBreakthroughSkillBonuses, getBreakthroughBonusForSkill, getBreakthroughBonusesForSkill */
+/* exported SKILL_GROUPS, SKILL_GRANTING_BREAKTHROUGHS, EXPERTISE_MULTIPLIER, BASE_SKILL_POINTS, calculateAvailableSkillPoints, getRemainingPoints, deepCloneSkillGroups, canAddExpertise, isCraftingGatheringSkill, getEffectiveSkillCap, getRaceSkillPoints, SKILL_EXPERTISE_EXAMPLES, parseExpertiseString, serializeExpertiseArray, calculateExpertisePoints, BREAKTHROUGH_SKILL_BONUSES, getBreakthroughSkillBonuses, getBreakthroughBonusForSkill, getBreakthroughBonusesForSkill, computeBreakthroughEffects */
 const SKILL_GROUPS = [
   {
     name: 'Fitness',
@@ -677,4 +677,116 @@ function getBreakthroughBonusForSkill(skillName, selectedBreakthroughs) {
 function getBreakthroughBonusesForSkill(skillName, selectedBreakthroughs) {
   const bonuses = getBreakthroughSkillBonuses(selectedBreakthroughs);
   return bonuses.filter(b => b.skill === skillName);
+}
+
+/**
+ * Compute all mechanical effects from a list of breakthroughs.
+ * Returns a consolidated object with all applied effects.
+ * Standalone version that takes breakthroughs as a parameter (for summary/export).
+ *
+ * @param {Array} selectedBreakthroughs - Array of breakthrough objects
+ * @returns {Object} Consolidated effects object
+ */
+function computeBreakthroughEffects(selectedBreakthroughs) {
+  if (!selectedBreakthroughs || !Array.isArray(selectedBreakthroughs)) {
+    return {
+      mysticEyesLimit: 2,
+      size: null,
+      burdenBonus: 0,
+      combatBurdenBonus: 0,
+      movementSpeedBonus: 0,
+      darkvision: 0,
+      flight: false,
+      sunlightWeakness: false,
+      noManaRegen: false,
+      noWounds: false,
+      woundExceptions: [],
+      mounted: false,
+      swimmingPenalty: 0,
+      climbingSpeed: null,
+      losesAbility: null,
+      raceChange: null,
+      statBonuses: {},
+      appliedBreakthroughs: []
+    };
+  }
+
+  const effects = {
+    mysticEyesLimit: 2,
+    size: null,
+    burdenBonus: 0,
+    combatBurdenBonus: 0,
+    movementSpeedBonus: 0,
+    darkvision: 0,
+    flight: false,
+    sunlightWeakness: false,
+    noManaRegen: false,
+    noWounds: false,
+    woundExceptions: [],
+    mounted: false,
+    swimmingPenalty: 0,
+    climbingSpeed: null,
+    losesAbility: null,
+    raceChange: null,
+    statBonuses: {},
+    appliedBreakthroughs: []
+  };
+
+  for (const bt of selectedBreakthroughs) {
+    if (!bt || !bt.mechanics) continue;
+
+    const mech = bt.mechanics;
+    effects.appliedBreakthroughs.push(bt.name);
+
+    if (mech.mysticEyesLimit) {
+      effects.mysticEyesLimit = Math.max(effects.mysticEyesLimit, mech.mysticEyesLimit);
+    }
+    if (mech.size) {
+      effects.size = mech.size;
+    }
+    if (mech.burdenBonus) {
+      effects.burdenBonus += mech.burdenBonus;
+    }
+    if (mech.combatBurdenBonus) {
+      effects.combatBurdenBonus += mech.combatBurdenBonus;
+    }
+    if (mech.movementSpeedBonus) {
+      effects.movementSpeedBonus += mech.movementSpeedBonus;
+    }
+    if (mech.darkvision) {
+      effects.darkvision = Math.max(effects.darkvision, mech.darkvision);
+    }
+    if (mech.flight) {
+      effects.flight = true;
+    }
+    if (mech.sunlightWeakness) {
+      effects.sunlightWeakness = true;
+    }
+    if (mech.noManaRegen) {
+      effects.noManaRegen = true;
+    }
+    if (mech.noWounds) {
+      effects.noWounds = true;
+      if (mech.woundExceptions) {
+        effects.woundExceptions = [...new Set([...effects.woundExceptions, ...mech.woundExceptions])];
+      }
+    }
+    if (mech.mounted) {
+      effects.mounted = true;
+    }
+    if (mech.swimmingPenalty) {
+      effects.swimmingPenalty += mech.swimmingPenalty;
+    }
+    if (mech.climbingSpeed) {
+      effects.climbingSpeed = mech.climbingSpeed;
+    }
+    if (mech.losesAbility) {
+      effects.losesAbility = mech.losesAbility;
+    }
+    if (mech.raceChange) {
+      effects.raceChange = mech.raceChange;
+    }
+  }
+
+  return effects;
 }

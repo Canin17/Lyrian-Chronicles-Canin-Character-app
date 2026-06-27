@@ -89,7 +89,7 @@ StandAlone/
 
 ### Skills
 - 5 groups tied to sub-stats: Fitness (2 skills), Cunning (3), Reason (9), Awareness (4), Presence (3)
-- 17 total skills: Athletics, Riding, Deception, Roguecraft, Stealth, Artifice, Appraise, Common Knowledge, Flight, History, Linguistics, Magic, Medicine, Religion, Acrobatics, Intimidation, Performance, Persuasion
+- 21 total skills: Athletics, Riding, Deception, Roguecraft, Stealth, Artifice, Appraise, Common Knowledge, Flight, History, Linguistics, Magic, Medicine, Religion, Animal Husbandry, Insight, Perception, Survival, Art, Intimidation, Negotiation
 - Base: 10 skill points at creation
 - Additional points from race, class, and breakthroughs (tracked per-source)
 - Per-source eligible skill lists — each source can only spend on its eligible skills

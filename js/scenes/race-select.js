@@ -9,20 +9,14 @@ const RaceSelectScene = (function() {
   let selectedAncestry = null;
   let imageTimeouts = []; // Track image load timeouts for cleanup
 
-  /**
-   * Decode HTML entities for textContent display.
-   * Data files contain &nbsp;, &mdash;, etc. which should display as actual characters.
-   */
   function decodeHtmlEntities(str) {
-    if (typeof str !== 'string') return '';
-    const textarea = document.createElement('textarea');
-    textarea.innerHTML = str;
-    const result = textarea.value;
-    textarea.innerHTML = ''; // Clear to prevent script execution
-    return result;
+    return window.decodeHtmlEntities(str);
   }
 
   function init() {
+    // Clear stale image timeouts from previous renders
+    imageTimeouts.forEach(id => clearTimeout(id));
+    imageTimeouts = [];
     renderRaces();
   }
 

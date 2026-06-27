@@ -47,7 +47,8 @@ const SummaryScene = (function() {
     }
     {
       const baseClim = characterData.clim ?? 3000;
-      const hasRichParents = characterData.breakthroughs?.some(b => b?.name?.includes('Rich Parents'));
+      const RICH_PARENTS_ID = '69ea4f7a6be32fced492fb97';
+      const hasRichParents = characterData.breakthroughs?.some(b => b?.id === RICH_PARENTS_ID);
       const richBonus = hasRichParents ? 3000 : 0;
       const totalClim = baseClim + richBonus;
       html += `<div class="summary-row"><span class="summary-label">Starting Clim</span><span class="summary-value">${baseClim}${hasRichParents ? ' <span style="font-size:0.75rem; color: var(--accent-gold-light);">(+3000 Rich Parents)</span>' : ''}</span></div>`;
@@ -173,6 +174,82 @@ const SummaryScene = (function() {
         </div>`;
       });
       html += `</div>`;
+    }
+
+    // Breakthrough Effects (computed from mechanics)
+    {
+      const effects = computeBreakthroughEffects(characterData.breakthroughs || []);
+      const effectLabels = [];
+
+      if (effects.mysticEyesLimit > 2) {
+        effectLabels.push({ label: 'Mystic Eyes Limit', value: effects.mysticEyesLimit, color: 'var(--accent-gold-light)' });
+      }
+      if (effects.size) {
+        effectLabels.push({ label: 'Size', value: effects.size, color: 'var(--accent-gold-light)' });
+      }
+      if (effects.burdenBonus > 0) {
+        effectLabels.push({ label: 'Burden Bonus', value: `+${effects.burdenBonus}`, color: 'var(--meter-hp)' });
+      }
+      if (effects.combatBurdenBonus > 0) {
+        effectLabels.push({ label: 'Combat Burden Bonus', value: `+${effects.combatBurdenBonus}`, color: 'var(--meter-hp)' });
+      }
+      if (effects.movementSpeedBonus > 0) {
+        effectLabels.push({ label: 'Movement Speed', value: `+${effects.movementSpeedBonus}ft`, color: 'var(--accent-gold)' });
+      }
+      if (effects.darkvision > 0) {
+        effectLabels.push({ label: 'Darkvision', value: `${effects.darkvision}ft`, color: 'var(--text-muted)' });
+      }
+      if (effects.flight) {
+        effectLabels.push({ label: 'Flight', value: '✓', color: 'var(--accent-gold-light)' });
+      }
+      if (effects.sunlightWeakness) {
+        effectLabels.push({ label: 'Sunlight Weakness', value: '✓', color: 'var(--accent-red)' });
+      }
+      if (effects.noManaRegen) {
+        effectLabels.push({ label: 'No Mana Regen', value: '✓', color: 'var(--accent-red)' });
+      }
+      if (effects.noWounds) {
+        const exceptionText = effects.woundExceptions.length > 0 ? ` (except: ${effects.woundExceptions.join(', ')})` : '';
+        effectLabels.push({ label: 'No Wounds', value: `✓${exceptionText}`, color: 'var(--accent-red)' });
+      }
+      if (effects.mounted) {
+        effectLabels.push({ label: 'Mounted', value: '✓', color: 'var(--accent-gold-light)' });
+      }
+      if (effects.swimmingPenalty < 0) {
+        effectLabels.push({ label: 'Swimming DC Penalty', value: `${effects.swimmingPenalty}`, color: 'var(--accent-red)' });
+      }
+      if (effects.climbingSpeed) {
+        effectLabels.push({ label: 'Climbing Speed', value: `${effects.climbingSpeed}ft`, color: 'var(--accent-gold)' });
+      }
+      if (effects.losesAbility) {
+        effectLabels.push({ label: 'Loses Ability', value: effects.losesAbility, color: 'var(--accent-red)' });
+      }
+      if (effects.raceChange) {
+        effectLabels.push({ label: 'Race Changed To', value: effects.raceChange, color: 'var(--accent-red)' });
+      }
+
+      if (effectLabels.length > 0) {
+        html += `<div class="summary-section">
+          <h3>Active Breakthrough Effects</h3>
+          <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">`;
+        effectLabels.forEach(e => {
+          html += `<span style="display: inline-block; padding: 0.25rem 0.6rem; background: var(--bg-tertiary); border-radius: 4px; font-size: 0.8rem; border-left: 3px solid ${e.color};">
+            <strong style="color: ${e.color};">${window.escapeHtml(e.label)}:</strong> <span style="color: var(--text-primary);">${window.escapeHtml(String(e.value))}</span>
+          </span>`;
+        });
+        html += `</div></div>`;
+      }
+    }
+
+    // Breakthrough Proficiencies
+    if (characterData.breakthroughProficiencies && characterData.breakthroughProficiencies.length > 0) {
+      html += `<div class="summary-section">
+        <h3>Breakthrough Proficiencies</h3>
+        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">`;
+      characterData.breakthroughProficiencies.forEach(prof => {
+        html += `<span style="display: inline-block; padding: 0.25rem 0.5rem; background: var(--bg-tertiary); border-radius: 4px; font-size: 0.85rem; color: var(--accent-gold-light);">${window.escapeHtml(prof)}</span>`;
+      });
+      html += `</div></div>`;
     }
 
     // Skills
@@ -779,11 +856,6 @@ const SummaryScene = (function() {
         doc.roundedRect(x, yy, w, h, r, r, 'S');
       }
     };
-    const drawRect = (x, yy, w, h, strokeColor) => {
-      doc.setDrawColor(strokeColor[0], strokeColor[1], strokeColor[2]);
-      doc.setLineWidth(0.3);
-      doc.rect(x, yy, w, h, 'S');
-    };
     const sectionHeader = (text, x, yy, w) => {
       doc.setFillColor(30, 60, 120);
       doc.roundedRect(x, yy, w, 5, 1, 1, 'F');
@@ -841,7 +913,6 @@ const SummaryScene = (function() {
     const colW = (contentW / 2) - 2;
 
     // Core Info (HP, RP, Mana) — Left
-    const coreBoxH = 20;
     sectionHeader('Core Info', leftColX, y, colW);
     y += 6;
     const coreItems = [
@@ -888,7 +959,6 @@ const SummaryScene = (function() {
     // --- Stats Section ---
     const statsY = y;
     const statsBoxW = colW;
-    const statsBoxH = 28;
 
     // Main Stats — Left
     sectionHeader('Main Stats', leftColX, statsY, statsBoxW);
@@ -1005,7 +1075,8 @@ const SummaryScene = (function() {
     }
     {
       const baseClim = characterData.clim ?? 3000;
-      const hasRichParents = (characterData.breakthroughs || []).some(b => b && b.name && b.name.includes('Rich Parents'));
+      const RICH_PARENTS_ID = '69ea4f7a6be32fced492fb97';
+      const hasRichParents = (characterData.breakthroughs || []).some(b => b && b.id === RICH_PARENTS_ID);
       const totalClim = baseClim + (hasRichParents ? 3000 : 0);
       doc.setFontSize(7);
       doc.text('Starting Clim: ' + baseClim + (hasRichParents ? ' (+3000 Rich Parents)' : ''), leftColX, y);

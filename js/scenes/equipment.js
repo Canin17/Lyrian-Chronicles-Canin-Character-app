@@ -48,7 +48,6 @@ const EquipmentScene = (function() {
   // ===========================================================================
   let itemsById = new Map();
   let itemUrlCache = new Map();
-  let decodeEl = null; // reusable textarea for HTML entity decoding
 
   // ===========================================================================
   // BURDEN — Official rule: flat limit of 10, over = Rooted
@@ -59,6 +58,13 @@ const EquipmentScene = (function() {
 
   function isBurdenItem(item) {
     return (item.burdenCost || 0) > 0;
+  }
+
+  // ===========================================================================
+  // BURDEN CALCULATION — Simplified to flat 10 (no modifiers)
+  // ===========================================================================
+  function calculateBurdenCapacities() {
+    return BURDEN_LIMIT;
   }
 
   // ===========================================================================
@@ -129,10 +135,7 @@ const EquipmentScene = (function() {
   // HTML HELPERS — FIX #1 (use window.escapeHtml), FIX #6 (reusable decodeEl)
   // ===========================================================================
   function decodeHtmlEntities(str) {
-    if (typeof str !== 'string') return '';
-    if (!decodeEl) decodeEl = document.createElement('textarea');
-    decodeEl.innerHTML = str;
-    return decodeEl.value;
+    return window.decodeHtmlEntities(str);
   }
 
   // ===========================================================================
@@ -225,11 +228,6 @@ const EquipmentScene = (function() {
     // FIX #11: No auto-select of first item — start with null
   }
 
-  // Calculate carrying capacity — official rule: flat 10, no modifiers
-  function calculateBurdenCapacities() {
-    return BURDEN_LIMIT;
-  }
-
   // Calculate current spent resources
   function calculateSpent() {
     let climSpent = 0;
@@ -289,7 +287,38 @@ const EquipmentScene = (function() {
     // Make this item the inspected item when added or updated
     inspectedItem = item;
 
-    refresh();
+    // ponytail: targeted update — skip grid re-render on qty change
+    updateAfterQuantityChange(itemId);
+  }
+
+  // Targeted update after a quantity change — skips renderGrid()
+  function updateAfterQuantityChange(changedItemId) {
+    const burdenCap = calculateBurdenCapacities();
+    const stats = calculateSpent();
+
+    // Update owned badge on the specific card if it exists in the grid
+    const card = document.querySelector(`.eq-card[data-id="${changedItemId}"]`);
+    if (card) {
+      const inInventory = getQuantityInInventory(changedItemId);
+      let badge = card.querySelector('.eq-card-owned-badge');
+      if (inInventory > 0) {
+        if (badge) {
+          badge.textContent = inInventory;
+        } else {
+          badge = document.createElement('div');
+          badge.className = 'eq-card-owned-badge';
+          badge.textContent = inInventory;
+          card.appendChild(badge);
+        }
+      } else if (badge) {
+        badge.remove();
+      }
+    }
+
+    updateStickyHeader(burdenCap, stats);
+    renderInventoryShelf();
+    renderSidebar();
+    highlightInspectedCard();
   }
 
   // Check the currently owned inventory quantity
@@ -439,7 +468,7 @@ const EquipmentScene = (function() {
     renderGrid();
     updateStickyHeader(burdenCap, stats);
     renderInventoryShelf();
-    renderSidebar(stats);
+    renderSidebar();
     highlightInspectedCard();
   }
 
@@ -575,7 +604,7 @@ const EquipmentScene = (function() {
     container.innerHTML = html;
   }
 
-  function renderSidebar(stats) {
+  function renderSidebar() {
     // 1. Render item inspection detail card
     const detailContainer = document.getElementById('eq-item-detail-panel');
     if (detailContainer) {

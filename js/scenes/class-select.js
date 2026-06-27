@@ -22,17 +22,8 @@ const ClassSelectScene = (function() {
   let previewEventsBound = false; // Guard against duplicate event listeners
   let imageTimeouts = []; // Track image load timeouts for cleanup
 
-  /**
-   * Decode HTML entities for textContent display.
-   * Data files contain &nbsp;, &mdash;, etc. which should display as actual characters.
-   */
   function decodeHtmlEntities(str) {
-    if (typeof str !== 'string') return '';
-    const textarea = document.createElement('textarea');
-    textarea.innerHTML = str;
-    const result = textarea.value;
-    textarea.innerHTML = ''; // Clear to prevent script execution
-    return result;
+    return window.decodeHtmlEntities(str);
   }
 
   // EXP constants from rulebook
@@ -281,7 +272,20 @@ const ClassSelectScene = (function() {
         let btName = btMatch[1].trim().toLowerCase();
         // Strip trailing "breakthrough" word if present
         btName = btName.replace(/\s+breakthrough\s*$/i, '');
-        return breakthroughs.some(bt => bt.name.toLowerCase() === btName);
+        // Strip quotes and whitespace
+        btName = btName.replace(/^[\s"'\u201c\u201d]+|[\s"'\u201c\u201d]+$/g, '').toLowerCase();
+
+        // Try exact match first
+        const exactMatch = breakthroughs.some(bt => bt.name.toLowerCase() === btName);
+        if (exactMatch) return true;
+
+        // Try partial match: check if the requirement name is contained in the breakthrough name
+        // This handles cases like "Mystic Eyes of Faerie Light" matching "Mystic Eyes of Faerie Light (Fae)"
+        // or "Angelblooded" matching "Angelblooded (Human) (Restricted)"
+        return breakthroughs.some(bt => {
+          const btNameLower = bt.name.toLowerCase();
+          return btNameLower.includes(btName) || btName.includes(btNameLower);
+        });
       }
       return false;
     }
@@ -304,7 +308,13 @@ const ClassSelectScene = (function() {
 
     // "Proficient in..."
     if (lower.includes('proficient') || lower.includes('proficiency')) {
-      return equippedClasses.length > 0;
+      const profMatch = clause.match(/(?:must be|be)\s+(?:a|an)?\s+proficient\s+with\s+(.+?)(?:\.|$)/i);
+      if (profMatch) {
+        const neededProf = profMatch[1].trim().toLowerCase();
+        const charProfs = getCharacterProficiencies();
+        return charProfs.some(p => p.toLowerCase() === neededProf);
+      }
+      return false;
     }
 
     // "At least 5 skill points in..."
@@ -986,6 +996,10 @@ const ClassSelectScene = (function() {
   }
 
   function init() {
+    // Clear stale image timeouts from previous renders
+    imageTimeouts.forEach(id => clearTimeout(id));
+    imageTimeouts = [];
+
     populateFilters();
     renderEquippedClasses();
     const charData = window.getCharacterData ? window.getCharacterData() : {};

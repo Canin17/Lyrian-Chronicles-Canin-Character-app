@@ -21,24 +21,12 @@ const BreakthroughScene = (function() {
   let baseSpiritCore = 0;
   // Total abilities that must be bought for a class to be considered "mastered"
 
-  /**
-   * Decode HTML entities for textContent display.
-   * Data files contain &nbsp;, &mdash;, etc. which should display as actual characters.
-   */
   function decodeHtmlEntities(str) {
-    if (typeof str !== 'string') return '';
-    const textarea = document.createElement('textarea');
-    textarea.innerHTML = str;
-    const result = textarea.value;
-    textarea.innerHTML = ''; // Clear to prevent script execution
-    return result;
+    return window.decodeHtmlEntities(str);
   }
 
   // ===========================================================================
   // ELIGIBILITY CHECKER — clause-based parser
-  // Splits requirements into clauses by separators (period, comma)
-  // Evaluates each clause with AND logic
-  // ===========================================================================
   function isBreakthroughEligible(bt) {
     const req = (bt.prerequisites || '').replace(/<[^>]*>/g, '').trim();
     if (!req || req === 'None') return true;
@@ -50,7 +38,7 @@ const BreakthroughScene = (function() {
     const breakthroughs = charData.breakthroughs || [];
 
     // Split on period into clauses, evaluate ALL (AND logic)
-    const clauses = req.split(/\.\s*/).map(s => s.trim()).filter(Boolean);
+    const clauses = req.split(/\.\\s*/).map(s => s.trim()).filter(Boolean);
     return clauses.every(clause => evaluateBreakthroughClause(clause, charData, race, ancestry, cls, breakthroughs));
   }
 
@@ -223,8 +211,13 @@ const BreakthroughScene = (function() {
 
     // "You must be proficient with X" / "proficient in X"
     if (lower.includes('proficient')) {
-      // No proficiency tracking in character creator - be permissive
-      return true;
+      const profMatch = clause.match(/(?:must be|be)\s+(?:a|an)?\s+proficient\s+with\s+(.+?)(?:\.|$)/i);
+      if (profMatch) {
+        const neededProf = profMatch[1].trim().toLowerCase();
+        const charProfs = getCharacterProficiencies();
+        return charProfs.some(p => p.toLowerCase() === neededProf);
+      }
+      return false;
     }
 
     // "X only" race restriction (e.g., "Fae only", "Cowfolk only")
@@ -243,6 +236,54 @@ const BreakthroughScene = (function() {
 
     // Unknown clause - be permissive (don't block the user)
     return true;
+  }
+
+  // Helper: get all character proficiencies (race + ancestry + class + breakthroughs)
+  function getCharacterProficiencies() {
+    const charData = window.getCharacterData ? window.getCharacterData() : {};
+    const proficiencies = new Set();
+
+    // Race & ancestry proficiencies
+    if (charData.race && Array.isArray(charData.race.proficiencies)) {
+      charData.race.proficiencies.forEach(p => proficiencies.add(p));
+    }
+    if (charData.ancestry && Array.isArray(charData.ancestry.proficiencies)) {
+      charData.ancestry.proficiencies.forEach(p => proficiencies.add(p));
+    }
+
+    // Class key ability proficiencies (all levels: L1, L2, L3, etc.)
+    if (charData.cls && Array.isArray(charData.cls.all)) {
+      charData.cls.all.forEach(clsEntry => {
+        const classObj = clsEntry.class || {};
+        const className = classObj.name;
+        if (className && typeof CLASS_ABILITIES_DATA === 'object') {
+          const classAbilities = CLASS_ABILITIES_DATA[className];
+          if (classAbilities) {
+            // Iterate through all class levels (L1, L2, L3, ...)
+            for (const levelKey of Object.keys(classAbilities)) {
+              const levelData = classAbilities[levelKey];
+              if (levelData && Array.isArray(levelData.proficiencies)) {
+                levelData.proficiencies.forEach(p => proficiencies.add(p));
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Breakthrough proficiencies from saved character data
+    if (Array.isArray(charData.breakthroughProficiencies)) {
+      charData.breakthroughProficiencies.forEach(p => proficiencies.add(p));
+    }
+
+    // ALSO include proficiencies from currently selected breakthroughs (real-time)
+    selectedBreakthroughs.forEach(bt => {
+      if (Array.isArray(bt.proficiencies)) {
+        bt.proficiencies.forEach(p => proficiencies.add(p));
+      }
+    });
+
+    return Array.from(proficiencies);
   }
 
   // Helper: check if the player's race/ancestry matches a required race name
@@ -272,6 +313,7 @@ const BreakthroughScene = (function() {
       'yuki-onna youkai', 'kitsune youkai', 'jiangshi youkai',
       'suryan youkai', 'nekomata youkai', 'ancient marionette youkai',
     ];
+
     const neededLower = neededRace.toLowerCase();
 
     if (!race) return false;
@@ -651,6 +693,24 @@ const BreakthroughScene = (function() {
   }
 
   /**
+   * Compute all proficiencies granted by selected breakthroughs.
+   * Returns array of proficiency strings.
+   */
+  function getBreakthroughProficiencies() {
+    const proficiencies = [];
+    selectedBreakthroughs.forEach(bt => {
+      if (Array.isArray(bt.proficiencies)) {
+        bt.proficiencies.forEach(p => {
+          if (!proficiencies.includes(p)) {
+            proficiencies.push(p);
+          }
+        });
+      }
+    });
+    return proficiencies;
+  }
+
+  /**
    * Handle stat choice change for a stat-training breakthrough.
    */
   function handleStatChoiceChange(btIndex, newStat) {
@@ -662,6 +722,207 @@ const BreakthroughScene = (function() {
     if (typeof StatsScene !== 'undefined' && StatsScene.setBreakthroughBonuses) {
       StatsScene.setBreakthroughBonuses(getStatBonuses());
     }
+  }
+
+  // ===========================================================================
+  // BREAKTHROUGH EFFECTS APPLICATION
+  // ===========================================================================
+  /**
+   * Compute all mechanical effects from selected breakthroughs.
+   * Returns a consolidated object with all applied effects.
+   */
+  function computeBreakthroughEffects() {
+    const effects = {
+      mysticEyesLimit: 2, // Default limit
+      size: null,
+      burdenBonus: 0,
+      combatBurdenBonus: 0,
+      movementSpeedBonus: 0,
+      darkvision: 0,
+      flight: false,
+      sunlightWeakness: false,
+      noManaRegen: false,
+      noWounds: false,
+      woundExceptions: [],
+      mounted: false,
+      swimmingPenalty: 0,
+      climbingSpeed: null,
+      losesAbility: null,
+      raceChange: null,
+      statBonuses: {},
+      appliedBreakthroughs: []
+    };
+
+    // Get all selected breakthroughs
+    const selected = selectedBreakthroughs.map(s => {
+      const bt = window.BREAKTHROUGH_DATA.find(b => b.id === s.id);
+      return bt ? { ...bt, instanceIndex: s.instanceIndex } : null;
+    }).filter(Boolean);
+
+    // Also include racial breakthroughs from character data
+    const racialBreakthroughs = (window.characterData && window.characterData.racialBreakthroughs) || [];
+    const allBreakthroughs = [...selected, ...racialBreakthroughs];
+
+    allBreakthroughs.forEach(btIdOrObj => {
+      let bt;
+      if (typeof btIdOrObj === 'string') {
+        bt = window.BREAKTHROUGH_DATA.find(b => b.id === btIdOrObj);
+      } else {
+        bt = btIdOrObj;
+      }
+      if (!bt || !bt.mechanics) return;
+
+      const mech = bt.mechanics;
+      effects.appliedBreakthroughs.push(bt.name);
+
+      // Mystic eyes limit
+      if (mech.mysticEyesLimit) {
+        effects.mysticEyesLimit = Math.max(effects.mysticEyesLimit, mech.mysticEyesLimit);
+      }
+
+      // Size changes
+      if (mech.size) {
+        effects.size = mech.size;
+      }
+
+      // Burden bonuses (regular)
+      if (mech.burdenBonus) {
+        effects.burdenBonus += mech.burdenBonus;
+      }
+
+      // Combat burden bonuses
+      if (mech.combatBurdenBonus) {
+        effects.combatBurdenBonus += mech.combatBurdenBonus;
+      }
+
+      // Movement speed bonuses
+      if (mech.movementSpeedBonus) {
+        effects.movementSpeedBonus += mech.movementSpeedBonus;
+      }
+
+      // Darkvision
+      if (mech.darkvision) {
+        effects.darkvision = Math.max(effects.darkvision, mech.darkvision);
+      }
+
+      // Flight
+      if (mech.flight) {
+        effects.flight = true;
+      }
+
+      // Sunlight weakness
+      if (mech.sunlightWeakness) {
+        effects.sunlightWeakness = true;
+      }
+
+      // No mana regeneration
+      if (mech.noManaRegen) {
+        effects.noManaRegen = true;
+      }
+
+      // No wounds
+      if (mech.noWounds) {
+        effects.noWounds = true;
+        if (mech.woundExceptions) {
+          effects.woundExceptions = [...new Set([...effects.woundExceptions, ...mech.woundExceptions])];
+        }
+      }
+
+      // Mounted status
+      if (mech.mounted) {
+        effects.mounted = true;
+      }
+
+      // Swimming penalty
+      if (mech.swimmingPenalty) {
+        effects.swimmingPenalty += mech.swimmingPenalty;
+      }
+
+      // Climbing speed
+      if (mech.climbingSpeed) {
+        effects.climbingSpeed = mech.climbingSpeed;
+      }
+
+      // Loses ability
+      if (mech.losesAbility) {
+        effects.losesAbility = mech.losesAbility;
+      }
+
+      // Race change
+      if (mech.raceChange) {
+        effects.raceChange = mech.raceChange;
+      }
+
+      // Stat bonuses (handled separately via getStatBonuses)
+      if (mech.statBonus) {
+        // Stat bonuses are tracked via statBonusChoices, not here
+      }
+    });
+
+    return effects;
+  }
+
+  /**
+   * Get the current mystic eyes limit from breakthroughs
+   */
+  function getMysticEyesLimit() {
+    return computeBreakthroughEffects().mysticEyesLimit;
+  }
+
+  /**
+   * Get the current size from breakthroughs (or null if unchanged)
+   */
+  function getBreakthroughSize() {
+    return computeBreakthroughEffects().size;
+  }
+
+  /**
+   * Get total burden bonus from breakthroughs
+   */
+  function getBurdenBonus() {
+    return computeBreakthroughEffects().burdenBonus;
+  }
+
+  /**
+   * Get total combat burden bonus from breakthroughs
+   */
+  function getCombatBurdenBonus() {
+    return computeBreakthroughEffects().combatBurdenBonus;
+  }
+
+  /**
+   * Get total movement speed bonus from breakthroughs
+   */
+  function getMovementSpeedBonus() {
+    return computeBreakthroughEffects().movementSpeedBonus;
+  }
+
+  /**
+   * Check if character has flight from breakthroughs
+   */
+  function hasFlight() {
+    return computeBreakthroughEffects().flight;
+  }
+
+  /**
+   * Check if character has sunlight weakness
+   */
+  function hasSunlightWeakness() {
+    return computeBreakthroughEffects().sunlightWeakness;
+  }
+
+  /**
+   * Check if character has no mana regeneration
+   */
+  function hasNoManaRegen() {
+    return computeBreakthroughEffects().noManaRegen;
+  }
+
+  /**
+   * Get darkvision range from breakthroughs
+   */
+  function getDarkvision() {
+    return computeBreakthroughEffects().darkvision;
   }
 
   // ===========================================================================
@@ -1024,6 +1285,7 @@ const BreakthroughScene = (function() {
 
   function reset() {
     selectedBreakthroughs = [];
+    statBonusChoices = {};
     renderSelectedList();
     hideBreakthroughPreview();
     // Reset filter button guards so re-init can re-bind
@@ -1059,5 +1321,5 @@ const BreakthroughScene = (function() {
     updateOverviewStats();
   }
 
-  return { init, getSelection, reset, toggleBreakthrough, refresh, restoreState, setMainExpPool, getExpFromMainPool, getCurrentSpiritCore, getStatBonuses, handleStatChoiceChange };
+  return { init, getSelection, reset, toggleBreakthrough, refresh, restoreState, setMainExpPool, getExpFromMainPool, getCurrentSpiritCore, getStatBonuses, getBreakthroughProficiencies, handleStatChoiceChange, computeBreakthroughEffects, getMysticEyesLimit, getBreakthroughSize, getBurdenBonus, getCombatBurdenBonus, getMovementSpeedBonus, hasFlight, hasSunlightWeakness, hasNoManaRegen, getDarkvision };
 })();

@@ -1,7 +1,7 @@
 /** @type {import("eslint").Linter.Config[]} */
 export default [
   {
-    files: ["js/**/*.js", "js/**/*.json"],
+    files: ["js/**/*.js"],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: "script",
@@ -68,6 +68,34 @@ export default [
         SkillsStepScene: "readonly",
         StatsScene: "readonly",
         SummaryScene: "readonly",
+        // Cross-file function globals (defined in data files)
+        calculateDerivedStats: "readonly",
+        calculateBaseSpeed: "readonly",
+        getAvailableValues: "readonly",
+        getAbilityData: "readonly",
+        abilityLink: "readonly",
+        keywordLinks: "readonly",
+        deepCloneSkillGroups: "readonly",
+        calculateExpertisePoints: "readonly",
+        calculateAvailableSkillPoints: "readonly",
+        getEffectiveSkillCap: "readonly",
+        getBreakthroughBonusesForSkill: "readonly",
+        parseExpertiseString: "readonly",
+        serializeExpertiseArray: "readonly",
+        getBreakthroughSkillBonuses: "readonly",
+        computeBreakthroughEffects: "readonly",
+        getCharacterProficiencies: "readonly",
+        // Character ability aggregation
+        getAllCharacterAbilities: "readonly",
+        getAllCharacterProficiencies: "readonly",
+        getRaceAbilities: "readonly",
+        getClassAbilities: "readonly",
+        getBreakthroughAbilities: "readonly",
+        getRaceProficiencies: "readonly",
+        getClassProficiencies: "readonly",
+        getBreakthroughProficiencies: "readonly",
+        // Browser APIs
+        requestAnimationFrame: "readonly",
       },
     },
     rules: {
