@@ -1848,6 +1848,38 @@ body {
   opacity: 0.7;
 }
 
+/* ponytail: class stat bonus dropdowns (L6/L7) */
+.class-stat-bonus-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  background: var(--bg-card);
+  border: 1px solid #444;
+  border-radius: var(--border-radius-lg);
+  flex-wrap: wrap;
+  width: 100%;
+  box-sizing: border-box;
+}
+.class-stat-bonus-item label {
+  font-size: 0.8rem;
+  color: var(--text-label);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.class-stat-bonus-item select {
+  background: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid #555;
+  border-radius: 4px;
+  padding: 0.2rem 0.4rem;
+  font-size: 0.85rem;
+  min-width: 100px;
+  flex: 1 1 auto;
+}
+
 .stat-box .stat-bonus-label {
   color: var(--accent-green);
 }
@@ -4447,6 +4479,17 @@ body {
 
 .stat-box .stat-bt-label {
   color: var(--meter-mana, #5b9bd5);
+}
+
+/* ponytail: class stat bonus (L6/L7) display */
+.stat-box .stat-total .class-bonus {
+  font-size: 0.85rem;
+  color: var(--accent-green, #4caf50);
+  font-weight: normal;
+}
+
+.stat-box .stat-class-label {
+  color: var(--accent-green, #4caf50);
 }
 
 /* Stat picker in selected breakthroughs list */

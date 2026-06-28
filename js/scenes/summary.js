@@ -84,6 +84,11 @@ const SummaryScene = (function() {
     const raceBonuses = characterData.raceBonuses || {};
     const btBonuses = characterData.breakthroughStatBonuses || {};
     const baseStats = characterData.baseStats || {};
+    // ponytail: compute class stat bonuses from choices for display
+    const classBonuses = {};
+    if (characterData.classStatBonusChoices) {
+      Object.values(characterData.classStatBonusChoices).forEach(k => { if (k) classBonuses[k] = (classBonuses[k] || 0) + 1; });
+    }
 
     html += `<div class="summary-section">
       <h3>Ability Scores</h3>
@@ -93,10 +98,12 @@ const SummaryScene = (function() {
       const base = baseStats[def.id] ?? '-';
       const rBonus = raceBonuses[def.id] || 0;
       const bBonus = btBonuses[def.id] || 0;
+      const cBonus = classBonuses[def.id] || 0;
       const total = stats[def.id] ?? '-';
       let bonusDetail = '';
       if (rBonus > 0) bonusDetail += `<span style="color: var(--accent-gold);">+${rBonus} Race</span> `;
-      if (bBonus > 0) bonusDetail += `<span style="color: var(--meter-mana);">+${bBonus} BT</span>`;
+      if (bBonus > 0) bonusDetail += `<span style="color: var(--meter-mana);">+${bBonus} BT</span> `;
+      if (cBonus > 0) bonusDetail += `<span style="color: var(--accent-green);">+${cBonus} Class</span>`;
 
       html += `<div style="text-align: center; padding: 0.5rem; background: var(--bg-primary); border-radius: 4px;">
         <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">${def.short || def.name}</div>
@@ -114,10 +121,12 @@ const SummaryScene = (function() {
       const base = baseStats[def.id] ?? '-';
       const rBonus = raceBonuses[def.id] || 0;
       const bBonus = btBonuses[def.id] || 0;
+      const cBonus = classBonuses[def.id] || 0;
       const total = stats[def.id] ?? '-';
       let bonusDetail = '';
       if (rBonus > 0) bonusDetail += `<span style="color: var(--accent-gold);">+${rBonus} Race</span> `;
-      if (bBonus > 0) bonusDetail += `<span style="color: var(--meter-mana);">+${bBonus} BT</span>`;
+      if (bBonus > 0) bonusDetail += `<span style="color: var(--meter-mana);">+${bBonus} BT</span> `;
+      if (cBonus > 0) bonusDetail += `<span style="color: var(--accent-green);">+${cBonus} Class</span>`;
 
       html += `<div style="text-align: center; padding: 0.4rem; background: var(--bg-primary); border-radius: 4px;">
         <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">${def.name}</div>

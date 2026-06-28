@@ -1084,9 +1084,8 @@ const BreakthroughScene = (function() {
       if (type) {
         const newIdx = selectedBreakthroughs.length - 1;
         const newKey = btInstanceKey(bt, newIdx);
-        // Default to first stat (user can change it)
-        const defaultStat = type === 'primary' ? 'pow' : 'fitness';
-        statBonusChoices[newKey] = defaultStat;
+        // ponytail: default to blank — user picks explicitly
+        statBonusChoices[newKey] = '';
       }
     }
 
@@ -1318,6 +1317,21 @@ const BreakthroughScene = (function() {
   }
 
   /**
+   * ponytail: Expose stat-training items for the stats panel mirror.
+   * Returns [{ name, type: 'primary'|'secondary', index, choice }]
+   */
+  function getStatTrainingItems() {
+    const items = [];
+    selectedBreakthroughs.forEach((bt, i) => {
+      const type = getStatTrainingType(bt);
+      if (!type) return;
+      const key = btInstanceKey(bt, i);
+      items.push({ name: bt.name, type, index: i, choice: statBonusChoices[key] || '' });
+    });
+    return items;
+  }
+
+  /**
    * Set the main class EXP pool available for breakthrough spending.
    * @param {number} pool - Remaining class EXP (main pool)
    * @param {number} classExpSpent - EXP spent on classes (base Spirit Core, NOT including breakthrough spending)
@@ -1328,5 +1342,5 @@ const BreakthroughScene = (function() {
     updateOverviewStats();
   }
 
-  return { init, getSelection, reset, toggleBreakthrough, refresh, restoreState, setMainExpPool, getExpFromMainPool, getCurrentSpiritCore, getStatBonuses, getBreakthroughProficiencies, handleStatChoiceChange, computeBreakthroughEffects, getMysticEyesLimit, getBreakthroughSize, getBurdenBonus, getCombatBurdenBonus, getMovementSpeedBonus, hasFlight, hasSunlightWeakness, hasNoManaRegen, getDarkvision };
+  return { init, getSelection, reset, toggleBreakthrough, refresh, restoreState, setMainExpPool, getExpFromMainPool, getCurrentSpiritCore, getStatBonuses, getBreakthroughProficiencies, handleStatChoiceChange, computeBreakthroughEffects, getMysticEyesLimit, getBreakthroughSize, getBurdenBonus, getCombatBurdenBonus, getMovementSpeedBonus, hasFlight, hasSunlightWeakness, hasNoManaRegen, getDarkvision, getStatTrainingItems };
 })();

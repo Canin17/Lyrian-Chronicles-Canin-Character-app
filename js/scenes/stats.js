@@ -21,6 +21,11 @@ const StatsScene = (function() {
     fitness: 0, cunning: 0, reason: 0, awareness: 0, presence: 0
   };
 
+  // ponytail: Class stat bonuses from L6 Heart (+1 sub) and L7 Soul (+1 main)
+  // Shape: { l6: number, l7: number, choices: { heart_0: 'fitness', soul_0: 'pow', ... } }
+  let classBonusCounts = { l6: 0, l7: 0 };
+  let classBonusChoices = {};
+
   function setRaceData(raceName) {
     cachedRaceName = raceName.toLowerCase();
   }
@@ -96,6 +101,8 @@ const StatsScene = (function() {
     renderStatGroup('sub-stats', SUB_STATS, subAssignments, SUB_STATS_ARRAY, 'sub');
     updateAssignmentPool('main-pool', mainAssignments, MAIN_STATS_ARRAY);
     updateAssignmentPool('sub-pool', subAssignments, SUB_STATS_ARRAY);
+    renderClassStatBonuses();
+    renderStatTrainingBonuses();
     updateDerivedStats();
     updateCompletionStatus();
   }
@@ -121,8 +128,9 @@ const StatsScene = (function() {
       const bonuses = getRaceBonuses();
       const raceBonus = bonuses[def.id] || 0;
       const btBonus = breakthroughBonuses[def.id] || 0;
+      const classBonus = getClassStatBonuses()[def.id] || 0;
       const baseVal = assigned != null ? assigned : 0;
-      const total = baseVal + raceBonus + btBonus;
+      const total = baseVal + raceBonus + btBonus + classBonus;
 
       // Build dropdown options
       let optionsHtml = '<option value="">—</option>';
@@ -140,6 +148,7 @@ const StatsScene = (function() {
       const displayValue = assigned != null ? total : '—';
       const bonusText = raceBonus > 0 && assigned != null ? ` <span class="race-bonus">(+${raceBonus})</span>` : '';
       const btBonusText = btBonus > 0 && assigned != null ? ` <span class="bt-bonus">(+${btBonus})</span>` : '';
+      const classBonusText = classBonus > 0 && assigned != null ? ` <span class="class-bonus">(+${classBonus})</span>` : '';
 
       box.innerHTML = `
         <div class="stat-name">${def.short || def.name}</div>
@@ -148,11 +157,12 @@ const StatsScene = (function() {
             ${optionsHtml}
           </select>
         </div>
-        <div class="stat-total">${displayValue}${bonusText}${btBonusText}</div>
+        <div class="stat-total">${displayValue}${bonusText}${btBonusText}${classBonusText}</div>
         <div class="stat-label-row">
           <span class="stat-base-label">Base</span>
           ${raceBonus > 0 ? '<span class="stat-bonus-label">Race +1</span>' : ''}
           ${btBonus > 0 ? `<span class="stat-bt-label">BT +${btBonus}</span>` : ''}
+          ${classBonus > 0 ? `<span class="stat-class-label">Class +${classBonus}</span>` : ''}
         </div>
       `;
 
@@ -217,18 +227,127 @@ const StatsScene = (function() {
   }
 
   /**
+   * ponytail: Render class stat bonus dropdowns (L6 Heart / L7 Soul).
+   * Shows one dropdown per class bonus, filtered by that class's allowed stats.
+   * Labeled with class name. Hidden when no bonuses.
+   */
+  function renderClassStatBonuses() {
+    const section = document.getElementById('class-stat-bonuses-section');
+    const container = document.getElementById('class-stat-bonus-selects');
+    if (!section || !container) return;
+
+    // ponytail: fetch per-class details with restrictions from ClassSelectScene
+    const details = ClassSelectScene.getClassStatBonusDetails
+      ? ClassSelectScene.getClassStatBonusDetails()
+      : [];
+
+    if (details.length === 0) {
+      section.style.display = 'none';
+      return;
+    }
+    section.style.display = '';
+    container.innerHTML = '';
+
+    // ponytail: Soul (L7) first, then Heart (L6) — matches class level ordering
+    const souls = details.filter(b => b.type === 'soul');
+    const hearts = details.filter(b => b.type === 'heart');
+    const ordered = [...souls, ...hearts];
+
+    ordered.forEach((bonus, idx) => {
+      const key = `${bonus.type}_${idx}`;
+      const item = document.createElement('div');
+      item.className = 'class-stat-bonus-item';
+
+      // ponytail: build filtered options from class restriction, fallback to all stats
+      const allStats = bonus.type === 'soul' ? MAIN_STATS : SUB_STATS;
+      const allowed = bonus.allowed; // null = no restriction → all stats
+      const filtered = allowed ? allStats.filter(s => allowed.includes(s.id)) : allStats;
+      // ponytail: if filter eliminated everything (bad data), show all
+      const options = filtered.length > 0 ? filtered : allStats;
+
+      let opts = `<option value=""${classBonusChoices[key] ? '' : ' selected'}>— choose —</option>` + options.map(s =>
+        `<option value="${s.id}"${classBonusChoices[key] === s.id ? ' selected' : ''}>${s.short || s.name}</option>`
+      ).join('');
+
+      const label = bonus.type === 'soul' ? 'L7 Soul' : 'L6 Heart';
+      item.innerHTML = `<label>${label} (${bonus.className}):</label><select data-class-bonus="${key}">${opts}</select>`;
+      item.querySelector('select').addEventListener('change', (e) => {
+        classBonusChoices[key] = e.target.value;
+        renderAll();
+      });
+      container.appendChild(item);
+    });
+  }
+
+  /**
+   * ponytail: Render stat-training breakthrough dropdowns (mirrors breakthroughs panel).
+   * Hidden when no stat-training breakthroughs selected.
+   */
+  function renderStatTrainingBonuses() {
+    const section = document.getElementById('stat-training-section');
+    const container = document.getElementById('stat-training-selects');
+    if (!section || !container) return;
+
+    // ponytail: fetch from BreakthroughScene — each entry: { name, type, index, choice }
+    const items = BreakthroughScene.getStatTrainingItems
+      ? BreakthroughScene.getStatTrainingItems()
+      : [];
+
+    if (items.length === 0) {
+      section.style.display = 'none';
+      return;
+    }
+    section.style.display = '';
+    container.innerHTML = '';
+
+    items.forEach(item => {
+      const el = document.createElement('div');
+      el.className = 'class-stat-bonus-item';
+      const allStats = item.type === 'primary' ? MAIN_STATS : SUB_STATS;
+      const opts = `<option value=""${item.choice ? '' : ' selected'}>— choose —</option>` + allStats.map(s =>
+        `<option value="${s.id}"${item.choice === s.id ? ' selected' : ''}>${s.short || s.name}</option>`
+      ).join('');
+      const label = item.type === 'primary' ? 'Primary' : 'Secondary';
+      el.innerHTML = `<label>${label} (${item.name}):</label><select data-bt-stat="${item.index}">${opts}</select>`;
+      el.querySelector('select').addEventListener('change', (e) => {
+        BreakthroughScene.handleStatChoiceChange(item.index, e.target.value);
+        renderAll();
+      });
+      container.appendChild(el);
+    });
+  }
+
+  /**
+   * ponytail: Compute stat bonuses from class L6/L7 choices.
+   * Returns { pow: N, ..., presence: N }
+   */
+  function getClassStatBonuses() {
+    const bonuses = {
+      pow: 0, foc: 0, agi: 0, tou: 0,
+      fitness: 0, cunning: 0, reason: 0, awareness: 0, presence: 0
+    };
+    Object.values(classBonusChoices).forEach(statKey => {
+      if (statKey && bonuses.hasOwnProperty(statKey)) {
+        bonuses[statKey] += 1;
+      }
+    });
+    return bonuses;
+  }
+
+  /**
    * Update derived stats preview
    */
   function updateDerivedStats() {
     const bonuses = getRaceBonuses();
+    const classBonuses = getClassStatBonuses();
     const finalStats = {};
 
-    // Combine main + sub assignments with race bonuses + breakthrough bonuses
+    // Combine main + sub assignments with race bonuses + breakthrough bonuses + class bonuses
     Object.keys(mainAssignments).forEach(k => {
-      finalStats[k] = (mainAssignments[k] != null ? mainAssignments[k] : 0) + (bonuses[k] || 0) + (breakthroughBonuses[k] || 0);
+      finalStats[k] = (mainAssignments[k] != null ? mainAssignments[k] : 0) + (bonuses[k] || 0) + (breakthroughBonuses[k] || 0) + (classBonuses[k] || 0);
     });
     Object.keys(subAssignments).forEach(k => {
-      finalStats[k] = (subAssignments[k] != null ? subAssignments[k] : 0) + (bonuses[k] || 0) + (breakthroughBonuses[k] || 0);
+      finalStats[k] = (subAssignments[k] != null ? subAssignments[k] : 0) + (bonuses[k] || 0) + (breakthroughBonuses[k] || 0) + (classBonuses[k] || 0);
     });
 
     const derived = calculateDerivedStats(finalStats);
@@ -251,13 +370,23 @@ const StatsScene = (function() {
   /**
    * Update completion status and next button
    */
+  // ponytail: check all class bonus + stat-training dropdowns have a non-blank choice
+  function allBonusesChosen() {
+    const classOk = Object.values(classBonusChoices).every(v => v && v !== '');
+    const btItems = BreakthroughScene.getStatTrainingItems
+      ? BreakthroughScene.getStatTrainingItems()
+      : [];
+    const btOk = btItems.every(it => it.choice && it.choice !== '');
+    return classOk && btOk;
+  }
+
   function updateCompletionStatus() {
     const mainComplete = mainAssignments.pow != null && mainAssignments.foc != null &&
                          mainAssignments.agi != null && mainAssignments.tou != null;
     const subComplete = subAssignments.fitness != null && subAssignments.cunning != null &&
                         subAssignments.reason != null && subAssignments.awareness != null &&
                         subAssignments.presence != null;
-    const complete = mainComplete && subComplete;
+    const complete = mainComplete && subComplete && allBonusesChosen();
 
     const nextBtn = document.getElementById('btn-stats-next');
     if (nextBtn) {
@@ -280,17 +409,18 @@ const StatsScene = (function() {
   }
 
   /**
-   * Get final stats (base + race bonuses + breakthrough bonuses)
+   * Get final stats (base + race bonuses + breakthrough bonuses + class bonuses)
    */
   function getStats() {
     const bonuses = getRaceBonuses();
+    const classBonuses = getClassStatBonuses();
     const finalStats = {};
 
     Object.keys(mainAssignments).forEach(k => {
-      finalStats[k] = (mainAssignments[k] != null ? mainAssignments[k] : 0) + (bonuses[k] || 0) + (breakthroughBonuses[k] || 0);
+      finalStats[k] = (mainAssignments[k] != null ? mainAssignments[k] : 0) + (bonuses[k] || 0) + (breakthroughBonuses[k] || 0) + (classBonuses[k] || 0);
     });
     Object.keys(subAssignments).forEach(k => {
-      finalStats[k] = (subAssignments[k] != null ? subAssignments[k] : 0) + (bonuses[k] || 0) + (breakthroughBonuses[k] || 0);
+      finalStats[k] = (subAssignments[k] != null ? subAssignments[k] : 0) + (bonuses[k] || 0) + (breakthroughBonuses[k] || 0) + (classBonuses[k] || 0);
     });
 
     return finalStats;
@@ -372,6 +502,17 @@ const StatsScene = (function() {
     }
   }
 
+  // ponytail: Set class bonus counts + choices from ClassSelectScene
+  function setClassBonusCounts(counts, choices) {
+    if (counts) classBonusCounts = { l6: counts.l6 || 0, l7: counts.l7 || 0 };
+    if (choices) classBonusChoices = { ...choices };
+    renderAll();
+  }
+
+  function getClassBonusChoices() {
+    return { ...classBonusChoices };
+  }
+
   function reset() {
     mainAssignments = { pow: null, foc: null, agi: null, tou: null };
     subAssignments = { fitness: null, cunning: null, reason: null, awareness: null, presence: null };
@@ -379,6 +520,8 @@ const StatsScene = (function() {
     humanSubBonus = 'fitness';
     cachedRaceName = '';
     breakthroughBonuses = { pow: 0, foc: 0, agi: 0, tou: 0, fitness: 0, cunning: 0, reason: 0, awareness: 0, presence: 0 };
+    classBonusCounts = { l6: 0, l7: 0 };
+    classBonusChoices = {};
     // Clear human bonus listener guards so re-init can re-bind
     const mainSelect = document.getElementById('human-main-select');
     const subSelect = document.getElementById('human-sub-select');
@@ -387,5 +530,5 @@ const StatsScene = (function() {
     renderAll();
   }
 
-  return { init, getStats, getBaseStats, reset, setRaceData, getHumanChoices, getRaceBonuses, restoreState, setBreakthroughBonuses };
+  return { init, getStats, getBaseStats, reset, setRaceData, getHumanChoices, getRaceBonuses, restoreState, setBreakthroughBonuses, setClassBonusCounts, getClassBonusChoices, getClassStatBonuses };
 })();

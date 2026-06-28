@@ -77,6 +77,7 @@
     breakthroughs: [],
     breakthroughStatBonuses: {},
     breakthroughProficiencies: [],
+    classStatBonusChoices: {},
     stats: {},
     baseStats: {},
     humanChoices: {},
@@ -534,6 +535,8 @@
         character.raceBonuses = StatsScene.getRaceBonuses();
         // Also refresh breakthrough bonuses in case they changed while on stats page
         character.breakthroughStatBonuses = BreakthroughScene.getStatBonuses();
+        // ponytail: save class stat bonus choices
+        character.classStatBonusChoices = StatsScene.getClassBonusChoices ? StatsScene.getClassBonusChoices() : {};
         break;
       case 5: // Skills
         character.skills = SkillsStepScene.getSkills();
@@ -623,6 +626,11 @@
         }
         // Apply breakthrough stat bonuses
         StatsScene.setBreakthroughBonuses(BreakthroughScene.getStatBonuses());
+        // ponytail: apply class stat bonus counts + restore choices
+        const classBonusCounts = ClassSelectScene.getClassStatBonusCounts
+          ? ClassSelectScene.getClassStatBonusCounts()
+          : { l6: 0, l7: 0 };
+        StatsScene.setClassBonusCounts(classBonusCounts, character.classStatBonusChoices || {});
         // Restore stat assignments instead of resetting
         if (character.baseStats && Object.keys(character.baseStats).length > 0) {
           StatsScene.restoreState(
@@ -683,6 +691,7 @@
     character.statBonusChoices = {};
     character.breakthroughStatBonuses = {};
     character.breakthroughProficiencies = [];
+    character.classStatBonusChoices = {};
     character.stats = {};
     character.baseStats = {};
     character.raceBonuses = {};
