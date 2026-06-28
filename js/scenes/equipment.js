@@ -132,13 +132,6 @@ const EquipmentScene = (function() {
   let debouncedRenderGrid = debounce(function() { renderGrid(); }, 150);
 
   // ===========================================================================
-  // HTML HELPERS — FIX #1 (use window.escapeHtml), FIX #6 (reusable decodeEl)
-  // ===========================================================================
-  function decodeHtmlEntities(str) {
-    return window.decodeHtmlEntities(str);
-  }
-
-  // ===========================================================================
   // ITEM SLUG / URL — FIX #5 (pre-computed cache)
   // ===========================================================================
   function getItemUrl(item) {
@@ -694,7 +687,7 @@ const EquipmentScene = (function() {
             '</div>' +
             '<div class="eq-detail-description">' +
               '<h5>Item Description & Rules</h5>' +
-              '<p>' + decodeHtmlEntities(inspectedItem.description || 'No description available for this item.') + '</p>' +
+              '<p>' + window.decodeHtmlEntities(inspectedItem.description || 'No description available for this item.') + '</p>' +
             '</div>' +
             modSection +
             purchaseSection +

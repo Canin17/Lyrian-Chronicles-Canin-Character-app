@@ -91,3 +91,56 @@ function getAvailableValues(array, assignments) {
   }
   return remaining;
 }
+
+/* exported checkRaceMatch */
+/**
+ * Check if the player's race/ancestry matches a required race name.
+ * ponytail: single source of truth — was duplicated in class-select.js and breakthroughs.js.
+ * The breakthroughs.js version was the authoritative one (full ancestry list, aliases, compounds).
+ */
+function checkRaceMatch(neededRace, race, ancestry) {
+  const knownRaces = ['human', 'demon', 'fae', 'chimera', 'angel', 'youkai'];
+  const raceAliases = { faerie: 'fae' };
+  const knownAncestries = [
+    'bearfolk', 'bullfolk', 'catfolk', 'centaur', 'cowfolk', 'dogfolk',
+    'harpy', 'horse-folk', 'lamiafolk', 'lizardfolk', 'mothfolk',
+    'phoenix', 'rabbitfolk', 'ratfolk', 'red pandafolk', 'sheepfolk',
+    'slimefolk', 'spiderfolk', 'wolf-folk',
+    'anubis', 'cait sith', 'cu sith', 'dryad', 'dullahan', 'gnome',
+    'high fae', 'pixie', 'salamander', 'selkie', 'sylph', 'unseelie',
+    'willo wisp',
+    'ancient marionette', 'jiangshi', 'kitsune', 'nekomata', 'nio',
+    'oni', 'raijin', 'ryujin', 'suryan', 'tengu', 'yuki-onna',
+    'red panda', 'arachne', 'arachne spiderfolk', 'lamia', 'marionette',
+    'willowisp', 'will-o-wisp', 'sheep', 'wolf', 'horse',
+    'cow', 'bull', 'bear', 'dog', 'cat', 'rabbit', 'rat', 'slime',
+    'spider', 'moth', 'lizard', 'harpy', 'centaur',
+    'raijin youkai', 'ryujin youkai', 'oni youkai', 'tengu youkai',
+    'yuki-onna youkai', 'kitsune youkai', 'jiangshi youkai',
+    'suryan youkai', 'nekomata youkai', 'ancient marionette youkai',
+  ];
+
+  const neededLower = neededRace.toLowerCase();
+  if (!race) return false;
+  const raceName = (race.name || '').toLowerCase();
+  const ancestryName = (ancestry && ancestry.name) ? ancestry.name.toLowerCase() : '';
+  const ancestryId = (ancestry && ancestry.ancestryId) ? ancestry.ancestryId.toLowerCase() : '';
+
+  const words = neededLower.split(/\s+/);
+  if (words.length > 1) {
+    if (words.every(w => ancestryName.includes(w)) || words.every(w => ancestryId.includes(w))) return true;
+    const firstWord = words[0];
+    const lastWord = words[words.length - 1];
+    if (knownAncestries.includes(firstWord) && knownRaces.includes(lastWord)) {
+      if ((ancestryName === firstWord || ancestryId === firstWord) && raceName === lastWord) return true;
+    }
+    if (knownAncestries.includes(neededLower)) return ancestryName === neededLower || ancestryId === neededLower;
+    if (knownRaces.includes(lastWord) && raceName === lastWord) return true;
+    return words.every(w => raceName.includes(w));
+  }
+
+  if (knownRaces.includes(neededLower)) return raceName === neededLower;
+  if (raceAliases[neededLower]) return raceName === raceAliases[neededLower];
+  return ancestryName === neededLower || ancestryId === neededLower ||
+    knownAncestries.includes(neededLower) && (raceName.includes(neededLower) || ancestryName.includes(neededLower));
+}

@@ -9,8 +9,47 @@ const RaceSelectScene = (function() {
   let selectedAncestry = null;
   let imageTimeouts = []; // Track image load timeouts for cleanup
 
-  function decodeHtmlEntities(str) {
-    return window.decodeHtmlEntities(str);
+  /**
+   * ponytail: Create an image element with fallback to initial-letter div on error/timeout.
+   * Extracted from duplicated race-card + ancestry-card rendering.
+   */
+  function createImageWithFallback(item, cssClass) {
+    if (!item.image) {
+      const fallback = document.createElement('div');
+      fallback.className = `${cssClass} no-image`;
+      fallback.textContent = item.name.charAt(0);
+      return fallback;
+    }
+
+    const imgEl = document.createElement('img');
+    imgEl.className = cssClass;
+    imgEl.alt = item.name;
+    let loaded = false;
+
+    const replaceWithFallback = () => {
+      if (!imgEl.parentNode) return;
+      imgEl.style.display = 'none';
+      const fallback = document.createElement('div');
+      fallback.className = `${cssClass} no-image`;
+      fallback.textContent = item.name.charAt(0);
+      imgEl.parentNode.replaceChild(fallback, imgEl);
+    };
+
+    imgEl.onload = () => {
+      loaded = true;
+      if (!imgEl.naturalWidth || !imgEl.naturalHeight) replaceWithFallback();
+    };
+    imgEl.onerror = () => {
+      loaded = true;
+      replaceWithFallback();
+    };
+
+    const timeoutId = setTimeout(() => {
+      if (!loaded) replaceWithFallback();
+    }, 8000);
+    imageTimeouts.push(timeoutId);
+    imgEl.src = item.image;
+    return imgEl;
   }
 
   function init() {
@@ -59,48 +98,7 @@ const RaceSelectScene = (function() {
       card.dataset.race = race.id;
 
       // Image
-      let imgEl;
-      if (race.image) {
-        imgEl = document.createElement('img');
-        imgEl.className = 'race-card-image';
-        imgEl.alt = race.name;
-        // No loading='lazy' — eager load so the timeout below doesn't fire prematurely.
-        let loaded = false;
-        imgEl.onload = () => {
-          loaded = true;
-          if (!imgEl.naturalWidth || !imgEl.naturalHeight) {
-            imgEl.style.display = 'none';
-            const fallback = document.createElement('div');
-            fallback.className = 'race-card-image no-image';
-            fallback.textContent = race.name.charAt(0);
-            imgEl.parentNode.replaceChild(fallback, imgEl);
-          }
-        };
-        imgEl.onerror = () => {
-          loaded = true;
-          imgEl.style.display = 'none';
-          const fallback = document.createElement('div');
-          fallback.className = 'race-card-image no-image';
-          fallback.textContent = race.name.charAt(0);
-          imgEl.parentNode.replaceChild(fallback, imgEl);
-        };
-        // 8s fallback timeout (increased from 3s for slow CDN / connection limits)
-        const timeoutId = setTimeout(() => {
-          if (!loaded && imgEl.parentNode) {
-            imgEl.style.display = 'none';
-            const fallback = document.createElement('div');
-            fallback.className = 'race-card-image no-image';
-            fallback.textContent = race.name.charAt(0);
-            imgEl.parentNode.replaceChild(fallback, imgEl);
-          }
-        }, 8000);
-        imageTimeouts.push(timeoutId);
-        imgEl.src = race.image;
-      } else {
-        imgEl = document.createElement('div');
-        imgEl.className = 'race-card-image no-image';
-        imgEl.textContent = race.name.charAt(0);
-      }
+      const imgEl = createImageWithFallback(race, 'race-card-image');
 
       // Content
       const content = document.createElement('div');
@@ -115,7 +113,7 @@ const RaceSelectScene = (function() {
 
       const desc = document.createElement('p');
       desc.className = 'race-desc';
-      desc.textContent = decodeHtmlEntities(race.description ? race.description.substring(0, 120) + '...' : '');
+      desc.textContent = window.decodeHtmlEntities(race.description ? race.description.substring(0, 120) + '...' : '');
 
       const details = document.createElement('a');
       details.className = 'race-details-btn';
@@ -215,55 +213,14 @@ const RaceSelectScene = (function() {
       card.dataset.ancestry = anc.ancestryId;
 
       // Image
-      let imgEl;
-      if (anc.image) {
-        imgEl = document.createElement('img');
-        imgEl.className = 'ancestry-card-image';
-        imgEl.alt = anc.name;
-        // No loading='lazy' — eager load so the timeout below doesn't fire prematurely.
-        let loaded = false;
-        imgEl.onload = () => {
-          loaded = true;
-          if (!imgEl.naturalWidth || !imgEl.naturalHeight) {
-            imgEl.style.display = 'none';
-            const fallback = document.createElement('div');
-            fallback.className = 'ancestry-card-image no-image';
-            fallback.textContent = anc.name.charAt(0);
-            imgEl.parentNode.replaceChild(fallback, imgEl);
-          }
-        };
-        imgEl.onerror = () => {
-          loaded = true;
-          imgEl.style.display = 'none';
-          const fallback = document.createElement('div');
-          fallback.className = 'ancestry-card-image no-image';
-          fallback.textContent = anc.name.charAt(0);
-          imgEl.parentNode.replaceChild(fallback, imgEl);
-        };
-        // 8s fallback timeout (increased from 3s for slow CDN / connection limits)
-        const timeoutId = setTimeout(() => {
-          if (!loaded && imgEl.parentNode) {
-            imgEl.style.display = 'none';
-            const fallback = document.createElement('div');
-            fallback.className = 'ancestry-card-image no-image';
-            fallback.textContent = anc.name.charAt(0);
-            imgEl.parentNode.replaceChild(fallback, imgEl);
-          }
-        }, 8000);
-        imageTimeouts.push(timeoutId);
-        imgEl.src = anc.image;
-      } else {
-        imgEl = document.createElement('div');
-        imgEl.className = 'ancestry-card-image no-image';
-        imgEl.textContent = anc.name.charAt(0);
-      }
+      const imgEl = createImageWithFallback(anc, 'ancestry-card-image');
 
       const name = document.createElement('h4');
       name.textContent = anc.name;
 
       const desc = document.createElement('p');
       desc.className = 'ancestry-desc';
-      desc.textContent = decodeHtmlEntities(anc.description ? anc.description.substring(0, 100) + '...' : '');
+      desc.textContent = window.decodeHtmlEntities(anc.description ? anc.description.substring(0, 100) + '...' : '');
 
       const details = document.createElement('a');
       details.className = 'race-details-btn';
@@ -379,42 +336,6 @@ const RaceSelectScene = (function() {
 
     summary.innerHTML = html;
     summary.classList.remove('hidden');
-  }
-
-  function _showRaceDetails(race) {
-    const overlay = document.getElementById('class-modal-overlay');
-    const content = document.getElementById('class-modal-content');
-    if (!overlay || !content) return;
-
-    let html = `<div class="modal-header">
-      <h3>${window.escapeHtml(race.name)}</h3>
-      <button class="modal-close" type="button">&times;</button>
-    </div>
-    <div class="modal-body">
-      <p>${window.renderHtml(race.description)}</p>
-      ${race.attributes ? `<div style="margin-top: 1rem;"><strong>Attributes:</strong> ${window.renderHtml(race.attributes)}</div>` : ''}
-      ${race.traits ? `<div style="margin-top: 0.5rem;"><strong>Traits:</strong> ${window.renderHtml(race.traits)}</div>` : ''}
-    </div>`;
-
-    content.innerHTML = html;
-    overlay.classList.remove('hidden');
-
-    // Bind close button
-    const closeBtn = content.querySelector('.modal-close');
-    if (closeBtn) {
-      closeBtn.addEventListener('click', () => {
-        overlay.classList.add('hidden');
-      });
-    }
-
-    // Bind overlay background click to close
-    const closeOnOverlay = (e) => {
-      if (e.target === overlay) {
-        overlay.classList.add('hidden');
-        overlay.removeEventListener('click', closeOnOverlay);
-      }
-    };
-    overlay.addEventListener('click', closeOnOverlay);
   }
 
   function getSelection() {

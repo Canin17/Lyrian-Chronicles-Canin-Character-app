@@ -18,13 +18,9 @@ const ClassSelectScene = (function() {
   let previewClass = null;
   let previewLevel = 1;
   let openDropdownLevel = null; // Track which ability dropdown is open
-  let activeFilters = { tier: '', role: '', eligibility: '', difficulty: '' }; // Filter state
+  let activeFilters = { tier: '', role: '', eligibility: 'eligible', difficulty: '' }; // Filter state
   let previewEventsBound = false; // Guard against duplicate event listeners
   let imageTimeouts = []; // Track image load timeouts for cleanup
-
-  function decodeHtmlEntities(str) {
-    return window.decodeHtmlEntities(str);
-  }
 
   // EXP constants from rulebook
   let TOTAL_CLASS_EXP = 1000; // Configurable starting EXP
@@ -348,28 +344,7 @@ const ClassSelectScene = (function() {
     return true;
   }
 
-  // Helper: check if the player's race/ancestry matches a required race name
-  function checkRaceMatch(neededRace, race, ancestry) {
-    const knownRaces = ['human', 'demon', 'fae', 'chimera', 'angel', 'youkai'];
-    const neededLower = neededRace.toLowerCase();
-
-    if (!race) return false;
-    const raceName = (race.name || '').toLowerCase();
-    const ancestryName = (ancestry && ancestry.name) ? ancestry.name.toLowerCase() : '';
-    const ancestryId = (ancestry && ancestry.ancestryId) ? ancestry.ancestryId.toLowerCase() : '';
-
-    // Compound names — all words must be present in the SAME identifier
-    const words = neededLower.split(/\s+/);
-    if (words.length > 1) {
-      return words.every(w => raceName.includes(w)) ||
-             words.every(w => ancestryName.includes(w)) ||
-             words.every(w => ancestryId.includes(w));
-    }
-
-    if (knownRaces.includes(neededLower)) return raceName === neededLower;
-    return ancestryName === neededLower || ancestryId === neededLower || raceName.includes(neededLower);
-  }
-
+  // ponytail: checkRaceMatch moved to calculations.js — single source of truth
   // Checks class mastery requirements
   function checkClassMastery(clause) {
     const lower = clause.toLowerCase();
@@ -587,7 +562,7 @@ const ClassSelectScene = (function() {
     const reqEl = document.getElementById('classPreviewRequirements');
     if (reqEl) {
       const reqText = reqEl.querySelector('.req-text');
-      if (reqText) reqText.textContent = decodeHtmlEntities(cls.requirements || 'None');
+      if (reqText) reqText.textContent = window.decodeHtmlEntities(cls.requirements || 'None');
     }
 
     // Update unlock cost
@@ -631,7 +606,7 @@ const ClassSelectScene = (function() {
 
       const nameEl = document.createElement('div');
       nameEl.className = 'class-ability-name';
-      nameEl.textContent = decodeHtmlEntities(abilityData.name);
+      nameEl.textContent = window.decodeHtmlEntities(abilityData.name);
 
       abilityEl.appendChild(levelEl);
       abilityEl.appendChild(nameEl);
@@ -671,11 +646,11 @@ const ClassSelectScene = (function() {
 
       // Requirement
       if (abilityDb && abilityDb.requirement && abilityDb.requirement !== '-') {
-        dropdownHtml += `<div class="ability-detail-requirement"><strong>Requirement:</strong> ${decodeHtmlEntities(abilityDb.requirement)}</div>`;
+        dropdownHtml += `<div class="ability-detail-requirement"><strong>Requirement:</strong> ${window.decodeHtmlEntities(abilityDb.requirement)}</div>`;
       }
 
       // Description
-      dropdownHtml += `<div class="ability-detail-desc">${decodeHtmlEntities(abilityData.description || 'No description available.')}</div>`;
+      dropdownHtml += `<div class="ability-detail-desc">${window.decodeHtmlEntities(abilityData.description || 'No description available.')}</div>`;
 
       // Proficiencies (L1 only)
       if (i === 1 && abilityData.proficiencies && abilityData.proficiencies.length) {
@@ -1036,7 +1011,7 @@ const ClassSelectScene = (function() {
     previewClass = null;
     previewLevel = 1;
     openDropdownLevel = null;
-    activeFilters = { tier: '', role: '', eligibility: '', difficulty: '' };
+    activeFilters = { tier: '', role: '', eligibility: 'eligible', difficulty: '' };
     // Note: do NOT reset previewEventsBound — preview panel buttons are static DOM
     // elements whose event listeners persist across reset cycles.
     TOTAL_IP = 3;
@@ -1045,7 +1020,7 @@ const ClassSelectScene = (function() {
     document.querySelector('[data-filter="tier"][data-value=""]')?.classList.add('active');
     document.querySelector('[data-filter="role"][data-value=""]')?.classList.add('active');
     document.querySelector('[data-filter="difficulty"][data-value=""]')?.classList.add('active');
-    document.querySelector('[data-filter="eligibility"][data-value=""]')?.classList.add('active');
+    document.querySelector('[data-filter="eligibility"][data-value="eligible"]')?.classList.add('active');
     const searchEl = document.getElementById('class-search');
     if (searchEl) searchEl.value = '';
     renderEquippedClasses();

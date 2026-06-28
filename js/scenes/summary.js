@@ -647,52 +647,53 @@ const SummaryScene = (function() {
         expSheet.getCell('F4').value = -(characterData.climSpent || 0);
       }
 
-      // 5. Fill Base Stats & Race Bonuses (Character Creation Arrays)
+      // 5. Fill Base Stats & Total Bonuses
+      // ponytail: Excel template formulas read F45-F48 (main) and H45-H49 (sub) as the bonus columns.
+      // We write the TOTAL bonus (race + breakthrough + class) so derived stats are correct.
       const base = characterData.baseStats || {};
       const bonuses = characterData.raceBonuses || {};
-
-      // Main Stats (rows 45-48)
-      if (coreSheet) {
-        // Focus
-        coreSheet.getCell('A45').value = base.foc ?? 1;
-        coreSheet.getCell('B45').value = 'Focus';
-        coreSheet.getCell('F45').value = bonuses.foc ?? 0;
-        // Power
-        coreSheet.getCell('A46').value = base.pow ?? 1;
-        coreSheet.getCell('B46').value = 'Power';
-        coreSheet.getCell('F46').value = bonuses.pow ?? 0;
-        // Agility
-        coreSheet.getCell('A47').value = base.agi ?? 1;
-        coreSheet.getCell('B47').value = 'Agility';
-        coreSheet.getCell('F47').value = bonuses.agi ?? 0;
-        // Toughness
-        coreSheet.getCell('A48').value = base.tou ?? 1;
-        coreSheet.getCell('B48').value = 'Toughness';
-        coreSheet.getCell('F48').value = bonuses.tou ?? 0;
+      const btBonuses = characterData.breakthroughStatBonuses || {};
+      const classBonusesExport = {};
+      if (characterData.classStatBonusChoices) {
+        Object.values(characterData.classStatBonusChoices).forEach(k => { if (k) classBonusesExport[k] = (classBonusesExport[k] || 0) + 1; });
       }
 
-      // Sub Stats (rows 45-49)
+      // Helper: total bonus for a stat
+      const totalBonus = (k) => (bonuses[k] || 0) + (btBonuses[k] || 0) + (classBonusesExport[k] || 0);
+
+      // Main Stats (rows 45-48): A=base, B=label, F=total bonus
       if (coreSheet) {
-        // Fitness
+        coreSheet.getCell('A45').value = base.foc ?? 1;
+        coreSheet.getCell('B45').value = 'Focus';
+        coreSheet.getCell('F45').value = totalBonus('foc');
+        coreSheet.getCell('A46').value = base.pow ?? 1;
+        coreSheet.getCell('B46').value = 'Power';
+        coreSheet.getCell('F46').value = totalBonus('pow');
+        coreSheet.getCell('A47').value = base.agi ?? 1;
+        coreSheet.getCell('B47').value = 'Agility';
+        coreSheet.getCell('F47').value = totalBonus('agi');
+        coreSheet.getCell('A48').value = base.tou ?? 1;
+        coreSheet.getCell('B48').value = 'Toughness';
+        coreSheet.getCell('F48').value = totalBonus('tou');
+      }
+
+      // Sub Stats (rows 45-49): C=base, D=label, H=total bonus
+      if (coreSheet) {
         coreSheet.getCell('C45').value = base.fitness ?? 1;
         coreSheet.getCell('D45').value = 'Fitness';
-        coreSheet.getCell('H45').value = bonuses.fitness ?? 0;
-        // Cunning
+        coreSheet.getCell('H45').value = totalBonus('fitness');
         coreSheet.getCell('C46').value = base.cunning ?? 1;
         coreSheet.getCell('D46').value = 'Cunning';
-        coreSheet.getCell('H46').value = bonuses.cunning ?? 0;
-        // Reason
+        coreSheet.getCell('H46').value = totalBonus('cunning');
         coreSheet.getCell('C47').value = base.reason ?? 1;
         coreSheet.getCell('D47').value = 'Reason';
-        coreSheet.getCell('H47').value = bonuses.reason ?? 0;
-        // Awareness
+        coreSheet.getCell('H47').value = totalBonus('reason');
         coreSheet.getCell('C48').value = base.awareness ?? 1;
         coreSheet.getCell('D48').value = 'Awareness';
-        coreSheet.getCell('H48').value = bonuses.awareness ?? 0;
-        // Presence
+        coreSheet.getCell('H48').value = totalBonus('awareness');
         coreSheet.getCell('C49').value = base.presence ?? 1;
         coreSheet.getCell('D49').value = 'Presence';
-        coreSheet.getCell('H49').value = bonuses.presence ?? 0;
+        coreSheet.getCell('H49').value = totalBonus('presence');
       }
 
       // 5b. Starter Skill Points tracking
@@ -870,13 +871,23 @@ const SummaryScene = (function() {
         'Intimidation': 29
       };
 
+      // Collect breakthrough skill bonuses for export
+      const allBtSkillBonuses = getBreakthroughSkillBonuses(characterData.breakthroughs || []);
+      const btSkillBonusMap = {};
+      allBtSkillBonuses.forEach(b => {
+        if (!btSkillBonusMap[b.skill]) btSkillBonusMap[b.skill] = 0;
+        btSkillBonusMap[b.skill] += b.bonus;
+      });
+
       if (characterData.skills && coreSheet) {
         characterData.skills.forEach(group => {
           if (group.skills) {
             group.skills.forEach(skill => {
               const row = SKILL_ROW_MAP[skill.name];
               if (row) {
-                coreSheet.getCell(`H${row}`).value = skill.pts || 0;
+                // H = skill points + breakthrough skill bonuses
+                const btBonus = btSkillBonusMap[skill.name] || 0;
+                coreSheet.getCell(`H${row}`).value = (skill.pts || 0) + btBonus;
                 if (skill.expertise) {
                   coreSheet.getCell(`I${row}`).value = skill.expertise;
                 }
@@ -1697,9 +1708,12 @@ const SummaryScene = (function() {
 
           // Stats
           tgt.baseStats = { foc:N(core,'A45'), pow:N(core,'A46'), agi:N(core,'A47'), tou:N(core,'A48'), fitness:N(core,'C45'), cunning:N(core,'C46'), reason:N(core,'C47'), awareness:N(core,'C48'), presence:N(core,'C49') };
-          tgt.raceBonuses = { foc:N(core,'F45'), pow:N(core,'F46'), agi:N(core,'F47'), tou:N(core,'F48'), fitness:N(core,'H45'), cunning:N(core,'H46'), reason:N(core,'H47'), awareness:N(core,'H48'), presence:N(core,'H49') };
+          // ponytail: F/H columns hold total bonus (race+BT+class), so stats = base + total bonus
+          const totalBonuses = { foc:N(core,'F45'), pow:N(core,'F46'), agi:N(core,'F47'), tou:N(core,'F48'), fitness:N(core,'H45'), cunning:N(core,'H46'), reason:N(core,'H47'), awareness:N(core,'H48'), presence:N(core,'H49') };
+          tgt.raceBonuses = totalBonuses; // ponytail: we can't separate race from BT/class on import; store as raceBonuses for compatibility
+          tgt.breakthroughStatBonuses = {};
           tgt.stats = {};
-          Object.keys(tgt.baseStats).forEach(k => tgt.stats[k] = (tgt.baseStats[k]||0) + (tgt.raceBonuses[k]||0));
+          Object.keys(tgt.baseStats).forEach(k => tgt.stats[k] = (tgt.baseStats[k]||0) + (totalBonuses[k]||0));
 
           // Classes
           const classes = [];

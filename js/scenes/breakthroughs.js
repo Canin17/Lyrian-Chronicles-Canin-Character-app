@@ -21,10 +21,6 @@ const BreakthroughScene = (function() {
   let baseSpiritCore = 0;
   // Total abilities that must be bought for a class to be considered "mastered"
 
-  function decodeHtmlEntities(str) {
-    return window.decodeHtmlEntities(str);
-  }
-
   // ===========================================================================
   // ELIGIBILITY CHECKER — clause-based parser
   function isBreakthroughEligible(bt) {
@@ -294,91 +290,7 @@ const BreakthroughScene = (function() {
   }
 
   // Helper: check if the player's race/ancestry matches a required race name
-  function checkRaceMatch(neededRace, race, ancestry) {
-    const knownRaces = ['human', 'demon', 'fae', 'chimera', 'angel', 'youkai'];
-    const raceAliases = ['faerie']; // "faerie" = "fae"
-    // ALL 43 ancestries + aliases for compound names
-    const knownAncestries = [
-      // Chimera (19)
-      'bearfolk', 'bullfolk', 'catfolk', 'centaur', 'cowfolk', 'dogfolk',
-      'harpy', 'horse-folk', 'lamiafolk', 'lizardfolk', 'mothfolk',
-      'phoenix', 'rabbitfolk', 'ratfolk', 'red pandafolk', 'sheepfolk',
-      'slimefolk', 'spiderfolk', 'wolf-folk',
-      // Fae (13)
-      'anubis', 'cait sith', 'cu sith', 'dryad', 'dullahan', 'gnome',
-      'high fae', 'pixie', 'salamander', 'selkie', 'sylph', 'unseelie',
-      'willo wisp',
-      // Youkai (11)
-      'ancient marionette', 'jiangshi', 'kitsune', 'nekomata', 'nio',
-      'oni', 'raijin', 'ryujin', 'suryan', 'tengu', 'yuki-onna',
-      // Aliases / alternate spellings
-      'red panda', 'arachne', 'arachne spiderfolk', 'lamia', 'marionette',
-      'willowisp', 'will-o-wisp', 'sheep', 'wolf', 'horse',
-      'cow', 'bull', 'bear', 'dog', 'cat', 'rabbit', 'rat', 'slime',
-      'spider', 'moth', 'lizard', 'harpy', 'centaur',
-      'raijin youkai', 'ryujin youkai', 'oni youkai', 'tengu youkai',
-      'yuki-onna youkai', 'kitsune youkai', 'jiangshi youkai',
-      'suryan youkai', 'nekomata youkai', 'ancient marionette youkai',
-    ];
-
-    const neededLower = neededRace.toLowerCase();
-
-    if (!race) return false;
-    const raceName = (race.name || '').toLowerCase();
-    const ancestryName = (ancestry && ancestry.name) ? ancestry.name.toLowerCase() : '';
-    const ancestryId = (ancestry && ancestry.ancestryId) ? ancestry.ancestryId.toLowerCase() : '';
-
-    // Handle compound names - all words must be present in the SAME identifier
-    // e.g., "Arachne Spiderfolk" → ancestry name "Arachne Spiderfolk" or id "arachne"
-    // e.g., "Sylph Fae" → ancestry name "Sylph" with primary race "Fae"
-    const words = neededLower.split(/\s+/);
-    if (words.length > 1) {
-      // Check if all words match in a single ancestry name/id
-      const ancestryNameMatch = words.every(word => ancestryName.includes(word));
-      const ancestryIdMatch = words.every(word => ancestryId.includes(word));
-      if (ancestryNameMatch || ancestryIdMatch) return true;
-
-      // Check if first word is an ancestry and last word is the primary race
-      // e.g., "Sylph Fae" → ancestry=Sylph, race=Fae
-      const firstWord = words[0];
-      const lastWord = words[words.length - 1];
-      if (knownAncestries.includes(firstWord) && knownRaces.includes(lastWord)) {
-        if ((ancestryName === firstWord || ancestryId === firstWord) && raceName === lastWord) {
-          return true;
-        }
-      }
-
-      // Check if the primary race matches AND ancestry is in the list
-      // e.g., "Arachne Spiderfolk" → ancestry=Arachne (spiderfolk is implied)
-      if (knownAncestries.includes(neededLower)) {
-        return ancestryName === neededLower || ancestryId === neededLower;
-      }
-
-      // Fallback: check if race matches the last word (primary race)
-      if (knownRaces.includes(lastWord) && raceName === lastWord) {
-        return true;
-      }
-
-      // Fallback: check if all words appear in race name
-      const raceMatch = words.every(word => raceName.includes(word));
-      return raceMatch;
-    }
-
-    // Check exact match against main race name
-    if (knownRaces.includes(neededLower)) {
-      return raceName === neededLower;
-    }
-
-    // Check race aliases (e.g., "faerie" = "fae")
-    if (raceAliases.includes(neededLower)) {
-      const aliasMap = { faerie: 'fae' };
-      return raceName === aliasMap[neededLower];
-    }
-
-    // Check ancestry/subrace match
-    return ancestryName === neededLower || ancestryId === neededLower ||
-      knownAncestries.includes(neededLower) && (raceName.includes(neededLower) || ancestryName.includes(neededLower));
-  }
+  // ponytail: checkRaceMatch moved to calculations.js — single source of truth
 
   // ===========================================================================
   // EXP CALCULATIONS — Dual-pool system
@@ -869,68 +781,8 @@ const BreakthroughScene = (function() {
     return effects;
   }
 
-  /**
-   * Get the current mystic eyes limit from breakthroughs
-   */
-  function getMysticEyesLimit() {
-    return computeBreakthroughEffects().mysticEyesLimit;
-  }
-
-  /**
-   * Get the current size from breakthroughs (or null if unchanged)
-   */
-  function getBreakthroughSize() {
-    return computeBreakthroughEffects().size;
-  }
-
-  /**
-   * Get total burden bonus from breakthroughs
-   */
-  function getBurdenBonus() {
-    return computeBreakthroughEffects().burdenBonus;
-  }
-
-  /**
-   * Get total combat burden bonus from breakthroughs
-   */
-  function getCombatBurdenBonus() {
-    return computeBreakthroughEffects().combatBurdenBonus;
-  }
-
-  /**
-   * Get total movement speed bonus from breakthroughs
-   */
-  function getMovementSpeedBonus() {
-    return computeBreakthroughEffects().movementSpeedBonus;
-  }
-
-  /**
-   * Check if character has flight from breakthroughs
-   */
-  function hasFlight() {
-    return computeBreakthroughEffects().flight;
-  }
-
-  /**
-   * Check if character has sunlight weakness
-   */
-  function hasSunlightWeakness() {
-    return computeBreakthroughEffects().sunlightWeakness;
-  }
-
-  /**
-   * Check if character has no mana regeneration
-   */
-  function hasNoManaRegen() {
-    return computeBreakthroughEffects().noManaRegen;
-  }
-
-  /**
-   * Get darkvision range from breakthroughs
-   */
-  function getDarkvision() {
-    return computeBreakthroughEffects().darkvision;
-  }
+  // ponytail: removed 9 individual effect getters (getMysticEyesLimit, getBreakthroughSize, etc.)
+  // that each recomputed the full effects object. Callers should use computeBreakthroughEffects() directly.
 
   // ===========================================================================
   // PREVIEW PANEL
@@ -1029,7 +881,7 @@ const BreakthroughScene = (function() {
       // Description
       const desc = document.createElement('p');
       desc.className = 'bt-card-description';
-      desc.textContent = bt.description ? decodeHtmlEntities(bt.description.length > 120 ? bt.description.substring(0, 120) + '...' : bt.description) : '';
+      desc.textContent = bt.description ? window.decodeHtmlEntities(bt.description.length > 120 ? bt.description.substring(0, 120) + '...' : bt.description) : '';
 
       // Assemble card
       card.appendChild(header);
@@ -1037,7 +889,7 @@ const BreakthroughScene = (function() {
       if (bt.prerequisites) {
         const prereq = document.createElement('div');
         prereq.className = `bt-prereq-badge ${eligible ? 'eligible' : 'ineligible'}`;
-        prereq.textContent = decodeHtmlEntities(`Requires: ${bt.prerequisites}`);
+        prereq.textContent = window.decodeHtmlEntities(`Requires: ${bt.prerequisites}`);
         prereq.title = bt.prerequisites;
         card.appendChild(prereq);
       }
@@ -1225,8 +1077,8 @@ const BreakthroughScene = (function() {
 
   function init() {
     renderSelectedList();
-    renderBreakthroughs(BREAKTHROUGH_DATA);
     initFilters();
+    applyFilters();
     initExpToggle();
   }
 
@@ -1342,5 +1194,5 @@ const BreakthroughScene = (function() {
     updateOverviewStats();
   }
 
-  return { init, getSelection, reset, toggleBreakthrough, refresh, restoreState, setMainExpPool, getExpFromMainPool, getCurrentSpiritCore, getStatBonuses, getBreakthroughProficiencies, handleStatChoiceChange, computeBreakthroughEffects, getMysticEyesLimit, getBreakthroughSize, getBurdenBonus, getCombatBurdenBonus, getMovementSpeedBonus, hasFlight, hasSunlightWeakness, hasNoManaRegen, getDarkvision, getStatTrainingItems };
+  return { init, getSelection, reset, toggleBreakthrough, refresh, restoreState, setMainExpPool, getExpFromMainPool, getCurrentSpiritCore, getStatBonuses, getBreakthroughProficiencies, handleStatChoiceChange, computeBreakthroughEffects, getStatTrainingItems };
 })();
