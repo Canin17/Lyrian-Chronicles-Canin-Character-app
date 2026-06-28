@@ -1138,33 +1138,14 @@ const ClassSelectScene = (function() {
     return getTotalExpSpent();
   }
 
-  // ponytail: return per-class Heart/Soul bonus details with restrictions from CLASS_ABILITIES_DATA
-  // ponytail: parses "You gain +1 to X, Y or Z" → stat IDs; falls back to all stats if unparseable
+  // ponytail: return per-class Heart/Soul bonus details — lookup from pre-parsed CLASS_STAT_BONUSES
   function getClassStatBonusDetails() {
-    const statMap = {
-      'fitness': 'fitness', 'cunning': 'cunning', 'reason': 'reason', 'awareness': 'awareness', 'presence': 'presence',
-      'power': 'pow', 'focus': 'foc', 'agility': 'agi', 'toughness': 'tou'
-    };
-    const parseStats = (desc) => {
-      if (!desc) return null;
-      const m = desc.match(/You gain \+1 (?:to )?([^.]+?)(?:\.|$)/);
-      if (!m) return null;
-      const list = m[1].replace(/\beither\b/g, '').split(/,|\bor\b/).map(s => s.trim().toLowerCase()).filter(Boolean);
-      const ids = list.map(s => statMap[s]).filter(Boolean);
-      return ids.length > 0 ? ids : null;
-    };
-
     const bonuses = [];
     equippedClasses.forEach(ec => {
-      const clsData = CLASS_ABILITIES_DATA[ec.class.name];
-      if (ec.level >= 6) {
-        const heart = clsData && clsData.L5 ? parseStats(clsData.L5.description) : null;
-        bonuses.push({ type: 'heart', className: ec.class.name, allowed: heart });
-      }
-      if (ec.level >= 7) {
-        const soul = clsData && clsData.L7 ? parseStats(clsData.L7.description) : null;
-        bonuses.push({ type: 'soul', className: ec.class.name, allowed: soul });
-      }
+      const sb = CLASS_STAT_BONUSES[ec.class.name];
+      if (!sb) return;
+      if (ec.level >= 6 && sb.heart) bonuses.push({ type: 'heart', className: ec.class.name, allowed: sb.heart });
+      if (ec.level >= 7 && sb.soul) bonuses.push({ type: 'soul', className: ec.class.name, allowed: sb.soul });
     });
     return bonuses;
   }

@@ -161,80 +161,28 @@ const RACE_SKILL_DATA = {
 };
 
 // ===========================================================================
-// CLASS SKILL DATA — ALL classes grant +5 skill points at Level 3
-// with class-specific allowed skills. Expertise exchange allowed.
-// Source: https://rpg.angelssword.com/game/latest/classes/{slug}
-// Format: "You gain +5 skill points to spend in [Skill List]."
+// CLASS SKILL DATA — derived from CLASS_ABILITIES_DATA L3 at load time
+// ponytail: single source of truth — no manual CLASS_SKILL_DATA map to maintain
 // ===========================================================================
-const CLASS_SKILL_DATA = {
-  // --- Verified from website ---
-  'Abjurer': ['Athletics', 'Medicine', 'Magic', 'Religion', 'History', 'Flight', 'Artifice', 'Common Knowledge'],
-  'Acolyte': ['Appraise', 'Medicine', 'Religion', 'Magic', 'History', 'Insight', 'Negotiation', 'Intimidation', 'Common Knowledge'],
-  'Adventurer': 'any-except-crafting-gathering',
-  'Aeromancer': ['Medicine', 'Magic', 'Religion', 'History', 'Flight', 'Artifice', 'Common Knowledge'],
-  'Ranger': ['Appraise', 'Athletics', 'Stealth', 'Medicine', 'Perception', 'Survival', 'Animal Husbandry', 'Common Knowledge'],
-  'Rogue': ['Appraise', 'Athletics', 'Stealth', 'Deception', 'Roguecraft', 'Perception', 'Insight', 'Negotiation', 'Intimidation', 'Common Knowledge'],
-  'Mage': ['Appraise', 'Medicine', 'Magic', 'Religion', 'History', 'Flight', 'Artifice', 'Common Knowledge'],
-  'Sorcerer': ['Appraise', 'Medicine', 'Magic', 'Religion', 'History', 'Flight', 'Artifice', 'Common Knowledge'],
+const CLASS_SKILL_DATA = {};
+(function() {
+  const allSkills = getAllSkillNames();
+  for (const [name, levels] of Object.entries(CLASS_ABILITIES_DATA)) {
+    const l3 = levels && levels.L3;
+    if (!l3 || !l3.description) continue;
+    const desc = l3.description;
+    // "any non crafting skill" / "any non-crafting skill"
+    if (/any\s+(non\s+)?crafting/i.test(desc)) {
+      CLASS_SKILL_DATA[name] = 'any-except-crafting-gathering';
+      continue;
+    }
+    // Extract skill names: match known skills from the description
+    const found = allSkills.filter(s => new RegExp('\\b' + s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i').test(desc));
+    if (found.length > 0) CLASS_SKILL_DATA[name] = found;
+  }
+})();
 
-  // --- Estimated by role patterns ---
-  // Striker / Assault classes → Athletics, Intimidation, Deception, Roguecraft, Survival, Common Knowledge
-  'Fighter': ['Athletics', 'Intimidation', 'Deception', 'Roguecraft', 'Survival', 'Common Knowledge'],
-  'Berserker': ['Athletics', 'Intimidation', 'Deception', 'Roguecraft', 'Survival', 'Common Knowledge'],
-  'Gunlancer': ['Athletics', 'Intimidation', 'Deception', 'Roguecraft', 'Survival', 'Common Knowledge'],
-  'Sword Paladin': ['Athletics', 'Intimidation', 'Negotiation', 'Religion', 'History', 'Common Knowledge'],
-  'Shield Paladin': ['Athletics', 'Intimidation', 'Negotiation', 'Religion', 'History', 'Common Knowledge'],
-  'Gun Paladin': ['Athletics', 'Intimidation', 'Negotiation', 'Religion', 'History', 'Common Knowledge'],
-  'Martial Artist': ['Athletics', 'Perception', 'Insight', 'Medicine', 'Intimidation', 'Common Knowledge'],
-  'Bloodbinder': ['Athletics', 'Intimidation', 'Deception', 'Magic', 'Medicine', 'Common Knowledge'],
-  'Chronofighter': ['Athletics', 'Perception', 'Stealth', 'Magic', 'History', 'Common Knowledge'],
-  'Grandmaster': ['Athletics', 'Perception', 'Insight', 'Medicine', 'Intimidation', 'Common Knowledge'],
-  'Temporal Trickster': ['Deception', 'Stealth', 'Roguecraft', 'Magic', 'History', 'Common Knowledge'],
-  'Phantom Thief': ['Deception', 'Stealth', 'Roguecraft', 'Appraise', 'Negotiation', 'Common Knowledge'],
-  'Valkyrie': ['Athletics', 'Intimidation', 'Perception', 'Religion', 'History', 'Common Knowledge'],
-  'Cavalier': ['Athletics', 'Riding', 'Intimidation', 'Perception', 'Survival', 'Common Knowledge'],
-  'Onmyoji': ['Magic', 'Religion', 'History', 'Perception', 'Insight', 'Common Knowledge'],
-  'Alkahest': ['Artifice', 'Magic', 'History', 'Common Knowledge'],
-
-  // Healer / Support → Medicine, Magic, Religion, Insight, Negotiation, Common Knowledge
-  'High Priest': ['Medicine', 'Magic', 'Religion', 'Insight', 'Negotiation', 'Common Knowledge'],
-  'Priest': ['Medicine', 'Magic', 'Religion', 'Insight', 'Negotiation', 'Common Knowledge'],
-  'Medic': ['Medicine', 'Magic', 'Religion', 'Insight', 'Negotiation', 'Common Knowledge'],
-  'Idol': ['Art', 'Negotiation', 'Intimidation', 'Insight', 'Deception', 'Common Knowledge'],
-  'Maid': ['Medicine', 'Negotiation', 'Insight', 'Perception', 'Common Knowledge'],
-  'Aetherie': ['Magic', 'Religion', 'History', 'Insight', 'Medicine', 'Common Knowledge'],
-
-  // Controller / Mage → Magic, Religion, History, Artifice, Common Knowledge, Flight
-  'Abjurist': ['Athletics', 'Medicine', 'Magic', 'Religion', 'History', 'Flight', 'Artifice', 'Common Knowledge'],
-  'Artificer': ['Artifice', 'Appraise', 'Common Knowledge', 'History', 'Magic', 'Medicine', 'Linguistics'],
-  'Alchemist': ['Artifice', 'Medicine', 'Magic', 'Appraise', 'Common Knowledge', 'History'],
-  'Blacksmith': ['Artifice', 'Appraise', 'Common Knowledge', 'History', 'Athletics', 'Intimidation'],
-  'Culinarian': ['Medicine', 'Appraise', 'Negotiation', 'Common Knowledge', 'History', 'Insight'],
-  'Alchemeister': ['Artifice', 'Magic', 'Medicine', 'History', 'Common Knowledge', 'Appraise'],
-  'Aerial Mage': ['Magic', 'Flight', 'History', 'Artifice', 'Common Knowledge', 'Perception'],
-  'Cannoneer': ['Artifice', 'Athletics', 'Perception', 'Common Knowledge', 'History', 'Intimidation'],
-  'Naturalist': ['Magic', 'Survival', 'Animal Husbandry', 'Perception', 'Medicine', 'Common Knowledge'],
-  'Fae Knight': ['Magic', 'Athletics', 'Intimidation', 'Negotiation', 'Insight', 'Common Knowledge'],
-  'Fae Knight: Willow Style': ['Magic', 'Athletics', 'Intimidation', 'Negotiation', 'Insight', 'Common Knowledge'],
-
-  // Summoner → Animal Husbandry, Magic, Religion, Nature skills, Common Knowledge
-  'Summoner': ['Animal Husbandry', 'Magic', 'Religion', 'Survival', 'Perception', 'Common Knowledge'],
-  'Animal Summoner': ['Animal Husbandry', 'Survival', 'Perception', 'Insight', 'Magic', 'Common Knowledge'],
-  'Necromancer': ['Magic', 'Religion', 'History', 'Intimidation', 'Medicine', 'Common Knowledge'],
-
-  // Defender / Tank → Athletics, Intimidation, Perception, History, Common Knowledge
-  'Guardian': ['Athletics', 'Intimidation', 'Perception', 'History', 'Negotiation', 'Common Knowledge'],
-  'Sentinel': ['Athletics', 'Intimidation', 'Perception', 'History', 'Negotiation', 'Common Knowledge'],
-
-  // Special classes
-  'Merchant': ['Appraise', 'Negotiation', 'Deception', 'Common Knowledge', 'History', 'Linguistics'],
-  'Angelblooded': ['Magic', 'Religion', 'Negotiation', 'Insight', 'Medicine', 'Common Knowledge'],
-
-  // Filler for remaining classes — use role-based defaults
-  // These should be verified against the website later
-};
-
-// Default skill list for classes not in CLASS_SKILL_DATA
+// Default skill list for classes not in CLASS_ABILITIES_DATA
 const DEFAULT_CLASS_SKILLS = ['Athletics', 'Deception', 'Stealth', 'Appraise', 'Common Knowledge', 'History', 'Perception', 'Insight', 'Survival', 'Negotiation', 'Intimidation'];
 
 // ===========================================================================
@@ -284,7 +232,8 @@ function getRaceSkillPoints(raceName, _ancestryName) {
     ([key]) => key.toLowerCase() === raceName.toLowerCase()
   );
 
-  if (!raceData) return { points: 0, eligibleSkills: [] };
+  // ponytail: unknown races get 5 points in any skill — prevents silent 0-skill-point trap when new races added
+  if (!raceData) return { points: 5, eligibleSkills: resolveAllowedSkills('any-except-crafting-gathering') };
 
   const [, data] = raceData;
   return {
