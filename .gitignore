@@ -20,3 +20,6 @@ build/
 
 # Plans
 plans/
+
+eslint.config.js
+check_struct.py
