@@ -12,6 +12,7 @@ const EquipmentScene = (function() {
 
   // Selected category and search state
   let activeCategory = 'All';
+  let activeSubType = 'All';
   let searchQuery = '';
   let sortMode = 'default'; // 'default', 'asc', 'desc'
   let showUnknownPrice = false; // hide items with climCost === 0 by default
@@ -54,7 +55,7 @@ const EquipmentScene = (function() {
   // Any item with burdenCost > 0 counts toward the limit.
   // Items with burdenCost = 0 (backpacks, mounts, artifice limbs) are free.
   // ===========================================================================
-  const BURDEN_LIMIT = 10;
+  // ponytail: BURDEN_LIMIT from calculations.js — single source of truth
 
   function isBurdenItem(item) {
     return (item.burdenCost || 0) > 0;
@@ -156,7 +157,13 @@ const EquipmentScene = (function() {
   function precomputeItemUrls() {
     if (typeof ITEMS_DATA === 'undefined') return;
     itemsById = new Map(ITEMS_DATA.map(i => [i.id, i]));
-    ITEMS_DATA.forEach(i => getItemUrl(i));
+    ITEMS_DATA.forEach(i => {
+      getItemUrl(i);
+      // ponytail: pre-compute lowercase search fields — skip 206×3 .toLowerCase() per filter
+      i._nameLower = (i.name || '').toLowerCase();
+      i._subTypeLower = (i.subType || '').toLowerCase();
+      i._descLower = (i.description || '').toLowerCase();
+    });
   }
 
   // ===========================================================================
@@ -170,6 +177,9 @@ const EquipmentScene = (function() {
 
     // Render categories once — FIX #2
     renderCategories();
+
+    // Render subType filter options once
+    renderSubTypeFilter();
 
     // Bind event listeners for search input — FIX #8 (debounced)
     const searchInput = document.getElementById('equipment-search-input');
@@ -185,6 +195,15 @@ const EquipmentScene = (function() {
     if (sortSelect) {
       sortSelect.addEventListener('change', (e) => {
         sortMode = e.target.value;
+        renderGrid();
+      });
+    }
+
+    // Bind event listeners for subType filter dropdown
+    const subTypeSelect = document.getElementById('equipment-subtype-select');
+    if (subTypeSelect) {
+      subTypeSelect.addEventListener('change', (e) => {
+        activeSubType = e.target.value;
         renderGrid();
       });
     }
@@ -507,6 +526,25 @@ const EquipmentScene = (function() {
     container.innerHTML = html;
   }
 
+  function renderSubTypeFilter() {
+    const select = document.getElementById('equipment-subtype-select');
+    if (!select) return;
+    if (typeof ITEMS_DATA === 'undefined') return;
+
+    // Collect unique subTypes, sorted
+    const subTypes = new Set();
+    ITEMS_DATA.forEach(item => {
+      if (item.subType) subTypes.add(item.subType);
+    });
+    const sorted = Array.from(subTypes).sort();
+
+    let html = '<option value="All">All</option>';
+    sorted.forEach(st => {
+      html += '<option value="' + window.escapeHtml(st) + '">' + window.escapeHtml(st) + '</option>';
+    });
+    select.innerHTML = html;
+  }
+
   function renderGrid() {
     const grid = document.getElementById('equipment-grid');
     if (!grid) return;
@@ -515,11 +553,13 @@ const EquipmentScene = (function() {
       // Hide items with unknown price (climCost === 0) unless toggle is on
       if (!showUnknownPrice && item.climCost === 0) return false;
       const matchCat = activeCategory === 'All' || item.type === activeCategory;
+      const matchSubType = activeSubType === 'All' || item.subType === activeSubType;
+      // ponytail: use pre-computed lowercase fields — skip 206×3 .toLowerCase() per filter
       const matchSearch = !searchQuery ||
-                          item.name.toLowerCase().includes(searchQuery) ||
-                          (item.subType && item.subType.toLowerCase().includes(searchQuery)) ||
-                          item.description.toLowerCase().includes(searchQuery);
-      return matchCat && matchSearch;
+                          item._nameLower.includes(searchQuery) ||
+                          item._subTypeLower.includes(searchQuery) ||
+                          item._descLower.includes(searchQuery);
+      return matchCat && matchSubType && matchSearch;
     });
 
     if (filtered.length === 0) {
@@ -758,6 +798,7 @@ const EquipmentScene = (function() {
     console.log('[EquipmentScene] Resetting state...');
     inventory = {};
     activeCategory = 'All';
+    activeSubType = 'All';
     searchQuery = '';
     sortMode = 'default';
     showUnknownPrice = false;
@@ -765,6 +806,8 @@ const EquipmentScene = (function() {
     if (searchInput) searchInput.value = '';
     const sortSelect = document.getElementById('equipment-sort-select');
     if (sortSelect) sortSelect.value = 'default';
+    const subTypeSelect = document.getElementById('equipment-subtype-select');
+    if (subTypeSelect) subTypeSelect.value = 'All';
     const showUnknownCheckbox = document.getElementById('equipment-show-unknown');
     if (showUnknownCheckbox) showUnknownCheckbox.checked = false;
     // FIX #11: No auto-select

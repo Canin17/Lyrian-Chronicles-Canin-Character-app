@@ -241,52 +241,10 @@ const BreakthroughScene = (function() {
     return false;
   }
 
-  // Helper: get all character proficiencies (race + ancestry + class + breakthroughs)
+  // Helper: get all character proficiencies — ponytail: centralized in calculations.js
   function getCharacterProficiencies() {
     const charData = window.getCharacterData ? window.getCharacterData() : {};
-    const proficiencies = new Set();
-
-    // Race & ancestry proficiencies
-    if (charData.race && Array.isArray(charData.race.proficiencies)) {
-      charData.race.proficiencies.forEach(p => proficiencies.add(p));
-    }
-    if (charData.ancestry && Array.isArray(charData.ancestry.proficiencies)) {
-      charData.ancestry.proficiencies.forEach(p => proficiencies.add(p));
-    }
-
-    // Class key ability proficiencies (all levels: L1, L2, L3, etc.)
-    if (charData.cls && Array.isArray(charData.cls.all)) {
-      charData.cls.all.forEach(clsEntry => {
-        const classObj = clsEntry.class || {};
-        const className = classObj.name;
-        if (className && typeof CLASS_ABILITIES_DATA === 'object') {
-          const classAbilities = CLASS_ABILITIES_DATA[className];
-          if (classAbilities) {
-            // Iterate through all class levels (L1, L2, L3, ...)
-            for (const levelKey of Object.keys(classAbilities)) {
-              const levelData = classAbilities[levelKey];
-              if (levelData && Array.isArray(levelData.proficiencies)) {
-                levelData.proficiencies.forEach(p => proficiencies.add(p));
-              }
-            }
-          }
-        }
-      });
-    }
-
-    // Breakthrough proficiencies from saved character data
-    if (Array.isArray(charData.breakthroughProficiencies)) {
-      charData.breakthroughProficiencies.forEach(p => proficiencies.add(p));
-    }
-
-    // ALSO include proficiencies from currently selected breakthroughs (real-time)
-    selectedBreakthroughs.forEach(bt => {
-      if (Array.isArray(bt.proficiencies)) {
-        bt.proficiencies.forEach(p => proficiencies.add(p));
-      }
-    });
-
-    return Array.from(proficiencies);
+    return window.getCharacterProficiencies(charData, selectedBreakthroughs);
   }
 
   // Helper: check if the player's race/ancestry matches a required race name

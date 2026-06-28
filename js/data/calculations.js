@@ -92,7 +92,63 @@ function getAvailableValues(array, assignments) {
   return remaining;
 }
 
-/* exported checkRaceMatch */
+/* exported BURDEN_LIMIT, getCharacterProficiencies, checkRaceMatch */
+// ponytail: flat burden limit — single source of truth for equipment.js + summary.js
+window.BURDEN_LIMIT = 10;
+
+/**
+ * Get all character proficiencies from race, ancestry, class (all levels), and breakthroughs.
+ * ponytail: single source of truth — was duplicated in breakthroughs.js; class-select.js called it but it was local to breakthroughs IIFE.
+ * @param {Object} [characterData] - defaults to window.getCharacterData()
+ * @param {Array} [extraBreakthroughs] - additional breakthroughs (e.g. locally selected, not yet saved)
+ * @returns {string[]}
+ */
+function getCharacterProficiencies(characterData, extraBreakthroughs) {
+  characterData = characterData || (window.getCharacterData ? window.getCharacterData() : {});
+  const proficiencies = new Set();
+
+  if (characterData.race && Array.isArray(characterData.race.proficiencies)) {
+    characterData.race.proficiencies.forEach(p => proficiencies.add(p));
+  }
+  if (characterData.ancestry && Array.isArray(characterData.ancestry.proficiencies)) {
+    characterData.ancestry.proficiencies.forEach(p => proficiencies.add(p));
+  }
+
+  // Class proficiencies — all levels L1–L8
+  if (characterData.cls && Array.isArray(characterData.cls.all)) {
+    characterData.cls.all.forEach(clsEntry => {
+      const className = (clsEntry.class || {}).name;
+      if (className && typeof CLASS_ABILITIES_DATA === 'object') {
+        const classAbilities = CLASS_ABILITIES_DATA[className];
+        if (classAbilities) {
+          for (const levelKey of Object.keys(classAbilities)) {
+            const levelData = classAbilities[levelKey];
+            if (levelData && Array.isArray(levelData.proficiencies)) {
+              levelData.proficiencies.forEach(p => proficiencies.add(p));
+            }
+          }
+        }
+      }
+    });
+  }
+
+  // Breakthrough proficiencies from saved character data
+  if (Array.isArray(characterData.breakthroughProficiencies)) {
+    characterData.breakthroughProficiencies.forEach(p => proficiencies.add(p));
+  }
+
+  // Extra breakthroughs (locally selected, not yet in characterData)
+  if (Array.isArray(extraBreakthroughs)) {
+    extraBreakthroughs.forEach(bt => {
+      if (Array.isArray(bt.proficiencies)) {
+        bt.proficiencies.forEach(p => proficiencies.add(p));
+      }
+    });
+  }
+
+  return Array.from(proficiencies);
+}
+
 /**
  * Check if the player's race/ancestry matches a required race name.
  * ponytail: single source of truth — was duplicated in class-select.js and breakthroughs.js.

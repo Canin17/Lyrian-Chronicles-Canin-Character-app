@@ -116,21 +116,14 @@
   // ===========================================================================
   // CLIM CALCULATION
   // ===========================================================================
-  // Breakthrough ID constants — avoid magic strings
-  // ===========================================================================
-  const BREAKTHROUGH_ID = {
-    RICH_PARENTS: '69ea4f7a6be32fced492fb97',
-  };
-
-  // ===========================================================================
   function calculateTotalClim(startingClim, breakthroughs) {
     let total = startingClim || 3000;
 
     // Apply breakthrough CLIM bonuses
     if (Array.isArray(breakthroughs)) {
       breakthroughs.forEach(b => {
-        // "Rich Parents" gives +3000 Clim — matched by ID
-        if (b && b.id === BREAKTHROUGH_ID.RICH_PARENTS) {
+        // "Rich Parents" gives +3000 Clim — ponytail: match by name, not fragile ID
+        if (b && b.name?.includes('Rich Parents')) {
           total += 3000;
         }
       });
@@ -307,10 +300,6 @@
         SummaryScene.exportExcel(character);
       }
 
-      // Export PDF button
-      if (e.target.id === 'btn-export-pdf') {
-        SummaryScene.exportPDF(character);
-      }
 
       // New character button
       if (e.target.id === 'btn-new-char') {

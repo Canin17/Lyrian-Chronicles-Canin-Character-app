@@ -650,13 +650,18 @@
                 <input type="text" id="equipment-search-input" placeholder="Search items by name, subtype, or rules description..." class="eq-search-field">
               </div>
 
-              <!-- Sort by Price + Show Unknown -->
+              <!-- Sort by Price + SubType Filter + Show Unknown -->
               <div class="equipment-sort-row">
                 <span class="filter-label">Sort by Price:</span>
                 <select id="equipment-sort-select" class="eq-sort-select">
                   <option value="default">Default</option>
                   <option value="asc">Lowest First</option>
                   <option value="desc">Highest First</option>
+                </select>
+                <span class="filter-label">Sub-Type:</span>
+                <select id="equipment-subtype-select" class="eq-sort-select">
+                  <option value="All">All</option>
+                  <!-- Filled by JS -->
                 </select>
                 <label class="eq-show-unknown-label">
                   <input type="checkbox" id="equipment-show-unknown">
@@ -680,8 +685,7 @@
           <div class="nav-buttons">
             <button class="btn-secondary" data-action="back">Back</button>
             <button class="btn-primary" id="btn-export">Export JSON</button>
-            <button class="btn-primary" id="btn-export-excel">Export Excel</button>
-            <button class="btn-primary" id="btn-export-pdf">Export PDF</button>
+            <button class="btn-primary" id="btn-export-excel">Mirane Character Sheet V10.3.1 <span class="excel-icon" aria-hidden="true">X</span></button>
             <button class="btn-primary" id="btn-new-char">New Character</button>
           </div>
           <div id="summary-content">

@@ -21,6 +21,9 @@ const ClassSelectScene = (function() {
   let activeFilters = { tier: '', role: '', eligibility: 'eligible', difficulty: '' }; // Filter state
   let previewEventsBound = false; // Guard against duplicate event listeners
   let imageTimeouts = []; // Track image load timeouts for cleanup
+  // ponytail: eligibility cache — keyed by charData fingerprint; skip 179× regex/string ops
+  let eligibilityCache = new Map();
+  let charDataFingerprint = '';
 
   // EXP constants from rulebook
   let TOTAL_CLASS_EXP = 1000; // Configurable starting EXP
@@ -165,6 +168,27 @@ const ClassSelectScene = (function() {
   // Evaluates each clause with AND logic
   // ===========================================================================
   function isClassEligible(cls, charData) {
+    // ponytail: fingerprint charData; bust cache when it changes
+    const fp = JSON.stringify({
+      race: charData.race,
+      ancestry: charData.ancestry?.name,
+      ancestryId: charData.ancestry?.ancestryId,
+      btCount: (charData.breakthroughs || []).length
+    });
+    if (fp !== charDataFingerprint) {
+      eligibilityCache.clear();
+      charDataFingerprint = fp;
+    }
+    const cached = eligibilityCache.get(cls.name);
+    if (cached !== undefined) return cached;
+
+    const result = _isClassEligible(cls, charData);
+    eligibilityCache.set(cls.name, result);
+    return result;
+  }
+
+  // Original logic, now private
+  function _isClassEligible(cls, charData) {
     const req = (cls.requirements || '').replace(/<[^>]*>/g, '').trim();
     if (!req || req === 'None') {
       const tier = parseInt(cls.tier) || 1;
@@ -307,7 +331,7 @@ const ClassSelectScene = (function() {
       const profMatch = clause.match(/(?:must be|be)\s+(?:a|an)?\s+proficient\s+with\s+(.+?)(?:\.|$)/i);
       if (profMatch) {
         const neededProf = profMatch[1].trim().toLowerCase();
-        const charProfs = getCharacterProficiencies();
+        const charProfs = window.getCharacterProficiencies();
         return charProfs.some(p => p.toLowerCase() === neededProf);
       }
       return false;
@@ -340,8 +364,9 @@ const ClassSelectScene = (function() {
       return checkRaceMatch(cleanClause.toLowerCase(), race, ancestry);
     }
 
-    // Unknown clause - be permissive
-    return true;
+    // ponytail: unknown clauses warn + fail — consistent with breakthroughs.js
+    console.warn(`[Class] Unparsed prerequisite clause: "${clause}" on class eligibility check`);
+    return false;
   }
 
   // ponytail: checkRaceMatch moved to calculations.js — single source of truth
@@ -808,6 +833,25 @@ const ClassSelectScene = (function() {
         searchTimeout = setTimeout(filterClasses, 150);
       });
     }
+
+    // Grid click delegation — one listener for all class cards
+    const grid = document.getElementById('class-grid');
+    if (grid && !grid.dataset.clickBound) {
+      grid.dataset.clickBound = 'true';
+      grid.addEventListener('click', (e) => {
+        const card = e.target.closest('.class-card');
+        if (!card) return;
+        // Skip if clicking "See details" link
+        if (e.target.closest('.race-details-btn')) return;
+        const cls = CLASS_DATA.find(c => c.name === card.dataset.className);
+        if (!cls) return;
+        if (previewClass && previewClass.name === cls.name) {
+          hideClassPreview();
+        } else {
+          showClassPreview(cls);
+        }
+      });
+    }
   }
 
   function filterClasses() {
@@ -819,7 +863,7 @@ const ClassSelectScene = (function() {
       if (activeFilters.tier && String(c.tier) !== String(activeFilters.tier)) return false;
       if (activeFilters.role && !(c.role || '').split('/').some(r => r.trim() === activeFilters.role)) return false;
       if (activeFilters.difficulty && String(c.difficulty) !== String(activeFilters.difficulty)) return false;
-      if (search && !c.name.toLowerCase().includes(search)) return false;
+      if (search && !c._nameLower.includes(search)) return false;
       if (activeFilters.eligibility) {
         const eligible = isClassEligible(c, charData);
         if (activeFilters.eligibility === 'eligible' && !eligible) return false;
@@ -841,6 +885,7 @@ const ClassSelectScene = (function() {
     return `https://rpg.angelssword.com/game/0.13.0/classes/${slug}`;
   }
 
+  // ponytail: class grid — DocumentFragment (1 reflow), event delegation (1 listener), Set lookup (O(1))
   function renderClasses(classes, charData) {
     const grid = document.getElementById('class-grid');
     if (!grid) return;
@@ -851,9 +896,14 @@ const ClassSelectScene = (function() {
       return;
     }
 
+    // Pre-compute equipped names — O(1) lookup instead of .some() per card
+    const equippedNames = new Set(equippedClasses.map(ec => ec.class.name));
+
+    // Build cards in a fragment — single DOM insertion
+    const frag = document.createDocumentFragment();
     classes.forEach((cls, i) => {
       const eligible = isClassEligible(cls, charData);
-      const isEquipped = equippedClasses.some(ec => ec.class.name === cls.name);
+      const isEquipped = equippedNames.has(cls.name);
       const isPreviewed = previewClass && previewClass.name === cls.name;
       const card = document.createElement('div');
       card.className = 'class-card' +
@@ -861,6 +911,7 @@ const ClassSelectScene = (function() {
         (isPreviewed ? ' previewed' : '') +
         (!eligible ? ' requirements-warning' : '');
       card.dataset.index = i;
+      card.dataset.className = cls.name; // for delegation handler
       if (!eligible) card.title = `Requires: ${cls.requirements || 'Unknown'}`;
 
       // Image using shared helper
@@ -923,18 +974,9 @@ const ClassSelectScene = (function() {
       overlay.appendChild(bottomInfo);
       card.appendChild(overlay);
 
-      card.addEventListener('click', (e) => {
-        // Don't trigger preview if clicking the "See details" link
-        if (e.target.closest('.race-details-btn')) return;
-        if (previewClass && previewClass.name === cls.name) {
-          // Click on already-previewed class → dismiss overview
-          hideClassPreview();
-        } else {
-          showClassPreview(cls);
-        }
-      });
-      grid.appendChild(card);
+      frag.appendChild(card);
     });
+    grid.appendChild(frag);
 
     // Animate cards
     if (window.gsap) {
@@ -974,6 +1016,9 @@ const ClassSelectScene = (function() {
     // Clear stale image timeouts from previous renders
     imageTimeouts.forEach(id => clearTimeout(id));
     imageTimeouts = [];
+
+    // ponytail: pre-compute lowercase class names — skip 179× .toLowerCase() per filter
+    CLASS_DATA.forEach(c => { c._nameLower = (c.name || '').toLowerCase(); });
 
     populateFilters();
     renderEquippedClasses();
