@@ -322,10 +322,23 @@ const RaceSelectScene = (function() {
         html += `<div class="summary-row"><span class="summary-label">Race Attributes</span><span class="summary-value">${window.renderHtml(selectedRace.attributes)}</span></div>`;
       }
       if (selectedRace.proficiencies && selectedRace.proficiencies.length) {
-        const profList = Array.isArray(selectedRace.proficiencies)
-          ? selectedRace.proficiencies.map(p => window.escapeHtml(p)).join(', ')
-          : selectedRace.proficiencies;
-        html += `<div class="summary-row"><span class="summary-label">Proficiencies</span><span class="summary-value">${profList}</span></div>`;
+        const descDb = typeof TRAIT_DESCRIPTIONS !== 'undefined' ? TRAIT_DESCRIPTIONS : {};
+        selectedRace.proficiencies.forEach(prof => {
+          const desc = descDb[prof];
+          const descText = desc ? window.renderHtml(desc) : '<em>Language or weapon proficiency.</em>';
+          html += `<details class="trait-dropdown">
+            <summary class="trait-dropdown-summary">${window.escapeHtml(prof)}</summary>
+            <div class="trait-dropdown-content">${descText}</div>
+          </details>`;
+        });
+      }
+      // Race skill points
+      const raceSkillData = typeof RACE_SKILL_DATA !== 'undefined' ? RACE_SKILL_DATA[selectedRace.name] : null;
+      if (raceSkillData) {
+        const skills = raceSkillData.allowedSkills === 'any-except-crafting-gathering'
+          ? 'any non-crafting/gathering skill'
+          : (Array.isArray(raceSkillData.allowedSkills) ? raceSkillData.allowedSkills.join(', ') : raceSkillData.allowedSkills);
+        html += `<div class="summary-row"><span class="summary-label">Skill Points</span><span class="summary-value">+${raceSkillData.skillPoints} in: ${skills}</span></div>`;
       }
     }
 

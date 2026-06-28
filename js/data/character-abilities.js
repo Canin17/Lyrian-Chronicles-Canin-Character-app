@@ -20,6 +20,12 @@ function getAllCharacterAbilities(characterData) {
     abilities.push(...raceAbilities);
   }
   
+  // 1b. Ancestry traits (comma-separated attributes string → ability objects)
+  if (characterData.ancestry) {
+    const ancestryAbilities = getAncestryAbilities(characterData.ancestry);
+    abilities.push(...ancestryAbilities);
+  }
+  
   // 2. Class abilities (based on level)
   // cls shape: { primary: { class, level }, all: [{ class, level }], spiritCore: number }
   const classList = (characterData.cls && Array.isArray(characterData.cls.all))
@@ -69,6 +75,34 @@ function getRaceAbilities(raceData) {
   
   // Some races have abilities described in their description field
   // This would need to be parsed out if the data structure supports it
+  
+  return abilities;
+}
+
+/**
+ * Get abilities granted by an ancestry (subrace)
+ * Parses comma-separated attributes string → ability objects with descriptions from TRAIT_DESCRIPTIONS
+ * @param {Object} ancestryData - Ancestry data from ANCESTRY_MAP
+ * @returns {Array} Array of ability objects
+ */
+function getAncestryAbilities(ancestryData) {
+  if (!ancestryData || !ancestryData.attributes) return [];
+  
+  const abilities = [];
+  const descDb = typeof TRAIT_DESCRIPTIONS !== 'undefined' ? TRAIT_DESCRIPTIONS : {};
+  
+  const traits = typeof ancestryData.attributes === 'string'
+    ? ancestryData.attributes.split(',').map(t => t.trim()).filter(Boolean)
+    : [];
+  
+  traits.forEach(trait => {
+    abilities.push({
+      name: trait,
+      description: descDb[trait] || '',
+      source: 'ancestry',
+      sourceName: ancestryData.name
+    });
+  });
   
   return abilities;
 }
@@ -159,6 +193,12 @@ function getAllCharacterProficiencies(characterData) {
     raceProfs.forEach(p => proficiencies.add(p));
   }
   
+  // 1b. Ancestry proficiencies
+  if (characterData.ancestry) {
+    const ancestryProfs = getAncestryProficiencies(characterData.ancestry);
+    ancestryProfs.forEach(p => proficiencies.add(p));
+  }
+  
   // 2. Class proficiencies (based on level)
   // cls shape: { primary: { class, level }, all: [{ class, level }], spiritCore: number }
   const classList = (characterData.cls && Array.isArray(characterData.cls.all))
@@ -196,6 +236,19 @@ function getRaceProficiencies(raceData) {
     return raceData.proficiencies;
   }
   
+  return [];
+}
+
+/**
+ * Get proficiencies granted by an ancestry (subrace)
+ * @param {Object} ancestryData - Ancestry data from ANCESTRY_MAP
+ * @returns {Array} Array of proficiency strings
+ */
+function getAncestryProficiencies(ancestryData) {
+  if (!ancestryData || !ancestryData.proficiencies) return [];
+  if (Array.isArray(ancestryData.proficiencies)) {
+    return ancestryData.proficiencies;
+  }
   return [];
 }
 

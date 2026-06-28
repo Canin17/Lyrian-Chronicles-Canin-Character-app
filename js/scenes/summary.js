@@ -241,6 +241,50 @@ const SummaryScene = (function() {
       }
     }
 
+    // Race & Ancestry Traits + Proficiencies
+    {
+      const descDb = typeof TRAIT_DESCRIPTIONS !== 'object' ? {} : TRAIT_DESCRIPTIONS;
+      // Race traits
+      if (race?.attributes) {
+        html += `<div class="summary-section"><h3>Race Traits</h3>`;
+        html += `<div style="padding-left:1rem;font-size:0.85rem;color:var(--text-primary);">${window.escapeHtml(race.attributes)}</div>`;
+        html += `</div>`;
+      }
+      // Ancestry traits
+      if (ancestry?.attributes) {
+        const traits = typeof ancestry.attributes === 'string' ? ancestry.attributes.split(',').map(t => t.trim()).filter(Boolean) : [];
+        if (traits.length) {
+          html += `<div class="summary-section"><h3>Ancestry Traits</h3>`;
+          traits.forEach(trait => {
+            const desc = descDb[trait] || '';
+            html += `<div style="padding-left:1rem;font-size:0.85rem;color:var(--text-primary);margin-bottom:0.25rem;"><strong>${window.escapeHtml(trait)}</strong>${desc ? `<br><span style="font-size:0.75rem;color:var(--text-muted);">${window.escapeHtml(desc)}</span>` : ''}</div>`;
+          });
+          html += `</div>`;
+        }
+      }
+      // Race + Ancestry proficiencies
+      const allRaceProfs = new Set();
+      (race?.proficiencies || []).forEach(p => allRaceProfs.add(p));
+      (ancestry?.proficiencies || []).forEach(p => allRaceProfs.add(p));
+      if (allRaceProfs.size) {
+        html += `<div class="summary-section"><h3>Race Proficiencies</h3><div style="display:flex;flex-wrap:wrap;gap:0.5rem;">`;
+        allRaceProfs.forEach(p => {
+          html += `<span style="display:inline-block;padding:0.25rem 0.6rem;background:var(--bg-tertiary);border-radius:4px;font-size:0.8rem;border-left:3px solid var(--accent-gold);">${window.escapeHtml(p)}</span>`;
+        });
+        html += `</div></div>`;
+      }
+      // ponytail: race skill points from RACE_SKILL_DATA in skills.js
+      const raceSkillData = typeof RACE_SKILL_DATA === 'object' ? RACE_SKILL_DATA[race?.name] : null;
+      if (raceSkillData) {
+        const skills = raceSkillData.allowedSkills === 'any-except-crafting-gathering'
+          ? 'any non-crafting/gathering skill'
+          : (Array.isArray(raceSkillData.allowedSkills) ? raceSkillData.allowedSkills.join(', ') : raceSkillData.allowedSkills);
+        html += `<div class="summary-section"><h3>Race Skill Points</h3>`;
+        html += `<div style="padding-left:1rem;font-size:0.85rem;color:var(--text-primary);">+${raceSkillData.skillPoints} points in: ${window.escapeHtml(skills)}</div>`;
+        html += `</div>`;
+      }
+    }
+
     // Breakthrough Proficiencies
     if (characterData.breakthroughProficiencies && characterData.breakthroughProficiencies.length > 0) {
       html += `<div class="summary-section">
@@ -366,6 +410,32 @@ const SummaryScene = (function() {
     // Abilities (full detail, same as Excel)
     const allAbilities = [];
     const writtenAbilities = new Set();
+
+    // Ancestry traits (from ancestry attributes string)
+    if (characterData.ancestry && characterData.ancestry.attributes) {
+      const descDb = typeof TRAIT_DESCRIPTIONS !== 'undefined' ? TRAIT_DESCRIPTIONS : {};
+      const traits = typeof characterData.ancestry.attributes === 'string'
+        ? characterData.ancestry.attributes.split(',').map(t => t.trim()).filter(Boolean)
+        : [];
+      traits.forEach(trait => {
+        if (writtenAbilities.has(trait)) return;
+        writtenAbilities.add(trait);
+        allAbilities.push({
+          name: trait,
+          level: 0,
+          class: 'Ancestry',
+          cost: '',
+          keywords: [],
+          range: '',
+          requirement: '',
+          type: 'passive',
+          description: descDb[trait] || '',
+          keyBenefits: [],
+          proficiencies: []
+        });
+      });
+    }
+
     classes.forEach(clsEntry => {
       const classObj = clsEntry.class || {};
       const className = classObj.name;
@@ -532,8 +602,9 @@ const SummaryScene = (function() {
         coreSheet.getCell('B7').value = characterData.worships || '';
         // Spirit Core
         coreSheet.getCell('C5').value = characterData.spiritCore ?? 0;
-        // Base Speed (from ancestry traits)
-        coreSheet.getCell('H6').value = characterData.speed ?? 20;
+        // ponytail: use higher of base vs breakthrough speed
+        const btSpeed = (characterData.breakthroughs || []).reduce((m, b) => Math.max(m, b?.mechanics?.movementSpeedBonus || 0), 0);
+        coreSheet.getCell('H6').value = Math.max(characterData.speed ?? 20, btSpeed);
         // ponytail: skip D7 — it's =SUM(Breakthrough!B2:B58), auto-computed from sheet 7
         // ponytail: skip A55 — it's =SUM('EXP & Transactions'!F2), auto-computed
         // Starting EXP — write to D4 as number (overrides formula; user-set value takes priority)
@@ -851,6 +922,28 @@ const SummaryScene = (function() {
           const activeAbilities = [];
           const passiveAbilities = [];
           const written = new Set();
+
+          // Ancestry traits (from ancestry attributes string)
+          if (characterData.ancestry && characterData.ancestry.attributes) {
+            const descDb = typeof TRAIT_DESCRIPTIONS !== 'undefined' ? TRAIT_DESCRIPTIONS : {};
+            const traits = typeof characterData.ancestry.attributes === 'string'
+              ? characterData.ancestry.attributes.split(',').map(t => t.trim()).filter(Boolean)
+              : [];
+            traits.forEach(trait => {
+              if (written.has(trait)) return;
+              written.add(trait);
+              const abilityData = {
+                name: trait,
+                cost: '',
+                keywords: '',
+                range: '',
+                requirement: '',
+                description: descDb[trait] || '',
+                benefits: ''
+              };
+              passiveAbilities.push(abilityData);
+            });
+          }
 
           classes.forEach(clsEntry => {
             const classObj = clsEntry.class || {};
