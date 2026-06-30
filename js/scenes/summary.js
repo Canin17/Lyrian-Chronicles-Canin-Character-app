@@ -57,7 +57,7 @@ const SummaryScene = (function() {
         html += `<div class="summary-row"><span class="summary-label">Total Clim Available</span><span class="summary-value" style="color: var(--accent-gold-light);">${totalClim}</span></div>`;
       }
     }
-    html += `<div class="summary-row"><span class="summary-label">Starting EXP</span><span class="summary-value">${characterData.exp ?? 1000}</span></div>`;
+    html += `<div class="summary-row"><span class="summary-label">Starting EXP</span><span class="summary-value">${(characterData.exp ?? 1000) + (characterData.humanExpBonus ?? 0)}</span></div>`;
     html += `<div class="summary-row"><span class="summary-label">Starting IP</span><span class="summary-value">${characterData.ip ?? 3}</span></div>`;
 
     html += `</div>`;
@@ -516,7 +516,8 @@ const SummaryScene = (function() {
         weight: characterData.weight,
         worships: characterData.worships,
         clim: characterData.clim,
-        exp: characterData.exp,
+        exp: (characterData.exp ?? 1000) + (characterData.humanExpBonus ?? 0),
+        humanExpBonus: characterData.humanExpBonus ?? 0,
         ip: characterData.ip,
         race: characterData.race ? {
           id: characterData.race.id,

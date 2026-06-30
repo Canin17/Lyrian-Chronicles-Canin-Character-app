@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lyrian Chronicles - Combat Companion</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <script>
+    if (typeof structuredClone === 'undefined') {
+      window.structuredClone = function(o){ return JSON.parse(JSON.stringify(o)); };
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&display=swap" rel="stylesheet" crossorigin="anonymous">
+</head>
+<body>
+  <canvas id="bg-canvas"></canvas>
+  <div id="app" role="main">
+
+    <!-- Top bar -->
+    <div class="combat-topbar">
+      <button id="combat-back-btn" class="btn-secondary">← Creator</button>
+      <h1 id="combat-char-name" class="combat-title">Combat</h1>
+      <span id="combat-char-sub" class="combat-subtitle"></span>
+    </div>
+
+    <!-- HERO: Resource dashboard (HP + AP + RP + Mana) -->
+    <div id="combat-dashboard" class="combat-dashboard"><!-- JS --></div>
+
+    <!-- Turn cycle controls -->
+    <div id="combat-turn-controls" class="combat-turn-controls"><!-- JS --></div>
+
+    <!-- Basic actions (always available) -->
+    <div id="combat-basics" class="combat-basics"><!-- JS --></div>
+
+    <!-- Conditions strip -->
+    <div id="combat-conditions" class="combat-conditions"><!-- JS --></div>
+
+    <!-- Ability library: filters + grid -->
+    <div class="combat-abilities-region">
+      <div id="combat-filters" class="filter-bar"><!-- JS --></div>
+      <div id="combat-ability-grid" class="card-grid combat-ability-grid"><!-- JS --></div>
+    </div>
+
+    <!-- Encounter conclusion panel (collapsible, shown on demand) -->
+    <div id="combat-conclusion" class="combat-conclusion hidden"><!-- JS --></div>
+  </div>
+
+  <!-- Ability detail modal -->
+  <div id="combat-modal-overlay" class="modal-overlay hidden">
+    <div id="combat-modal-content" class="modal-content"><!-- JS --></div>
+  </div>
+
+  <!-- Toast -->
+  <div id="eq-toast" class="eq-toast" style="display:none;"></div>
+
+  <!-- CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/8.8.0/pixi.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.7/gsap.min.js"></script>
+
+  <!-- Data (same as index.html) -->
+  <script src="js/data/races.js"></script>
+  <script src="js/data/classes.js"></script>
+  <script src="js/data/abilities.js"></script>
+  <script src="js/data/breakthroughs.js"></script>
+  <script src="js/data/skills.js"></script>
+  <script src="js/data/calculations.js"></script>
+  <script src="js/data/items.js"></script>
+  <script src="js/data/character-abilities.js"></script>
+
+  <script src="js/scenes/combat.js"></script>
+</body>
+</html>

@@ -872,7 +872,11 @@ const BreakthroughScene = (function() {
     updateOverviewStats();
   }
 
+  // ponytail: Hybrid IDs — removing Human +100 EXP bonus
+  const HYBRID_IDS = new Set(['69ea4f7a6be32fced492fb56', '69ea4f7a6be32fced492fb57']);
+
   function toggleBreakthrough(bt) {
+    const hadHybrid = selectedBreakthroughs.some(s => HYBRID_IDS.has(s.id));
     const idx = selectedBreakthroughs.findIndex(s => s.id === bt.id);
     if (idx >= 0) {
       // Deselect
@@ -884,7 +888,9 @@ const BreakthroughScene = (function() {
     } else {
       // Check EXP budget — use effective cost (handles escalation)
       const cost = getEffectiveCost(bt);
-      if (getRemainingExp() < cost) {
+      // ponytail: Hybrid removes +100 Human EXP — effective cost is cost + 100
+      const effectiveTotal = HYBRID_IDS.has(bt.id) ? cost + 100 : cost;
+      if (getRemainingExp() < effectiveTotal) {
         return; // Not enough EXP
       }
       // Select
@@ -898,6 +904,10 @@ const BreakthroughScene = (function() {
         statBonusChoices[newKey] = '';
       }
     }
+    // ponytail: adjust mainExpPool when Hybrid toggled (Human loses +100 EXP)
+    const hasHybrid = selectedBreakthroughs.some(s => HYBRID_IDS.has(s.id));
+    if (hadHybrid && !hasHybrid) mainExpPool += 100;
+    if (!hadHybrid && hasHybrid) mainExpPool = Math.max(0, mainExpPool - 100);
 
     // Re-render
     renderSelectedList();

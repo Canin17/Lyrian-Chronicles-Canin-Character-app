@@ -90,6 +90,7 @@
     worships: '',
     clim: 3000,
     exp: 1000,
+    humanExpBonus: 0, // +100 for pure Human, cleared by Hybrid breakthrough
     ip: 3,
     mirane: true,
     oldArmorCalc: false,
@@ -156,6 +157,9 @@
 
     // Bind events
     bindEvents();
+
+    // Show Load button if saved character exists
+    showLoadButtonIfSaved();
 
     console.log('Initialization complete!');
   }
@@ -236,11 +240,13 @@
         if (ext === 'json') {
           try {
             const raw = JSON.parse(await file.text());
+            // ponytail: clear old character first so import is a clean replacement
+            resetCharacterData();
             // ponytail: unwrap { character: { ... } } envelope from exportJSON; merge known + extra keys
             const data = raw.character || raw;
             Object.keys(character).forEach(k => { if (data[k] !== undefined) character[k] = data[k]; });
             // ponytail: fields added at runtime but not in skeleton — restore on import
-            const extra = ['inventory', 'climSpent', 'remainingClim', 'statBonusChoices', 'breakthroughStatBonuses', 'breakthroughProficiencies'];
+            const extra = ['inventory', 'climSpent', 'remainingClim', 'statBonusChoices', 'breakthroughStatBonuses', 'breakthroughProficiencies', 'skillSourceAllocations'];
             extra.forEach(k => { if (data[k] !== undefined) character[k] = data[k]; });
             saveToLocalStorage();
             goToStep(7);
@@ -248,6 +254,8 @@
             showImportError('Invalid JSON: ' + err.message);
           }
         } else if (ext === 'xlsx') {
+          // ponytail: clear old character before xlsx import too
+          resetCharacterData();
           window._importCharacter = character;
           if (await SummaryScene.importExcel(file)) {
             saveToLocalStorage();
@@ -304,6 +312,23 @@
       // New character button
       if (e.target.id === 'btn-new-char') {
         resetAll(); // Already clears localStorage and hides load button internally
+      }
+
+      // Load saved character button
+      if (e.target.id === 'btn-load-saved') {
+        if (loadFromLocalStorage()) {
+          const btn = document.getElementById('btn-load-saved');
+          if (btn) btn.style.display = 'none';
+        }
+      }
+
+      // Enter Combat button
+      if (e.target.id === 'btn-combat') {
+        saveToLocalStorage();
+        hasCharacterProgress = false;
+        // ponytail: file:// opaque origins clear window.name on navigation. URL hash survives.
+        const blob = encodeURIComponent(JSON.stringify(character));
+        window.location.href = 'combat.html#' + blob;
       }
 
       // Resource stepper buttons (+/-)
@@ -505,6 +530,8 @@
         character.ancestry = raceSel.ancestry;
         // Calculate base speed from ancestry traits
         character.speed = calculateBaseSpeed(raceSel.ancestry?.name);
+        // +100 EXP for pure Human (cleared later if Hybrid breakthrough picked)
+        character.humanExpBonus = raceSel.race?.name === 'Human' ? 100 : 0;
         break;
       case 2: // Class
         character.cls = ClassSelectScene.getSelection();
@@ -516,6 +543,11 @@
         character.statBonusChoices = btData.statBonusChoices || {};
         character.breakthroughStatBonuses = BreakthroughScene.getStatBonuses();
         character.breakthroughProficiencies = BreakthroughScene.getBreakthroughProficiencies();
+        // Hybrid breakthroughs remove Human's +100 EXP
+        const HYBRID_IDS = new Set(['69ea4f7a6be32fced492fb56', '69ea4f7a6be32fced492fb57']); // Human-Chimera, Faerie-Chimera
+        if (character.breakthroughs.some(b => HYBRID_IDS.has(b?.id))) {
+          character.humanExpBonus = 0;
+        }
         break;
       case 4: // Stats
         character.stats = StatsScene.getStats();
@@ -585,7 +617,7 @@
           ClassSelectScene.setStartingIp(character.ip);
         }
         if (character.exp !== undefined) {
-          ClassSelectScene.setStartingExp(character.exp);
+          ClassSelectScene.setStartingExp((character.exp ?? 1000) + (character.humanExpBonus ?? 0));
         }
         // Restore class selection
         if (character.cls) {
@@ -669,8 +701,8 @@
   // ===========================================================================
   // RESET
   // ===========================================================================
-  async function resetAll() {
-    // Clear character data
+  // ponytail: extracted data reset so import can clear old character without touching UI
+  function resetCharacterData() {
     character.name = '';
     character.background = '';
     character.race = null;
@@ -700,6 +732,13 @@
     character.speed = 20;
     character.inventory = [];
     character.climSpent = 0;
+    character.remainingClim = undefined;
+    character.skillSourceAllocations = undefined;
+  }
+
+  async function resetAll() {
+    // Clear character data
+    resetCharacterData();
 
     // Reset scenes
     RaceSelectScene.reset();
@@ -779,13 +818,16 @@
       const data = {
         ...character,
         _step: currentStep,
-        _timestamp: Date.now()
+        _timestamp: Date.now(),
+        _version: SAVE_VERSION
       };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      const blob = JSON.stringify(data);
+      const sizeKB = Math.round(blob.length / 1024 * 100) / 100;
+      console.log('[App] Saving character to localStorage:', sizeKB, 'KB');
+      localStorage.setItem(STORAGE_KEY, blob);
       localStorage.setItem(STORAGE_KEY + '-step', String(currentStep));
     } catch (e) {
-      // quota exceeded or private browsing — silently fail
-      console.warn('[App] Could not save to localStorage:', e.message);
+      console.error('[App] localStorage save FAILED:', e.name, '-', e.message);
     }
   }
 
@@ -798,6 +840,57 @@
     }
     // Clear in-memory filter guards so re-init can re-bind
     delete window._btFiltersBound;
+  }
+
+  // ===========================================================================
+  // LOAD FROM LOCAL STORAGE — restore saved character on page load
+  // ponytail: version field for future schema migrations. Bump when character
+  // object shape changes; add migration logic in the version check below.
+  // ===========================================================================
+  const SAVE_VERSION = 1;
+
+  function getSavedCharacter() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return null;
+      const data = JSON.parse(raw);
+      if (!data || typeof data !== 'object' || data._step === undefined) return null;
+      return data;
+    } catch {
+      return null;
+    }
+  }
+
+  function showLoadButtonIfSaved() {
+    const saved = getSavedCharacter();
+    const btn = document.getElementById('btn-load-saved');
+    if (!btn) return;
+    if (saved && (saved.name || saved.race || saved.cls)) {
+      btn.style.display = '';
+    } else {
+      btn.style.display = 'none';
+    }
+  }
+
+  function loadFromLocalStorage() {
+    const saved = getSavedCharacter();
+    if (!saved) return false;
+
+    // Merge known keys
+    Object.keys(character).forEach(k => {
+      if (saved[k] !== undefined) character[k] = saved[k];
+    });
+    // Runtime fields not in skeleton
+    const extra = ['inventory', 'climSpent', 'remainingClim', 'statBonusChoices',
+      'breakthroughStatBonuses', 'breakthroughProficiencies', 'skillSourceAllocations'];
+    extra.forEach(k => {
+      if (saved[k] !== undefined) character[k] = saved[k];
+    });
+
+    // Navigate to saved step (or summary if step unknown)
+    const step = (typeof saved._step === 'number') ? saved._step : 7;
+    goToStep(Math.max(0, Math.min(step, STEPS.length - 1)));
+    return true;
   }
 
   // ===========================================================================
