@@ -410,8 +410,19 @@ const ClassSelectScene = (function() {
 
     return options.some(opt => {
       if (opt === 'any') return false;
+      // Check elemental mastery from BreakthroughScene
+      if (checkElementalMastery(opt)) return true;
       return equippedClasses.some(ec => ec.class.name.toLowerCase() === opt && ec.level >= MAX_LEVEL);
     });
+  }
+
+  // ponytail: elemental mastery check — maps requirement names to element keys
+  function checkElementalMastery(elementName) {
+    const selected = BreakthroughScene.getSelectedElements ? BreakthroughScene.getSelectedElements() : [];
+    // Map: "frost" → "ice" (rulebook uses Frost, our element key is ice)
+    const map = { frost: 'ice' };
+    const key = map[elementName] || elementName;
+    return selected.includes(key);
   }
 
   // ===========================================================================

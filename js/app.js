@@ -254,6 +254,10 @@
             showImportError('Invalid JSON: ' + err.message);
           }
         } else if (ext === 'xlsx') {
+          // ponytail: lazy-load export libs for xlsx import
+          if (typeof window.loadExportLibs === 'function') {
+            await window.loadExportLibs();
+          }
           // ponytail: clear old character before xlsx import too
           resetCharacterData();
           window._importCharacter = character;

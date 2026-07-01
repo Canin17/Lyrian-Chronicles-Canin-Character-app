@@ -97,22 +97,31 @@ const RaceSelectScene = (function() {
       card.className = 'card race-card';
       card.dataset.race = race.id;
 
-      // Image
-      const imgEl = createImageWithFallback(race, 'race-card-image');
+      // Image or fallback
+      if (race.image) {
+        const imgEl = createImageWithFallback(race, 'race-card-image');
+        card.appendChild(imgEl);
+      } else {
+        card.classList.add('no-image');
+        const fallback = document.createElement('div');
+        fallback.className = 'race-card-image no-image';
+        fallback.textContent = race.name.charAt(0);
+        card.appendChild(fallback);
+      }
 
-      // Content
-      const content = document.createElement('div');
-      content.className = 'race-card-content';
+      // Overlay
+      const overlay = document.createElement('div');
+      overlay.className = 'race-card-overlay';
+
+      const bottom = document.createElement('div');
+      bottom.className = 'race-card-bottom';
 
       const name = document.createElement('h3');
+      name.className = 'race-card-name';
       name.textContent = race.name;
 
-      const type = document.createElement('span');
-      type.className = 'race-type';
-      type.textContent = 'Primary Race';
-
       const desc = document.createElement('p');
-      desc.className = 'race-desc';
+      desc.className = 'race-card-desc';
       desc.textContent = window.decodeHtmlEntities(race.description ? race.description.substring(0, 120) + '...' : '');
 
       const details = document.createElement('a');
@@ -125,13 +134,12 @@ const RaceSelectScene = (function() {
         e.stopPropagation();
       });
 
-      content.appendChild(name);
-      content.appendChild(type);
-      content.appendChild(desc);
-      content.appendChild(details);
+      bottom.appendChild(name);
+      bottom.appendChild(desc);
+      bottom.appendChild(details);
 
-      card.appendChild(imgEl);
-      card.appendChild(content);
+      overlay.appendChild(bottom);
+      card.appendChild(overlay);
 
       card.addEventListener('click', () => selectRace(race));
 
@@ -212,18 +220,35 @@ const RaceSelectScene = (function() {
       card.className = 'card ancestry-card';
       card.dataset.ancestry = anc.ancestryId;
 
-      // Image
-      const imgEl = createImageWithFallback(anc, 'ancestry-card-image');
+      // Image or fallback
+      if (anc.image) {
+        const imgEl = createImageWithFallback(anc, 'ancestry-card-image');
+        card.appendChild(imgEl);
+      } else {
+        card.classList.add('no-image');
+        const fallback = document.createElement('div');
+        fallback.className = 'ancestry-card-image no-image';
+        fallback.textContent = anc.name.charAt(0);
+        card.appendChild(fallback);
+      }
+
+      // Overlay
+      const overlay = document.createElement('div');
+      overlay.className = 'ancestry-card-overlay';
+
+      const bottom = document.createElement('div');
+      bottom.className = 'ancestry-card-bottom';
 
       const name = document.createElement('h4');
+      name.className = 'ancestry-card-name';
       name.textContent = anc.name;
 
       const desc = document.createElement('p');
-      desc.className = 'ancestry-desc';
+      desc.className = 'ancestry-card-desc';
       desc.textContent = window.decodeHtmlEntities(anc.description ? anc.description.substring(0, 100) + '...' : '');
 
       const details = document.createElement('a');
-      details.className = 'race-details-btn';
+      details.className = 'ancestry-details-btn';
       details.href = getAncestryUrl(anc);
       details.target = '_blank';
       details.rel = 'noopener noreferrer';
@@ -232,10 +257,12 @@ const RaceSelectScene = (function() {
         e.stopPropagation();
       });
 
-      card.appendChild(imgEl);
-      card.appendChild(name);
-      card.appendChild(desc);
-      card.appendChild(details);
+      bottom.appendChild(name);
+      bottom.appendChild(desc);
+      bottom.appendChild(details);
+
+      overlay.appendChild(bottom);
+      card.appendChild(overlay);
 
       card.addEventListener('click', () => selectAncestry(anc));
 

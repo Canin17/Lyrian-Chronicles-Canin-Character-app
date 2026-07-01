@@ -11,7 +11,7 @@ const SummaryScene = (function() {
     const container = document.getElementById('summary-content');
     if (!container || !characterData) return;
 
-    const { name, background, race, ancestry, cls, stats, skills } = characterData;
+    const { race, ancestry, cls, stats, skills } = characterData;
     const derived = stats ? calculateDerivedStats(stats) : {};
 
     let html = '';
@@ -554,6 +554,10 @@ const SummaryScene = (function() {
    * All formulas and styling in the template are preserved.
    */
   async function exportExcel(characterData) {
+    // ponytail: lazy-load export libs on first use (~1.3MB saved from initial load)
+    if (typeof window.loadExportLibs === 'function') {
+      await window.loadExportLibs();
+    }
     try {
       // 1. Decode the embedded base64 template (avoids CORS on file://)
       const b64 = MIRANE_TEMPLATE_B64;
@@ -689,15 +693,10 @@ const SummaryScene = (function() {
       // These feed the derived stat formulas. Web app doesn't track these granularly,
       // so we compute them from the difference between final stats and base+racial.
       if (coreSheet) {
-        const finalStats = characterData.stats || {};
+        const _finalStats = characterData.stats || {};
         const btBonuses = characterData.breakthroughStatBonuses || {};
 
         // Evasion bonus (E33) — Agility-based evasion from racial/breakthrough sources
-        const agiBase = base.agi ?? 0;
-        const agiRace = bonuses.agi ?? 0;
-        const agiBt = btBonuses.agi ?? 0;
-        const agiFinal = finalStats.agi ?? 0;
-        // Evasion = 7 + Agility + E33 + equipment. The "E33" captures non-standard evasion mods.
         // ponytail: web app doesn't track evasion-specific mods separately; leave E33 as 0
         coreSheet.getCell('E33').value = 0;
 

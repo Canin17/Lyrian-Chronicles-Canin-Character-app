@@ -429,8 +429,18 @@ const BreakthroughScene = (function() {
           </div>`;
       }
 
+      // Elemental Affinity: show chosen element
+      let elementHtml = '';
+      if (isElementalAffinity(bt) && currentChoice) {
+        const el = ELEMENTS.find(e => e.key === currentChoice);
+        if (el) {
+          elementHtml = `<span class="bt-element-badge">${el.emoji} ${el.name}</span>`;
+        }
+      }
+
       item.innerHTML = `
         <span class="bt-selected-name">${window.escapeHtml(bt.name)}</span>
+        ${elementHtml}
         <span class="bt-selected-cost">${effectiveCost} EXP</span>
         ${statPickerHtml}
         <button class="bt-remove-btn" title="Remove">✕</button>
@@ -875,6 +885,23 @@ const BreakthroughScene = (function() {
   // ponytail: Hybrid IDs — removing Human +100 EXP bonus
   const HYBRID_IDS = new Set(['69ea4f7a6be32fced492fb56', '69ea4f7a6be32fced492fb57']);
 
+  // Elemental Affinity — element choices
+  const ELEMENTAL_AFFINITY_ID = '69ea4f7a6be32fced492fb76';
+  const ELEMENTS = [
+    { key: 'fire', name: 'Fire', emoji: '🔥' },
+    { key: 'water', name: 'Water', emoji: '💧' },
+    { key: 'wind', name: 'Wind', emoji: '🌪️' },
+    { key: 'earth', name: 'Earth', emoji: '🌍' },
+    { key: 'lightning', name: 'Lightning', emoji: '⚡' },
+    { key: 'ice', name: 'Ice', emoji: '❄️' },
+    { key: 'dark', name: 'Dark', emoji: '🌑' },
+    { key: 'holy', name: 'Holy', emoji: '✨' },
+  ];
+
+  function isElementalAffinity(bt) {
+    return bt.id === ELEMENTAL_AFFINITY_ID;
+  }
+
   function toggleBreakthrough(bt) {
     const hadHybrid = selectedBreakthroughs.some(s => HYBRID_IDS.has(s.id));
     const idx = selectedBreakthroughs.findIndex(s => s.id === bt.id);
@@ -892,6 +919,11 @@ const BreakthroughScene = (function() {
       const effectiveTotal = HYBRID_IDS.has(bt.id) ? cost + 100 : cost;
       if (getRemainingExp() < effectiveTotal) {
         return; // Not enough EXP
+      }
+      // Elemental Affinity: show modal for element choice
+      if (isElementalAffinity(bt)) {
+        showElementalModal(bt);
+        return;
       }
       // Select
       selectedBreakthroughs.push(bt);
@@ -913,6 +945,55 @@ const BreakthroughScene = (function() {
     renderSelectedList();
     updateOverviewStats();
     applyFilters();
+  }
+
+  // ===========================================================================
+  // ELEMENTAL AFFINITY MODAL
+  // ===========================================================================
+  function showElementalModal(bt) {
+    const modal = document.getElementById('elemental-modal');
+    const grid = document.getElementById('elemental-choices');
+    if (!modal || !grid) return;
+
+    grid.innerHTML = '';
+    ELEMENTS.forEach(el => {
+      const btn = document.createElement('button');
+      btn.className = 'bt-element-btn';
+      btn.innerHTML = `<span class="bt-element-emoji">${el.emoji}</span> ${el.name}`;
+      btn.addEventListener('click', () => {
+        // Select the breakthrough with the chosen element
+        selectedBreakthroughs.push(bt);
+        const newIdx = selectedBreakthroughs.length - 1;
+        const newKey = btInstanceKey(bt, newIdx);
+        statBonusChoices[newKey] = el.key;
+        hideElementalModal();
+        renderSelectedList();
+        updateOverviewStats();
+        applyFilters();
+      });
+      grid.appendChild(btn);
+    });
+
+    modal.style.display = 'flex';
+  }
+
+  function hideElementalModal() {
+    const modal = document.getElementById('elemental-modal');
+    if (modal) modal.style.display = 'none';
+  }
+
+  function initElementalModal() {
+    const closeBtn = document.getElementById('elemental-modal-close');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', hideElementalModal);
+    }
+    // Close on overlay click
+    const overlay = document.getElementById('elemental-modal');
+    if (overlay) {
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) hideElementalModal();
+      });
+    }
   }
 
   // ===========================================================================
@@ -1048,6 +1129,7 @@ const BreakthroughScene = (function() {
     initFilters();
     applyFilters();
     initExpToggle();
+    initElementalModal();
   }
 
   // Refresh the grid when returning to this step after changing class/race
@@ -1162,5 +1244,20 @@ const BreakthroughScene = (function() {
     updateOverviewStats();
   }
 
-  return { init, getSelection, reset, toggleBreakthrough, refresh, restoreState, setMainExpPool, getExpFromMainPool, getCurrentSpiritCore, getStatBonuses, getBreakthroughProficiencies, handleStatChoiceChange, computeBreakthroughEffects, getStatTrainingItems };
+  /**
+   * Get elements selected via Elemental Affinity breakthroughs.
+   * Returns array of element keys, e.g. ['fire', 'dark']
+   */
+  function getSelectedElements() {
+    const elements = [];
+    selectedBreakthroughs.forEach((bt, i) => {
+      if (!isElementalAffinity(bt)) return;
+      const key = btInstanceKey(bt, i);
+      const choice = statBonusChoices[key];
+      if (choice) elements.push(choice);
+    });
+    return elements;
+  }
+
+  return { init, getSelection, reset, toggleBreakthrough, refresh, restoreState, setMainExpPool, getExpFromMainPool, getCurrentSpiritCore, getStatBonuses, getBreakthroughProficiencies, handleStatChoiceChange, computeBreakthroughEffects, getStatTrainingItems, getSelectedElements };
 })();

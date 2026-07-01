@@ -1,7 +1,7 @@
 // Lyrian Chronicles - Character Ability Aggregation
 // Unified pools for all character abilities and proficiencies
 
-/* exported getAllCharacterAbilities, getAllCharacterProficiencies */
+/* exported getAllCharacterAbilities */
 
 /**
  * Get all active abilities for a character
@@ -176,119 +176,5 @@ function getBreakthroughAbilities(breakthroughData) {
   return abilities;
 }
 
-/**
- * Get all proficiencies for a character
- * Combines: race proficiencies, class proficiencies, breakthrough proficiencies
- * @param {Object} characterData - Full character data
- * @returns {Array} Array of unique proficiency strings
- */
-function getAllCharacterProficiencies(characterData) {
-  if (!characterData) return [];
-  
-  const proficiencies = new Set();
-  
-  // 1. Race proficiencies
-  if (characterData.race) {
-    const raceProfs = getRaceProficiencies(characterData.race);
-    raceProfs.forEach(p => proficiencies.add(p));
-  }
-  
-  // 1b. Ancestry proficiencies
-  if (characterData.ancestry) {
-    const ancestryProfs = getAncestryProficiencies(characterData.ancestry);
-    ancestryProfs.forEach(p => proficiencies.add(p));
-  }
-  
-  // 2. Class proficiencies (based on level)
-  // cls shape: { primary: { class, level }, all: [{ class, level }], spiritCore: number }
-  const classList = (characterData.cls && Array.isArray(characterData.cls.all))
-    ? characterData.cls.all
-    : (Array.isArray(characterData.cls) ? characterData.cls : []);
-  classList.forEach(clsData => {
-    if (clsData.class && clsData.level) {
-      const classProfs = getClassProficiencies(clsData.class, clsData.level);
-      classProfs.forEach(p => proficiencies.add(p));
-    }
-  });
-  
-  // 3. Breakthrough proficiencies
-  if (characterData.breakthroughs && Array.isArray(characterData.breakthroughs)) {
-    characterData.breakthroughs.forEach(bt => {
-      if (bt && bt.name) {
-        const btProfs = getBreakthroughProficiencies(bt);
-        btProfs.forEach(p => proficiencies.add(p));
-      }
-    });
-  }
-  
-  return Array.from(proficiencies);
-}
-
-/**
- * Get proficiencies granted by a race
- * @param {Object} raceData - Race data from RACE_DATA
- * @returns {Array} Array of proficiency strings
- */
-function getRaceProficiencies(raceData) {
-  if (!raceData || !raceData.proficiencies) return [];
-  
-  if (Array.isArray(raceData.proficiencies)) {
-    return raceData.proficiencies;
-  }
-  
-  return [];
-}
-
-/**
- * Get proficiencies granted by an ancestry (subrace)
- * @param {Object} ancestryData - Ancestry data from ANCESTRY_MAP
- * @returns {Array} Array of proficiency strings
- */
-function getAncestryProficiencies(ancestryData) {
-  if (!ancestryData || !ancestryData.proficiencies) return [];
-  if (Array.isArray(ancestryData.proficiencies)) {
-    return ancestryData.proficiencies;
-  }
-  return [];
-}
-
-/**
- * Get proficiencies granted by a class at a specific level
- * @param {string} className - Class name
- * @param {number} level - Class level (1-8)
- * @returns {Array} Array of proficiency strings
- */
-function getClassProficiencies(className, level) {
-  if (!className || !CLASS_ABILITIES_DATA[className]) return [];
-  
-  const proficiencies = [];
-  const classData = CLASS_ABILITIES_DATA[className];
-  
-  // Get proficiencies for all levels up to and including the current level
-  for (let lvl = 1; lvl <= level; lvl++) {
-    const levelKey = 'L' + lvl;
-    if (classData[levelKey] && classData[levelKey].proficiencies) {
-      const levelProfs = classData[levelKey].proficiencies;
-      if (Array.isArray(levelProfs)) {
-        levelProfs.forEach(p => proficiencies.push(p));
-      }
-    }
-  }
-  
-  return proficiencies;
-}
-
-/**
- * Get proficiencies granted by a breakthrough
- * @param {Object} breakthroughData - Breakthrough data
- * @returns {Array} Array of proficiency strings
- */
-function getBreakthroughProficiencies(breakthroughData) {
-  if (!breakthroughData || !breakthroughData.proficiencies) return [];
-  
-  if (Array.isArray(breakthroughData.proficiencies)) {
-    return breakthroughData.proficiencies;
-  }
-  
-  return [];
-}
+// ponytail: getAllCharacterProficiencies removed — dead code, never called.
+// Use getCharacterProficiencies() from calculations.js instead (single source of truth).
