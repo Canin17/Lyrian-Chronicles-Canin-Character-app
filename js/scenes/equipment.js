@@ -1,21 +1,24 @@
 /**
  * Lyrian Chronicles - Item Purchase and Equipment Scene
- * Handles purchasing items, tracking inventory, and calculating burden
+ * Handles purchasing items, tracking inventory (combat + storage), and calculating burden
  */
 
 /* exported EquipmentScene */
 const EquipmentScene = (function() {
   'use strict';
 
-  // Inventory state: { itemId: { item, quantity } }
-  let inventory = {};
+  // ponytail: two inventories — combat (burden-limited) + storage (unlimited)
+  let inventory = {
+    combat: {},
+    storage: {}
+  };
 
   // Selected category and search state
   let activeCategory = 'All';
   let activeSubType = 'All';
   let searchQuery = '';
   let sortMode = 'default'; // 'default', 'asc', 'desc'
-  let showUnknownPrice = false; // hide items with climCost === 0 by default
+  let showUnknownPrice = false;
 
   // Currently inspected item (selected from shelf or grid)
   let inspectedItem = null;
@@ -30,7 +33,6 @@ const EquipmentScene = (function() {
     clim: 3000
   };
 
-  // List of categories requested by user
   const CATEGORIES = [
     'All',
     'Adventuring Essentials',
@@ -44,38 +46,28 @@ const EquipmentScene = (function() {
     'Talisman'
   ];
 
-  // ===========================================================================
-  // LOOKUP MAPS (built once in init) — FIX #4, #5
-  // ===========================================================================
+  // Lookup maps (built once in init)
   let itemsById = new Map();
   let itemUrlCache = new Map();
 
   // ===========================================================================
   // BURDEN — Official rule: flat limit of 10, over = Rooted
-  // Any item with burdenCost > 0 counts toward the limit.
-  // Items with burdenCost = 0 (backpacks, mounts, artifice limbs) are free.
   // ===========================================================================
-  // ponytail: BURDEN_LIMIT from calculations.js — single source of truth
-
   function isBurdenItem(item) {
     return (item.burdenCost || 0) > 0;
   }
 
-  // ===========================================================================
-  // BURDEN CALCULATION — Simplified to flat 10 (no modifiers)
-  // ===========================================================================
   function calculateBurdenCapacities() {
     return BURDEN_LIMIT;
   }
 
   // ===========================================================================
-  // TOAST NOTIFICATIONS — FIX #7 (replaces alert())
+  // TOAST NOTIFICATIONS
   // ===========================================================================
   let toastTimeout = null;
 
   function showToast(message, type) {
     type = type || 'error';
-    // Remove existing toast
     const existing = document.getElementById('eq-toast');
     if (existing) existing.remove();
     if (toastTimeout) clearTimeout(toastTimeout);
@@ -85,18 +77,11 @@ const EquipmentScene = (function() {
     toast.className = 'eq-toast eq-toast-' + type;
     toast.textContent = message;
     toast.style.cssText = [
-      'position: fixed',
-      'top: 16px',
-      'right: 16px',
-      'z-index: 10000',
-      'padding: 12px 20px',
-      'border-radius: 8px',
-      'font-size: 0.9rem',
-      'font-weight: 600',
-      'max-width: 420px',
+      'position: fixed', 'top: 16px', 'right: 16px', 'z-index: 10000',
+      'padding: 12px 20px', 'border-radius: 8px', 'font-size: 0.9rem',
+      'font-weight: 600', 'max-width: 420px',
       'box-shadow: 0 4px 24px rgba(0,0,0,0.5)',
-      'transform: translateX(120%)',
-      'transition: transform 0.3s ease',
+      'transform: translateX(120%)', 'transition: transform 0.3s ease',
       type === 'error'
         ? 'background: var(--accent-red, #c0392b); color: #fff;'
         : type === 'warn'
@@ -105,10 +90,7 @@ const EquipmentScene = (function() {
     ].join(';');
     document.body.appendChild(toast);
 
-    // Trigger animation
-    requestAnimationFrame(() => {
-      toast.style.transform = 'translateX(0)';
-    });
+    requestAnimationFrame(() => { toast.style.transform = 'translateX(0)'; });
 
     toastTimeout = setTimeout(() => {
       toast.style.transform = 'translateX(120%)';
@@ -117,7 +99,7 @@ const EquipmentScene = (function() {
   }
 
   // ===========================================================================
-  // DEBOUNCE UTILITY — FIX #8
+  // DEBOUNCE UTILITY
   // ===========================================================================
   function debounce(fn, ms) {
     let timer = null;
@@ -129,11 +111,10 @@ const EquipmentScene = (function() {
     };
   }
 
-  // Debounced grid re-render for search (150ms)
   let debouncedRenderGrid = debounce(function() { renderGrid(); }, 150);
 
   // ===========================================================================
-  // ITEM SLUG / URL — FIX #5 (pre-computed cache)
+  // ITEM SLUG / URL
   // ===========================================================================
   function getItemUrl(item) {
     const cached = itemUrlCache.get(item.id);
@@ -153,17 +134,150 @@ const EquipmentScene = (function() {
     return url;
   }
 
-  // Pre-compute all item URLs (called once)
   function precomputeItemUrls() {
     if (typeof ITEMS_DATA === 'undefined') return;
     itemsById = new Map(ITEMS_DATA.map(i => [i.id, i]));
     ITEMS_DATA.forEach(i => {
       getItemUrl(i);
-      // ponytail: pre-compute lowercase search fields — skip 206×3 .toLowerCase() per filter
       i._nameLower = (i.name || '').toLowerCase();
       i._subTypeLower = (i.subType || '').toLowerCase();
       i._descLower = (i.description || '').toLowerCase();
     });
+  }
+
+  // ===========================================================================
+  // MOD PARSING — extracts mods from description text for display
+  // ponytail: display only, no selection/calculation yet
+  // ===========================================================================
+  function parseMods(item) {
+    const desc = item.description || '';
+    const modsIdx = desc.indexOf('Mods:');
+    if (modsIdx === -1) return null;
+
+    const modsText = desc.substring(modsIdx + 5).trim();
+    const baseDesc = desc.substring(0, modsIdx).trim();
+
+    const tiers = [];
+    const tierRegex = /(A mods|B mods|Frame mods|C mods|S mods):?\s*/gi;
+    let match;
+
+    while ((match = tierRegex.exec(modsText)) !== null) {
+      const tierName = match[1].replace(' mods', '').replace(' Mods', '').trim();
+      const tierStart = match.index + match[0].length;
+      const nextMatch = tierRegex.exec(modsText);
+      const tierEnd = nextMatch ? nextMatch.index : modsText.length;
+      const tierContent = modsText.substring(tierStart, tierEnd).trim();
+      if (tierContent) {
+        tiers.push({ tier: tierName, content: tierContent });
+      }
+      tierRegex.lastIndex = tierEnd;
+    }
+
+    return { baseDesc, tiers, raw: modsText };
+  }
+
+  // ===========================================================================
+  // MODAL
+  // ===========================================================================
+  function openModal(item) {
+    inspectedItem = item;
+    renderModalContent();
+    const overlay = document.getElementById('eq-modal-overlay');
+    if (overlay) {
+      overlay.hidden = false;
+      overlay.classList.add('visible');
+    }
+  }
+
+  function closeModal() {
+    const overlay = document.getElementById('eq-modal-overlay');
+    if (overlay) {
+      overlay.classList.remove('visible');
+      setTimeout(() => { overlay.hidden = true; }, 200);
+    }
+  }
+
+  function renderModalContent() {
+    const body = document.getElementById('eq-modal-body');
+    if (!body || !inspectedItem) return;
+
+    const itemImg = inspectedItem.imageLgUrl || inspectedItem.imageSmUrl || '';
+    const wikiUrl = 'https://rpg.angelssword.com/game/0.13.0/items?search=' + encodeURIComponent(inspectedItem.name);
+
+    let specRows =
+      '<div class="eq-spec-row"><span class="eq-spec-label">Category:</span><span class="eq-spec-val">' + window.escapeHtml(inspectedItem.type) + '</span></div>' +
+      '<div class="eq-spec-row"><span class="eq-spec-label">Sub-Type:</span><span class="eq-spec-val">' + window.escapeHtml(inspectedItem.subType || '-') + '</span></div>' +
+      '<div class="eq-spec-row"><span class="eq-spec-label">Clim Cost:</span><span class="eq-spec-val">' + window.escapeHtml(inspectedItem.cost) + '</span></div>' +
+      '<div class="eq-spec-row"><span class="eq-spec-label">Weight (Burden):</span><span class="eq-spec-val">' + window.escapeHtml(inspectedItem.burden) + '</span></div>';
+
+    if (inspectedItem.shellSize && inspectedItem.shellSize !== '-' && inspectedItem.shellSize !== '') {
+      specRows += '<div class="eq-spec-row"><span class="eq-spec-label">Shell Size:</span><span class="eq-spec-val">' + window.escapeHtml(inspectedItem.shellSize) + '</span></div>';
+    }
+    if (inspectedItem.fuelUsage && inspectedItem.fuelUsage !== '-' && inspectedItem.fuelUsage !== '') {
+      specRows += '<div class="eq-spec-row"><span class="eq-spec-label">Fuel Usage:</span><span class="eq-spec-val">' + window.escapeHtml(inspectedItem.fuelUsage) + '</span></div>';
+    }
+    if (inspectedItem.craftingPoints && inspectedItem.craftingPoints !== '-' && inspectedItem.craftingPoints !== '') {
+      specRows += '<div class="eq-spec-row"><span class="eq-spec-label">Crafting Points:</span><span class="eq-spec-val">' + window.escapeHtml(inspectedItem.craftingPoints) + '</span></div>';
+    }
+    if (inspectedItem.craftingType && inspectedItem.craftingType !== '-' && inspectedItem.craftingType !== '') {
+      specRows += '<div class="eq-spec-row"><span class="eq-spec-label">Crafting Type:</span><span class="eq-spec-val">' + window.escapeHtml(inspectedItem.craftingType) + '</span></div>';
+    }
+
+    const combatQty = getQuantityInInventory(inspectedItem.id, 'combat');
+    const storageQty = getQuantityInInventory(inspectedItem.id, 'storage');
+    const totalOwned = combatQty + storageQty;
+
+    // ponytail: parse mods from description — display only, no selection yet
+    const mods = parseMods(inspectedItem);
+    let descText = mods ? mods.baseDesc : (inspectedItem.description || 'No description available.');
+    let modsSection = '';
+
+    if (mods && mods.tiers.length > 0) {
+      let tiersHtml = '';
+      mods.tiers.forEach(tier => {
+        tiersHtml += '<div class="eq-mod-tier"><h6 class="eq-mod-tier-title">' + window.escapeHtml(tier.tier) + ' Mods</h6><p class="eq-mod-tier-content">' + window.decodeHtmlEntities(tier.content) + '</p></div>';
+      });
+      modsSection =
+        '<div class="eq-detail-mods">' +
+          '<h5 class="eq-detail-mods-title">🛡️ Modifications</h5>' +
+          '<div class="eq-detail-mods-content">' + tiersHtml + '</div>' +
+        '</div>';
+    }
+
+    body.innerHTML =
+      '<div class="eq-detail-card">' +
+        '<div class="eq-detail-header">' +
+          (itemImg
+            ? '<div class="eq-detail-img-box" style="background-image: url(\'' + window.escapeHtml(itemImg) + '\');"></div>'
+            : '<div class="eq-detail-img-box eq-detail-img-fallback">' + window.escapeHtml(inspectedItem.name.charAt(0)) + '</div>'
+          ) +
+          '<div class="eq-detail-header-text">' +
+            '<span class="eq-detail-sub">' + window.escapeHtml(inspectedItem.type) + ' · ' + window.escapeHtml(inspectedItem.subType) + '</span>' +
+            '<h3 class="eq-detail-title">' + window.escapeHtml(inspectedItem.name) + '</h3>' +
+            '<a href="' + wikiUrl + '" target="_blank" class="eq-wiki-btn">See Details (Web) ↗</a>' +
+          '</div>' +
+        '</div>' +
+        '<div class="eq-detail-specs">' + specRows + '</div>' +
+        '<div class="eq-detail-description">' +
+          '<h5>Item Description</h5>' +
+          '<p>' + window.decodeHtmlEntities(descText || 'No description available.') + '</p>' +
+        '</div>' +
+        modsSection +
+        (totalOwned > 0 ? '<div class="eq-detail-owned-info"><strong>Owned:</strong> Combat: ' + combatQty + ', Storage: ' + storageQty + '</div>' : '') +
+        '<div class="eq-detail-purchase">' +
+          '<div class="eq-detail-purchase-controls">' +
+            '<div class="eq-sidebar-qty-stepper">' +
+              '<button type="button" class="eq-sidebar-qty-btn" data-action="decrease">−</button>' +
+              '<input type="number" id="eq-sidebar-qty" value="1" min="1" max="99" class="eq-sidebar-qty-input">' +
+              '<button type="button" class="eq-sidebar-qty-btn" data-action="increase">+</button>' +
+            '</div>' +
+            '<div class="eq-modal-purchase-buttons">' +
+              '<button type="button" class="eq-sidebar-add-btn eq-add-combat" data-target="combat">⚔️ Add to Combat</button>' +
+              '<button type="button" class="eq-sidebar-add-btn eq-add-storage" data-target="storage">🎒 Add to Storage</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
   }
 
   // ===========================================================================
@@ -172,16 +286,10 @@ const EquipmentScene = (function() {
   function init() {
     console.log('[EquipmentScene] Initializing...');
 
-    // Build lookup maps — FIX #4, #5
     precomputeItemUrls();
-
-    // Render categories once — FIX #2
     renderCategories();
-
-    // Render subType filter options once
     renderSubTypeFilter();
 
-    // Bind event listeners for search input — FIX #8 (debounced)
     const searchInput = document.getElementById('equipment-search-input');
     if (searchInput) {
       searchInput.addEventListener('input', (e) => {
@@ -190,7 +298,6 @@ const EquipmentScene = (function() {
       });
     }
 
-    // Bind event listeners for sort dropdown
     const sortSelect = document.getElementById('equipment-sort-select');
     if (sortSelect) {
       sortSelect.addEventListener('change', (e) => {
@@ -199,7 +306,6 @@ const EquipmentScene = (function() {
       });
     }
 
-    // Bind event listeners for subType filter dropdown
     const subTypeSelect = document.getElementById('equipment-subtype-select');
     if (subTypeSelect) {
       subTypeSelect.addEventListener('change', (e) => {
@@ -208,7 +314,6 @@ const EquipmentScene = (function() {
       });
     }
 
-    // Bind event listeners for "Show unknown price" toggle
     const showUnknownCheckbox = document.getElementById('equipment-show-unknown');
     if (showUnknownCheckbox) {
       showUnknownCheckbox.addEventListener('change', (e) => {
@@ -217,11 +322,29 @@ const EquipmentScene = (function() {
       });
     }
 
-    // Bind delegation for category buttons, grid, inventory shelf, sidebar actions
+    // Bind delegation for category buttons, grid, inventory shelf, modal actions
     const stepEl = document.getElementById('step-equipment');
     if (stepEl) {
       stepEl.addEventListener('click', handlePageClick);
     }
+
+    // Modal close handlers
+    const modalOverlay = document.getElementById('eq-modal-overlay');
+    if (modalOverlay) {
+      modalOverlay.addEventListener('click', (e) => {
+        if (e.target === modalOverlay) closeModal();
+      });
+      const closeBtn = modalOverlay.querySelector('.eq-modal-close');
+      if (closeBtn) closeBtn.addEventListener('click', closeModal);
+    }
+
+    // Keyboard: Escape closes modal
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        const overlay = document.getElementById('eq-modal-overlay');
+        if (overlay && !overlay.hidden) closeModal();
+      }
+    });
   }
 
   // ===========================================================================
@@ -236,18 +359,21 @@ const EquipmentScene = (function() {
       stats: data.stats || null,
       clim: data.clim !== undefined ? data.clim : 3000
     };
-
-    // FIX #11: No auto-select of first item — start with null
   }
 
-  // Calculate current spent resources
   function calculateSpent() {
     let climSpent = 0;
     let burdenSpent = 0;
 
-    for (const entry of Object.values(inventory)) {
-      climSpent += entry.item.climCost * entry.quantity;
-      // Only combat items count toward burden
+    // Clim: both inventories count
+    for (const section of [inventory.combat, inventory.storage]) {
+      for (const entry of Object.values(section)) {
+        climSpent += entry.item.climCost * entry.quantity;
+      }
+    }
+
+    // Burden: combat inventory only
+    for (const entry of Object.values(inventory.combat)) {
       if (isBurdenItem(entry.item)) {
         burdenSpent += entry.item.burdenCost * entry.quantity;
       }
@@ -256,60 +382,53 @@ const EquipmentScene = (function() {
     return { clim: climSpent, burden: burdenSpent };
   }
 
-  // Add an item to the purchase inventory (or increment quantity)
-  function adjustItemQuantity(itemId, adjustment) {
-    // FIX #4: O(1) lookup
+  function adjustItemQuantity(itemId, adjustment, targetInventory) {
+    targetInventory = targetInventory || 'combat';
     const item = itemsById.get(itemId);
     if (!item) return;
 
-    const currentEntry = inventory[itemId];
+    const section = inventory[targetInventory];
+    const currentEntry = section[itemId];
     const currentQty = currentEntry ? currentEntry.quantity : 0;
     const newQty = Math.max(0, currentQty + adjustment);
 
     if (newQty === currentQty) return;
 
     if (newQty > currentQty) {
-      // FIX #3: Calculate once, reuse
       const burdenCap = calculateBurdenCapacities();
       const currentStats = calculateSpent();
 
       const addedClim = item.climCost * (newQty - currentQty);
-      const addedBurden = item.burdenCost * (newQty - currentQty);
+      const addedBurden = (targetInventory === 'combat' && isBurdenItem(item))
+        ? item.burdenCost * (newQty - currentQty)
+        : 0;
 
       if (currentStats.clim + addedClim > charContext.clim) {
-        // FIX #7: Toast instead of alert
         showToast('Cannot add ' + item.name + '. Not enough Clim! Required: ' + addedClim + ', Available: ' + (charContext.clim - currentStats.clim) + '.', 'error');
         return;
       }
 
-      if (isBurdenItem(item) && currentStats.burden + addedBurden > burdenCap) {
-        showToast('Warning: Adding ' + item.name + ' exceeds carrying capacity! Current: ' + currentStats.burden + '/' + burdenCap + ', would be ' + (currentStats.burden + addedBurden) + '.', 'warn');
+      if (addedBurden > 0 && currentStats.burden + addedBurden > burdenCap) {
+        showToast('Warning: Adding ' + item.name + ' to combat gear exceeds carrying capacity! Current: ' + currentStats.burden + '/' + burdenCap + '.', 'warn');
       }
     }
 
     if (newQty === 0) {
-      delete inventory[itemId];
+      delete section[itemId];
     } else {
-      inventory[itemId] = {
-        item: item,
-        quantity: newQty
-      };
+      section[itemId] = { item: item, quantity: newQty };
     }
 
-    // Make this item the inspected item when added or updated
     inspectedItem = item;
-
-    // ponytail: targeted update — skip grid re-render on qty change
-    updateAfterQuantityChange(itemId);
+    updateAfterQuantityChange(itemId, targetInventory);
   }
 
-  // Targeted update after a quantity change — skips renderGrid()
   function updateAfterQuantityChange(changedItemId) {
     const burdenCap = calculateBurdenCapacities();
     const stats = calculateSpent();
 
-    // Update owned badge on the specific card if it exists in the grid
-    const card = document.querySelector(`.eq-card[data-id="${changedItemId}"]`);
+    // Update owned badge on grid card
+    const card = document.querySelector('.eq-card[data-id="' + changedItemId + '"]');
     if (card) {
       const inInventory = getQuantityInInventory(changedItemId);
       let badge = card.querySelector('.eq-card-owned-badge');
@@ -329,13 +448,21 @@ const EquipmentScene = (function() {
 
     updateStickyHeader(burdenCap, stats);
     renderInventoryShelf();
-    renderSidebar();
+    // ponytail: re-render modal if open and showing this item
+    if (inspectedItem && document.getElementById('eq-modal-overlay') && !document.getElementById('eq-modal-overlay').hidden) {
+      renderModalContent();
+    }
     highlightInspectedCard();
   }
 
-  // Check the currently owned inventory quantity
-  function getQuantityInInventory(itemId) {
-    return inventory[itemId] ? inventory[itemId].quantity : 0;
+  function getQuantityInInventory(itemId, targetInventory) {
+    if (targetInventory) {
+      return inventory[targetInventory][itemId] ? inventory[targetInventory][itemId].quantity : 0;
+    }
+    // total across both
+    const c = inventory.combat[itemId] ? inventory.combat[itemId].quantity : 0;
+    const s = inventory.storage[itemId] ? inventory.storage[itemId].quantity : 0;
+    return c + s;
   }
 
   // ===========================================================================
@@ -352,61 +479,57 @@ const EquipmentScene = (function() {
       return;
     }
 
-    // 2. Click on an item card to inspect it (entire card is clickable)
+    // 2. Click on an item card to open modal
     const card = e.target.closest('.eq-card');
     if (card) {
       const itemId = card.dataset.id;
-      // FIX #4: O(1) lookup
       const item = itemsById.get(itemId);
       if (item) {
-        inspectedItem = item;
-        renderSidebar();
-        highlightInspectedCard();
+        openModal(item);
       }
       return;
     }
 
-    // 3. Shelf remove button — must come before shelf item click to stop propagation
+    // 3. Shelf remove button — remove from correct inventory
     const shelfRemoveBtn = e.target.closest('.eq-shelf-remove-btn');
     if (shelfRemoveBtn) {
       e.stopPropagation();
       const itemId = shelfRemoveBtn.dataset.id;
-      adjustItemQuantity(itemId, -1);
+      const target = shelfRemoveBtn.dataset.inventory || 'combat';
+      adjustItemQuantity(itemId, -1, target);
       return;
     }
 
-    // 4. Click on an item in the purchased inventory shelf to inspect it
+    // 4. Click on an item in shelf to open modal
     const shelfItem = e.target.closest('.eq-shelf-item');
     if (shelfItem) {
       const itemId = shelfItem.dataset.id;
       const item = itemsById.get(itemId);
       if (item) {
-        inspectedItem = item;
-        renderSidebar();
-        highlightInspectedCard();
+        openModal(item);
       }
       return;
     }
 
-    // 5. Sidebar remove button clicks
+    // 5. Sidebar remove/clear buttons (if any remain)
     const removeBtn = e.target.closest('.eq-sidebar-remove-btn');
     if (removeBtn) {
       const itemId = removeBtn.dataset.id;
-      adjustItemQuantity(itemId, -1);
+      adjustItemQuantity(itemId, -1, 'combat');
       return;
     }
 
-    // 5. Sidebar clear all quantities click
     const clearBtn = e.target.closest('.eq-sidebar-clear-btn');
     if (clearBtn) {
       const itemId = clearBtn.dataset.id;
-      if (inventory[itemId]) {
-        adjustItemQuantity(itemId, -inventory[itemId].quantity);
+      const target = clearBtn.dataset.inventory || 'combat';
+      if (inventory[target][itemId]) {
+        adjustItemQuantity(itemId, -inventory[target][itemId].quantity, target);
       }
       return;
     }
 
-    // 6. Sidebar add button clicks (from detail panel)
+    // 6. Add button clicks (from modal) — with target inventory
     const sidebarAddBtn = e.target.closest('.eq-sidebar-add-btn');
     if (sidebarAddBtn) {
       if (inspectedItem) {
@@ -416,8 +539,9 @@ const EquipmentScene = (function() {
           showToast('Please select a quantity greater than 0 to purchase.', 'error');
           return;
         }
-        adjustItemQuantity(inspectedItem.id, qty);
-        // Reset qty input
+        const target = sidebarAddBtn.dataset.target || 'combat';
+        adjustItemQuantity(inspectedItem.id, qty, target);
+        closeModal();
         if (qtyInput) qtyInput.value = '1';
       }
       return;
@@ -437,50 +561,94 @@ const EquipmentScene = (function() {
     }
   }
 
-  // Highlight the card currently being inspected
+  // ponytail: track previous card/shelf item directly instead of querying all 206+ elements
+  let lastInspectedCard = null;
+  let lastInspectedShelf = null;
+
+  // ponytail: lazy-load card images in batches — 60 concurrent downloads stalls the main thread
+  const LAZY_BATCH = 12; // ponytail: load 12 at a time, not all 60 visible at once
+  let lazyQueue = [];
+  let lazyLoading = false;
+
+  function flushLazyBatch() {
+    if (lazyLoading) return;
+    lazyLoading = true;
+    const batch = lazyQueue.splice(0, LAZY_BATCH);
+    batch.forEach(el => {
+      const bg = el.dataset.bg;
+      if (bg) {
+        el.style.backgroundImage = `url('${bg}')`;
+        el.removeAttribute('data-bg');
+      }
+    });
+    // ponytail: yield between batches; keep draining if more queued
+    requestAnimationFrame(() => {
+      lazyLoading = false;
+      if (lazyQueue.length > 0) flushLazyBatch();
+    });
+  }
+
+  const lazyImageObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting && entry.target.dataset.bg) {
+        lazyQueue.push(entry.target);
+        lazyImageObserver.unobserve(entry.target);
+      }
+    });
+    if (lazyQueue.length > 0 && !lazyLoading) flushLazyBatch();
+  }, { rootMargin: '100px' });
+
   function highlightInspectedCard() {
-    document.querySelectorAll('.eq-card').forEach(card => {
-      card.classList.remove('inspected');
-      if (inspectedItem && card.dataset.id === inspectedItem.id) {
-        card.classList.add('inspected');
-      }
-    });
-    document.querySelectorAll('.eq-shelf-item').forEach(item => {
-      item.classList.remove('active');
-      if (inspectedItem && item.dataset.id === inspectedItem.id) {
-        item.classList.add('active');
-      }
-    });
+    // Remove highlight from previous
+    if (lastInspectedCard) lastInspectedCard.classList.remove('inspected');
+    if (lastInspectedShelf) lastInspectedShelf.classList.remove('active');
+
+    if (!inspectedItem) {
+      lastInspectedCard = null;
+      lastInspectedShelf = null;
+      return;
+    }
+
+    // Find and highlight new (cached lookup avoids queryAll)
+    const card = document.querySelector('.eq-card[data-id="' + inspectedItem.id + '"]');
+    if (card) {
+      card.classList.add('inspected');
+      lastInspectedCard = card;
+    }
+    const shelf = document.querySelector('.eq-shelf-item[data-id="' + inspectedItem.id + '"]');
+    if (shelf) {
+      shelf.classList.add('active');
+      lastInspectedShelf = shelf;
+    }
   }
 
   // ===========================================================================
   // RENDERING
   // ===========================================================================
+  // ponytail: renderGrid+refresh both called renderGrid — 206-node DOM build twice. Only call once.
   function render() {
     console.log('[EquipmentScene] Rendering step panel...');
 
-    // Check if variables are valid
     if (typeof ITEMS_DATA === 'undefined') {
       console.error('ITEMS_DATA is missing. Cannot render item list.');
       return;
     }
 
-    // Render item grid
+    const burdenCap = calculateBurdenCapacities();
+    const stats = calculateSpent();
     renderGrid();
-
-    // Refresh calculations and sidebars
-    refresh();
+    updateStickyHeader(burdenCap, stats);
+    renderInventoryShelf();
+    highlightInspectedCard();
   }
 
   function refresh() {
-    // FIX #3: Compute once, pass down
     const burdenCap = calculateBurdenCapacities();
     const stats = calculateSpent();
 
     renderGrid();
     updateStickyHeader(burdenCap, stats);
     renderInventoryShelf();
-    renderSidebar();
     highlightInspectedCard();
   }
 
@@ -531,7 +699,6 @@ const EquipmentScene = (function() {
     if (!select) return;
     if (typeof ITEMS_DATA === 'undefined') return;
 
-    // Collect unique subTypes, sorted
     const subTypes = new Set();
     ITEMS_DATA.forEach(item => {
       if (item.subType) subTypes.add(item.subType);
@@ -550,11 +717,9 @@ const EquipmentScene = (function() {
     if (!grid) return;
 
     const filtered = ITEMS_DATA.filter(item => {
-      // Hide items with unknown price (climCost === 0) unless toggle is on
       if (!showUnknownPrice && item.climCost === 0) return false;
       const matchCat = activeCategory === 'All' || item.type === activeCategory;
       const matchSubType = activeSubType === 'All' || item.subType === activeSubType;
-      // ponytail: use pre-computed lowercase fields — skip 206×3 .toLowerCase() per filter
       const matchSearch = !searchQuery ||
                           item._nameLower.includes(searchQuery) ||
                           item._subTypeLower.includes(searchQuery) ||
@@ -567,7 +732,6 @@ const EquipmentScene = (function() {
       return;
     }
 
-    // Sort by price if not default
     if (sortMode !== 'default') {
       filtered.sort((a, b) => {
         const costA = a.climCost || 0;
@@ -582,17 +746,16 @@ const EquipmentScene = (function() {
       const ownedBadge = inInventory > 0 ? '<div class="eq-card-owned-badge">' + inInventory + '</div>' : '';
       const isInspected = inspectedItem && inspectedItem.id === item.id ? 'inspected' : '';
       const itemImg = item.imageSmUrl || item.imageLgUrl || '';
-      // FIX #5: Use pre-computed URL
       const itemUrl = getItemUrl(item);
 
       html +=
         '<div class="eq-card ' + isInspected + '" data-id="' + item.id + '" title="' + window.escapeHtml(item.name) + '">' +
-          (itemImg ? '<div class="eq-card-img" style="background-image: url(\'' + window.escapeHtml(itemImg) + '\');"></div>' : '<div class="eq-card-initial">' + window.escapeHtml(item.name.charAt(0)) + '</div>') +
+          (itemImg ? '<div class="eq-card-img" data-bg="' + window.escapeHtml(itemImg) + '"></div>' : '<div class="eq-card-initial">' + window.escapeHtml(item.name.charAt(0)) + '</div>') +
           '<div class="eq-card-overlay">' +
             '<div class="eq-card-bottom">' +
               '<h4 class="eq-card-title">' + window.escapeHtml(item.name) + '</h4>' +
-              '<div class="eq-card-meta">' + window.escapeHtml(item.subType || '') + ' \u00b7 ' + window.escapeHtml(item.cost) + '</div>' +
-              '<a href="' + itemUrl + '" target="_blank" class="eq-card-details-link">See details \u2197</a>' +
+              '<div class="eq-card-meta">' + window.escapeHtml(item.subType || '') + ' · ' + window.escapeHtml(item.cost) + '</div>' +
+              '<a href="' + itemUrl + '" target="_blank" class="eq-card-details-link">See details ↗</a>' +
             '</div>' +
           '</div>' +
           ownedBadge +
@@ -600,27 +763,36 @@ const EquipmentScene = (function() {
     });
 
     grid.innerHTML = html;
+
+    // ponytail: observe new lazy-image elements
+    grid.querySelectorAll('.eq-card-img[data-bg]').forEach(el => lazyImageObserver.observe(el));
   }
 
+  // ponytail: two separate shelf renders — combat + storage
   function renderInventoryShelf() {
-    const container = document.getElementById('purchased-inventory-shelf');
+    renderInventorySection('combat', 'combat-inventory-shelf');
+    renderInventorySection('storage', 'storage-inventory-shelf');
+  }
+
+  function renderInventorySection(section, containerId) {
+    const container = document.getElementById(containerId);
     if (!container) return;
 
-    const keys = Object.keys(inventory);
+    const items = inventory[section];
+    const keys = Object.keys(items);
     if (keys.length === 0) {
-      container.innerHTML = '<div class="eq-shelf-empty">Your purchased inventory is empty. Select items below to buy!</div>';
+      container.innerHTML = '<div class="eq-shelf-empty">' + (section === 'combat' ? 'No combat gear equipped.' : 'Storage is empty.') + '</div>';
       return;
     }
 
-    // FIX #14: CSS-based fallback instead of hardcoded CDN URL
     let html = '<div class="eq-shelf-grid">';
     keys.sort().forEach(itemId => {
-      const entry = inventory[itemId];
+      const entry = items[itemId];
       const isInspected = inspectedItem && inspectedItem.id === itemId ? 'active' : '';
       const itemImg = entry.item.imageSmUrl || entry.item.imageLgUrl || '';
 
       html +=
-        '<div class="eq-shelf-item ' + isInspected + '" data-id="' + itemId + '" title="Click to view details: ' + window.escapeHtml(entry.item.name) + '">' +
+        '<div class="eq-shelf-item ' + isInspected + '" data-id="' + itemId + '" title="Click to view: ' + window.escapeHtml(entry.item.name) + '">' +
           (itemImg
             ? '<div class="eq-shelf-item-icon" style="background-image: url(\'' + window.escapeHtml(itemImg) + '\');"></div>'
             : '<div class="eq-shelf-item-icon eq-shelf-item-icon-fallback">' + window.escapeHtml(entry.item.name.charAt(0)) + '</div>'
@@ -629,135 +801,41 @@ const EquipmentScene = (function() {
             '<span class="eq-shelf-item-name">' + window.escapeHtml(entry.item.name) + '</span>' +
             '<span class="eq-shelf-item-qty">Qty: <strong>' + entry.quantity + '</strong></span>' +
           '</div>' +
-           '<button type="button" class="eq-shelf-remove-btn" data-id="' + itemId + '" title="Remove one ' + window.escapeHtml(entry.item.name) + '">×</button>' +
+          '<button type="button" class="eq-shelf-remove-btn" data-id="' + itemId + '" data-inventory="' + section + '" title="Remove one">×</button>' +
         '</div>';
-      });
-      html += '</div>';
-
+    });
+    html += '</div>';
     container.innerHTML = html;
-  }
-
-  function renderSidebar() {
-    // 1. Render item inspection detail card
-    const detailContainer = document.getElementById('eq-item-detail-panel');
-    if (detailContainer) {
-      if (!inspectedItem) {
-        detailContainer.innerHTML =
-          '<div class="eq-detail-empty">' +
-            '<span class="eq-detail-empty-icon">\ud83d\udd0d</span>' +
-            '<span>Select an item in the shelf or grid to inspect full stats, rules, and modifications.</span>' +
-          '</div>';
-      } else {
-        const itemImg = inspectedItem.imageLgUrl || inspectedItem.imageSmUrl || '';
-
-        let specRows =
-          '<div class="eq-spec-row"><span class="eq-spec-label">Category:</span><span class="eq-spec-val">' + window.escapeHtml(inspectedItem.type) + '</span></div>' +
-          '<div class="eq-spec-row"><span class="eq-spec-label">Sub-Type:</span><span class="eq-spec-val">' + window.escapeHtml(inspectedItem.subType || '-') + '</span></div>' +
-          '<div class="eq-spec-row"><span class="eq-spec-label">Clim Cost:</span><span class="eq-spec-val">' + window.escapeHtml(inspectedItem.cost) + '</span></div>' +
-          '<div class="eq-spec-row"><span class="eq-spec-label">Weight (Burden):</span><span class="eq-spec-val">' + window.escapeHtml(inspectedItem.burden) + '</span></div>';
-
-        // FIX #13: Check for both empty string and '-'
-        if (inspectedItem.activationCost && inspectedItem.activationCost !== '-' && inspectedItem.activationCost !== '') {
-          specRows += '<div class="eq-spec-row"><span class="eq-spec-label">Activation Cost:</span><span class="eq-spec-val">' + window.escapeHtml(inspectedItem.activationCost) + '</span></div>';
-        }
-        if (inspectedItem.shellSize && inspectedItem.shellSize !== '-' && inspectedItem.shellSize !== '') {
-          specRows += '<div class="eq-spec-row"><span class="eq-spec-label">Shell Size:</span><span class="eq-spec-val">' + window.escapeHtml(inspectedItem.shellSize) + '</span></div>';
-        }
-        if (inspectedItem.fuelUsage && inspectedItem.fuelUsage !== '-' && inspectedItem.fuelUsage !== '') {
-          specRows += '<div class="eq-spec-row"><span class="eq-spec-label">Fuel Usage:</span><span class="eq-spec-val">' + window.escapeHtml(inspectedItem.fuelUsage) + '</span></div>';
-        }
-        if (inspectedItem.craftingPoints && inspectedItem.craftingPoints !== '-' && inspectedItem.craftingPoints !== '') {
-          specRows += '<div class="eq-spec-row"><span class="eq-spec-label">Crafting Points:</span><span class="eq-spec-val">' + window.escapeHtml(inspectedItem.craftingPoints) + '</span></div>';
-        }
-        if (inspectedItem.craftingType && inspectedItem.craftingType !== '-' && inspectedItem.craftingType !== '') {
-          specRows += '<div class="eq-spec-row"><span class="eq-spec-label">Crafting Type:</span><span class="eq-spec-val">' + window.escapeHtml(inspectedItem.craftingType) + '</span></div>';
-        }
-
-        // Check if weapon has mods or special description
-        let modSection = '';
-        const lowerDesc = inspectedItem.description.toLowerCase();
-        if (lowerDesc.includes('mods:') || lowerDesc.includes('modifications:') || inspectedItem.subType === 'Weapon' || inspectedItem.subType === 'Armor') {
-          modSection =
-            '<div class="eq-detail-mods">' +
-              '<h5 class="eq-detail-mods-title">\ud83d\udee1\ufe0f Modifications & Attachments</h5>' +
-              '<div class="eq-detail-mods-content">' +
-                (inspectedItem.subType === 'Weapon' ? 'Accepts universal Weapon Attachments (Sights, Scopes, Stocks). Allows Element/Attribute infusions.' : '') +
-                (inspectedItem.subType === 'Armor' ? 'Accepts Armorsmith Modifications (Plating, Insulation, Lightweight Frame).' : '') +
-                '<p class="eq-mod-desc-hint" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 5px;">Configure modifications and attachments on your character sheet after creation.</p>' +
-              '</div>' +
-            '</div>';
-        }
-
-        // Purchase controls in detail panel
-        const currentOwned = getQuantityInInventory(inspectedItem.id);
-        let purchaseSection =
-          '<div class="eq-detail-purchase">' +
-            '<div class="eq-detail-purchase-info">' +
-              '<span class="eq-detail-purchase-cost">Cost: ' + window.escapeHtml(inspectedItem.cost) + ' Clim</span>' +
-              '<span class="eq-detail-purchase-burden">Burden: ' + window.escapeHtml(inspectedItem.burden) + '</span>' +
-              (currentOwned > 0 ? '<span class="eq-detail-purchase-owned">Owned: ' + currentOwned + '</span>' : '') +
-            '</div>' +
-            '<div class="eq-detail-purchase-controls">' +
-              '<div class="eq-sidebar-qty-stepper">' +
-                '<button type="button" class="eq-sidebar-qty-btn" data-action="decrease">\u2212</button>' +
-                '<input type="number" id="eq-sidebar-qty" value="1" min="1" max="99" class="eq-sidebar-qty-input">' +
-                '<button type="button" class="eq-sidebar-qty-btn" data-action="increase">+</button>' +
-              '</div>' +
-              '<button type="button" class="eq-sidebar-add-btn">Add to Inventory</button>' +
-            '</div>' +
-          '</div>';
-
-        const wikiUrl = 'https://rpg.angelssword.com/game/0.13.0/items?search=' + encodeURIComponent(inspectedItem.name);
-
-        detailContainer.innerHTML =
-          '<div class="eq-detail-card animate-fade-in">' +
-            '<div class="eq-detail-header">' +
-              (itemImg
-                ? '<div class="eq-detail-img-box" style="background-image: url(\'' + window.escapeHtml(itemImg) + '\');"></div>'
-                : '<div class="eq-detail-img-box eq-detail-img-fallback">' + window.escapeHtml(inspectedItem.name.charAt(0)) + '</div>'
-              ) +
-              '<div class="eq-detail-header-text">' +
-                '<span class="eq-detail-sub">' + window.escapeHtml(inspectedItem.type) + ' \u00b7 ' + window.escapeHtml(inspectedItem.subType) + '</span>' +
-                '<h3 class="eq-detail-title">' + window.escapeHtml(inspectedItem.name) + '</h3>' +
-                '<a href="' + wikiUrl + '" target="_blank" class="eq-wiki-btn">See Details (Web) \u2197</a>' +
-              '</div>' +
-            '</div>' +
-            '<div class="eq-detail-specs">' +
-              specRows +
-            '</div>' +
-            '<div class="eq-detail-description">' +
-              '<h5>Item Description & Rules</h5>' +
-              '<p>' + window.decodeHtmlEntities(inspectedItem.description || 'No description available for this item.') + '</p>' +
-            '</div>' +
-            modSection +
-            purchaseSection +
-          '</div>';
-      }
-    }
   }
 
   // ===========================================================================
   // EXTERNAL SCENE INTERFACE
   // ===========================================================================
   function getInventory() {
-    // Return array of objects matching expectations
-    return Object.values(inventory).map(entry => ({
-      item: {
-        id: entry.item.id,
-        indexId: entry.item.indexId,
-        name: entry.item.name,
-        type: entry.item.type,
-        subType: entry.item.subType,
-        cost: entry.item.cost,
-        climCost: entry.item.climCost,
-        burden: entry.item.burden,
-        burdenCost: entry.item.burdenCost,
-        description: entry.item.description,
-        imageSmUrl: entry.item.imageSmUrl,
-        imageLgUrl: entry.item.imageLgUrl
-      },
-      quantity: entry.quantity
-    }));
+    const result = [];
+    for (const [section, items] of Object.entries(inventory)) {
+      for (const entry of Object.values(items)) {
+        result.push({
+          item: {
+            id: entry.item.id,
+            indexId: entry.item.indexId,
+            name: entry.item.name,
+            type: entry.item.type,
+            subType: entry.item.subType,
+            cost: entry.item.cost,
+            climCost: entry.item.climCost,
+            burden: entry.item.burden,
+            burdenCost: entry.item.burdenCost,
+            description: entry.item.description,
+            imageSmUrl: entry.item.imageSmUrl,
+            imageLgUrl: entry.item.imageLgUrl
+          },
+          quantity: entry.quantity,
+          section: section
+        });
+      }
+    }
+    return result;
   }
 
   function getClimSpent() {
@@ -770,33 +848,31 @@ const EquipmentScene = (function() {
 
   function restoreState(savedInventory) {
     console.log('[EquipmentScene] Restoring state...', savedInventory);
-    inventory = {};
+    inventory = { combat: {}, storage: {} };
     if (Array.isArray(savedInventory)) {
       savedInventory.forEach(entry => {
         if (entry.item && entry.item.id) {
-          inventory[entry.item.id] = {
+          // ponytail: legacy saves have no 'section' — default to combat
+          const section = entry.section === 'storage' ? 'storage' : 'combat';
+          inventory[section][entry.item.id] = {
             item: entry.item,
             quantity: entry.quantity || 1
           };
         }
       });
     }
-
-    // FIX #11: Default inspected item to first item in restored inventory if possible
-    const keys = Object.keys(inventory);
+    const keys = Object.keys(inventory.combat);
     if (keys.length > 0) {
-      inspectedItem = inventory[keys[0]].item;
+      inspectedItem = inventory.combat[keys[0]].item;
     } else {
-      // No auto-select from ITEMS_DATA — leave as null
       inspectedItem = null;
     }
-
     refresh();
   }
 
   function reset() {
     console.log('[EquipmentScene] Resetting state...');
-    inventory = {};
+    inventory = { combat: {}, storage: {} };
     activeCategory = 'All';
     activeSubType = 'All';
     searchQuery = '';
@@ -810,7 +886,6 @@ const EquipmentScene = (function() {
     if (subTypeSelect) subTypeSelect.value = 'All';
     const showUnknownCheckbox = document.getElementById('equipment-show-unknown');
     if (showUnknownCheckbox) showUnknownCheckbox.checked = false;
-    // FIX #11: No auto-select
     inspectedItem = null;
 
     refresh();
