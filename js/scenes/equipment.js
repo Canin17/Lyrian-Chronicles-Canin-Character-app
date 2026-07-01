@@ -328,12 +328,14 @@ const EquipmentScene = (function() {
       stepEl.addEventListener('click', handlePageClick);
     }
 
-    // Modal close handlers
+    // Modal close + action handlers
     const modalOverlay = document.getElementById('eq-modal-overlay');
     if (modalOverlay) {
       modalOverlay.addEventListener('click', (e) => {
         if (e.target === modalOverlay) closeModal();
+        return;
       });
+      modalOverlay.addEventListener('click', handlePageClick);
       const closeBtn = modalOverlay.querySelector('.eq-modal-close');
       if (closeBtn) closeBtn.addEventListener('click', closeModal);
     }
