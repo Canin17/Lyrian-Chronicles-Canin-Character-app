@@ -16,51 +16,22 @@ const SummaryScene = (function() {
 
     let html = '';
 
-    // Character Identity
-    html += `<div class="summary-section">
-      <h3>Character Identity</h3>
-      <div class="summary-row">
-        <span class="summary-label">Name</span>
-        <span class="summary-value">${window.escapeHtml(name || 'Unnamed')}</span>
-      </div>`;
-
-    if (background) {
-      html += `<div class="summary-row" style="flex-direction: column; gap: 0.25rem;">
-        <span class="summary-label">Background</span>
-        <span class="summary-value" style="font-weight: normal; font-style: italic;">${window.escapeHtml(background)}</span>
-      </div>`;
-    }
-
-    // Identity extras
-    if (characterData.gender) {
-      html += `<div class="summary-row"><span class="summary-label">Gender</span><span class="summary-value">${window.escapeHtml(characterData.gender)}</span></div>`;
-    }
-    if (characterData.age) {
-      html += `<div class="summary-row"><span class="summary-label">Age</span><span class="summary-value">${window.escapeHtml(characterData.age)}</span></div>`;
-    }
-    if (characterData.height) {
-      html += `<div class="summary-row"><span class="summary-label">Height</span><span class="summary-value">${window.escapeHtml(characterData.height)}</span></div>`;
-    }
-    if (characterData.weight) {
-      html += `<div class="summary-row"><span class="summary-label">Weight</span><span class="summary-value">${window.escapeHtml(characterData.weight)}</span></div>`;
-    }
-    if (characterData.worships) {
-      html += `<div class="summary-row"><span class="summary-label">Worships</span><span class="summary-value">${window.escapeHtml(characterData.worships)}</span></div>`;
-    }
+    // Starting resources summary
     {
       const baseClim = characterData.clim ?? 3000;
       const hasRichParents = characterData.breakthroughs?.some(b => b?.name?.includes('Rich Parents'));
       const richBonus = hasRichParents ? 3000 : 0;
       const totalClim = baseClim + richBonus;
-      html += `<div class="summary-row"><span class="summary-label">Starting Clim</span><span class="summary-value">${baseClim}${hasRichParents ? ' <span style="font-size:0.75rem; color: var(--accent-gold-light);">(+3000 Rich Parents)</span>' : ''}</span></div>`;
+      html += `<div class="summary-section">
+        <h3>Starting Resources</h3>
+        <div class="summary-row"><span class="summary-label">Starting Clim</span><span class="summary-value">${baseClim}${hasRichParents ? ' <span style="font-size:0.75rem; color: var(--accent-gold-light);">(+3000 Rich Parents)</span>' : ''}</span></div>`;
       if (hasRichParents) {
         html += `<div class="summary-row"><span class="summary-label">Total Clim Available</span><span class="summary-value" style="color: var(--accent-gold-light);">${totalClim}</span></div>`;
       }
+      html += `<div class="summary-row"><span class="summary-label">Starting EXP</span><span class="summary-value">${(characterData.exp ?? 1000) + (characterData.humanExpBonus ?? 0)}</span></div>`;
+      html += `<div class="summary-row"><span class="summary-label">Starting IP</span><span class="summary-value">${characterData.ip ?? 3}</span></div>`;
+      html += `</div>`;
     }
-    html += `<div class="summary-row"><span class="summary-label">Starting EXP</span><span class="summary-value">${(characterData.exp ?? 1000) + (characterData.humanExpBonus ?? 0)}</span></div>`;
-    html += `<div class="summary-row"><span class="summary-label">Starting IP</span><span class="summary-value">${characterData.ip ?? 3}</span></div>`;
-
-    html += `</div>`;
 
     // Race & Class
     const isDemon = race && race.name === 'Demon';

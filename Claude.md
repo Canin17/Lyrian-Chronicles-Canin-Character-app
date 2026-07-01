@@ -62,48 +62,7 @@ StandAlone/
 
 ## Game Rules
 
-### Stats (Array-Based)
-- **Main** (4): POW, FOC, AGI, TOU — assign `(5,4,4,3)`
-- **Sub** (5): Fitness, Cunning, Reason, Awareness, Presence — assign `(5,4,3,2,1)`
-- Every value used exactly once — rearranging, not choosing
-
-### Race Stat Bonuses (Auto-Applied)
-| Race | Main | Sub |
-|------|------|-----|
-| Chimera | +1 TOU | +1 Awareness |
-| Demon | +1 POW | +1 Reason |
-| Fae | +1 AGI | +1 Cunning |
-| Youkai | +1 FOC | +1 Presence |
-| Human | +1 (choice) | +1 (choice) |
-
-### Derived Stats
-HP = 20 + (TOU × 10), Mana = 6 + POW, RP = 2 + AGI, Evasion = 7 + AGI, Dodge Eva = 20 + AGI, Potency = 11 + FOC, Damage = 5 + POW, Accuracy = FOC, Initiative = AGI, Save Bonus = TOU, Guard = TOU, Speed = 20
-
-### Classes
-- 174 classes, tiers 1–3, multi-class (IP to unlock, EXP to level 1–8)
-- L5 = Skills, L6 = Heart (+1 sub stat), L7 = Soul (+1 main stat), L8 = capstone
-- Spirit Core tracks unspent EXP from class leveling
-
-### Breakthroughs
-- Dual EXP: 300 starting pool (no Spirit Core) + main class EXP pool (adds to Spirit Core)
-- Categories: General, Racial, Class. Costs: 0–300+
-- Clause-based eligibility parser (race/class/mastered checks)
-- Can grant stat bonuses (stat training dropdowns in stats step) and proficiencies
-
-### Skills
-- 21 skills across 5 groups (Fitness: 2, Cunning: 3, Reason: 9, Awareness: 4, Presence: 3)
-- Base: 10 pts. Additional from race/class/breakthrough (per-source eligible lists)
-- Cap: 15 per skill. Expertise: 2 pts per investment
-
-### Equipment
-- 206 items: Artifice, Adventuring Essentials, Alchemy, Astra Relic, Crafting, Divine Arms, Equipment, Mount, Talisman
-- Burden: flat limit 10, over = Rooted. Items with burdenCost = 0 are free (backpacks, mounts, artifice limbs)
-- Clim budget: starting Clim (default 3000), "Rich Parents" breakthrough adds +3000
-
-### Resources
-- **Clim** — Starting currency (default 3000)
-- **EXP** — Class experience (default 1000)
-- **IP** — Interlude Points (default 3)
+https://rpg.angelssword.com/game/latest/rulebook
 
 ## Character Data Store
 

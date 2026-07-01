@@ -1035,9 +1035,9 @@ const BreakthroughScene = (function() {
       applyFilters();
     }
 
-    if (toggle) {
-      // Ensure default is ON
-      toggle.checked = true;
+    if (toggle && !toggle.dataset.btToggleBound) {
+      toggle.dataset.btToggleBound = '1';
+      // ponytail: don't override checked — state is managed by app.js (step 1)
       applyExpToggle();
       toggle.addEventListener('change', applyExpToggle);
     }

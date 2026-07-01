@@ -37,7 +37,7 @@
         <div class="nav-step active" data-step="0" role="listitem" aria-current="step">
           <div class="nav-step-icon">1</div>
           <div class="nav-step-info">
-            <span class="nav-step-name">Identity</span>
+            <span class="nav-step-name">Creation Settings</span>
           </div>
         </div>
         <div class="nav-step" data-step="1" role="listitem">
@@ -104,62 +104,13 @@
         </div>
       </div>
 
-      <!-- STEP 1: CHARACTER IDENTITY -->
-      <div id="step-identity" class="wizard-step" role="tabpanel" aria-label="Character Identity">
+      <!-- STEP 1: STARTING RESOURCES -->
+      <div id="step-identity" class="wizard-step" role="tabpanel" aria-label="Starting Resources">
         <div class="step-panel">
-          <h2>Character Identity</h2>
+          <h2>Starting Resources</h2>
           <div class="nav-buttons">
             <button class="btn-secondary" data-action="back">Back</button>
             <button class="btn-primary" data-action="next">Continue</button>
-          </div>
-          <div class="form-group">
-            <label for="char-name">Character Name</label>
-            <input type="text" id="char-name" placeholder="Enter your character's name..." maxlength="50" required>
-          </div>
-          <div class="form-group">
-            <label for="char-background">Background</label>
-            <textarea id="char-background" placeholder="A brief description of your character's origins and story..." rows="4"></textarea>
-          </div>
-
-          <!-- Identity extras -->
-          <div class="form-group">
-            <label for="char-gender">Gender</label>
-            <select id="char-gender">
-              <option value="">— Select —</option>
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="char-age">Age</label>
-            <input type="text" id="char-age" placeholder="e.g. 25" maxlength="10">
-          </div>
-          <div class="form-group">
-            <label for="char-height">Height</label>
-            <input type="text" id="char-height" placeholder="e.g. 5'10&quot;" maxlength="10">
-          </div>
-          <div class="form-group">
-            <label for="char-weight">Weight</label>
-            <input type="text" id="char-weight" placeholder="e.g. 160 lbs" maxlength="15">
-          </div>
-          <div class="form-group">
-            <label for="char-worships">Worships</label>
-            <select id="char-worships">
-              <option value="">— Select —</option>
-              <option value="Kari">Kari</option>
-              <option value="Heira">Heira</option>
-              <option value="Pandora">Pandora</option>
-              <option value="Makai">Makai</option>
-              <option value="Ayuzi Kirara">Ayuzi Kirara</option>
-              <option value="Eisen">Eisen</option>
-              <option value="Athena">Athena</option>
-              <option value="Clio">Clio</option>
-              <option value="Yggdrasil">Yggdrasil</option>
-              <option value="None">None</option>
-              <option value="Myself">Myself</option>
-              <option value="RNGesus">RNGesus</option>
-            </select>
           </div>
           <!-- Starting Resources Row -->
           <div class="identity-resources-row">
@@ -177,6 +128,11 @@
                 <button type="button" class="resource-btn" data-action="decrease" data-target="char-exp">−</button>
                 <input type="number" id="char-exp" value="1000" min="0" step="100">
                 <button type="button" class="resource-btn" data-action="increase" data-target="char-exp">+</button>
+              </div>
+              <!-- ponytail: BT Starting EXP toggle — inline with EXP row -->
+              <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.35rem;">
+                <label class="bt-stat-toggle active" for="bt-exp-toggle"><input type="checkbox" id="bt-exp-toggle" checked><span class="bt-toggle-slider"></span></label>
+                <span style="font-size:0.85rem;color:var(--text-primary);">Include 300 Starting EXP for Breakthroughs</span>
               </div>
             </div>
             <div class="resource-control">
@@ -379,7 +335,6 @@
               <div class="bt-selected-header">
                 <h3>SELECTED BREAKTHROUGHS</h3>
                 <div class="bt-selected-stats">
-                  <label class="bt-stat-toggle" for="bt-exp-toggle"><input type="checkbox" id="bt-exp-toggle" checked><span class="bt-toggle-slider"></span></label>
                   <span class="bt-exp-remaining-label" id="bt-exp-remaining-label">Starting EXP:</span>
                   <span class="bt-exp-remaining" id="bt-exp-remaining" title="Starting EXP pool (300, does not add to Spirit Core)">300 / 300 EXP</span>
                   <span class="bt-main-exp-remaining" id="bt-main-exp-remaining" title="Main class EXP pool (adds to Spirit Core when used)">0 / 0 EXP</span>
@@ -689,6 +644,54 @@
             <button class="btn-primary" id="btn-export-excel">Mirane Character Sheet V10.3.1 <span class="excel-icon" aria-hidden="true">X</span></button>
             <button class="btn-primary" id="btn-new-char">New Character</button>
             <button class="btn-primary" id="btn-combat">⚔️ Enter Combat</button>
+          </div>
+          <!-- Flavor fields (moved from Identity) -->
+          <div class="form-group">
+            <label for="char-name">Character Name</label>
+            <input type="text" id="char-name" placeholder="Enter your character's name..." maxlength="50" required>
+          </div>
+          <div class="form-group">
+            <label for="char-background">Background</label>
+            <textarea id="char-background" placeholder="A brief description of your character's origins and story..." rows="4"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="char-gender">Gender</label>
+            <select id="char-gender">
+              <option value="">— Select —</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="char-age">Age</label>
+            <input type="text" id="char-age" placeholder="e.g. 25" maxlength="10">
+          </div>
+          <div class="form-group">
+            <label for="char-height">Height</label>
+            <input type="text" id="char-height" placeholder="e.g. 5'10&quot;" maxlength="10">
+          </div>
+          <div class="form-group">
+            <label for="char-weight">Weight</label>
+            <input type="text" id="char-weight" placeholder="e.g. 160 lbs" maxlength="15">
+          </div>
+          <div class="form-group">
+            <label for="char-worships">Worships</label>
+            <select id="char-worships">
+              <option value="">— Select —</option>
+              <option value="Kari">Kari</option>
+              <option value="Heira">Heira</option>
+              <option value="Pandora">Pandora</option>
+              <option value="Makai">Makai</option>
+              <option value="Ayuzi Kirara">Ayuzi Kirara</option>
+              <option value="Eisen">Eisen</option>
+              <option value="Athena">Athena</option>
+              <option value="Clio">Clio</option>
+              <option value="Yggdrasil">Yggdrasil</option>
+              <option value="None">None</option>
+              <option value="Myself">Myself</option>
+              <option value="RNGesus">RNGesus</option>
+            </select>
           </div>
           <div id="summary-content">
             <!-- Filled by JS -->

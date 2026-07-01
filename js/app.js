@@ -102,7 +102,7 @@
   // WIZARD STEP DEFINITIONS
   // ===========================================================================
   const STEPS = [
-    { id: 'step-identity', name: 'Identity' },
+    { id: 'step-identity', name: 'Creation Settings' },
     { id: 'step-race', name: 'Race' },
     { id: 'step-class', name: 'Class' },
     { id: 'step-breakthroughs', name: 'Breakthroughs' },
@@ -513,16 +513,10 @@
   function saveCurrentStepData() {
     switch (currentStep) {
       case 0: // Identity
-        character.name = (document.getElementById('char-name')?.value || '').trim().slice(0, 50);
-        character.background = (document.getElementById('char-background')?.value || '').trim();
-        character.gender = (document.getElementById('char-gender')?.value || '').trim().slice(0, 30);
-        character.age = (document.getElementById('char-age')?.value || '').trim().slice(0, 10);
-        character.height = (document.getElementById('char-height')?.value || '').trim().slice(0, 10);
-        character.weight = (document.getElementById('char-weight')?.value || '').trim().slice(0, 15);
-        character.worships = (document.getElementById('char-worships')?.value || '').trim().slice(0, 50);
         character.clim = parseInt(document.getElementById('char-clim')?.value) || 3000;
         character.exp = parseInt(document.getElementById('char-exp')?.value) || 1000;
         character.ip = parseInt(document.getElementById('char-ip')?.value) || 3;
+        character.btExpToggleEnabled = document.getElementById('bt-exp-toggle')?.checked ?? true;
         break;
       case 1: // Race
         const raceSel = RaceSelectScene.getSelection();
@@ -569,6 +563,15 @@
         character.climSpent = EquipmentScene.getClimSpent();
         character.remainingClim = EquipmentScene.getRemainingClim();
         break;
+      case 7: // Summary — flavor fields
+        character.name = (document.getElementById('char-name')?.value || '').trim().slice(0, 50);
+        character.background = (document.getElementById('char-background')?.value || '').trim();
+        character.gender = (document.getElementById('char-gender')?.value || '').trim().slice(0, 30);
+        character.age = (document.getElementById('char-age')?.value || '').trim().slice(0, 10);
+        character.height = (document.getElementById('char-height')?.value || '').trim().slice(0, 10);
+        character.weight = (document.getElementById('char-weight')?.value || '').trim().slice(0, 15);
+        character.worships = (document.getElementById('char-worships')?.value || '').trim().slice(0, 50);
+        break;
     }
 
     // Auto-save to localStorage after every step save
@@ -581,30 +584,17 @@
   function loadStepData(stepIndex) {
     switch (stepIndex) {
       case 0: // Identity
-        if (character.name) {
-          const nameEl = document.getElementById('char-name');
-          if (nameEl) nameEl.value = character.name;
-        }
-        if (character.background) {
-          const bgEl = document.getElementById('char-background');
-          if (bgEl) bgEl.value = character.background;
-        }
-        const genderEl = document.getElementById('char-gender');
-        if (genderEl) genderEl.value = character.gender || '';
-        const ageEl = document.getElementById('char-age');
-        if (ageEl) ageEl.value = character.age || '';
-        const heightEl = document.getElementById('char-height');
-        if (heightEl) heightEl.value = character.height || '';
-        const weightEl = document.getElementById('char-weight');
-        if (weightEl) weightEl.value = character.weight || '';
-        const worshipsEl = document.getElementById('char-worships');
-        if (worshipsEl) worshipsEl.value = character.worships || '';
         const climEl = document.getElementById('char-clim');
         if (climEl) climEl.value = character.clim ?? 3000;
         const expEl = document.getElementById('char-exp');
         if (expEl) expEl.value = character.exp ?? 1000;
         const ipEl = document.getElementById('char-ip');
         if (ipEl) ipEl.value = character.ip ?? 3;
+        const btToggle = document.getElementById('bt-exp-toggle');
+        if (btToggle) {
+          btToggle.checked = character.btExpToggleEnabled ?? true;
+          btToggle.parentElement.classList.toggle('active', btToggle.checked);
+        }
         break;
       case 1: // Race - restore saved selection
         // Restore race/ancestry selection
@@ -693,6 +683,21 @@
         }
         break;
       case 7: // Summary
+        // Load flavor fields into form inputs
+        const nameEl = document.getElementById('char-name');
+        if (nameEl) nameEl.value = character.name || '';
+        const bgEl = document.getElementById('char-background');
+        if (bgEl) bgEl.value = character.background || '';
+        const genderEl = document.getElementById('char-gender');
+        if (genderEl) genderEl.value = character.gender || '';
+        const ageEl = document.getElementById('char-age');
+        if (ageEl) ageEl.value = character.age || '';
+        const heightEl = document.getElementById('char-height');
+        if (heightEl) heightEl.value = character.height || '';
+        const weightEl = document.getElementById('char-weight');
+        if (weightEl) weightEl.value = character.weight || '';
+        const worshipsEl = document.getElementById('char-worships');
+        if (worshipsEl) worshipsEl.value = character.worships || '';
         SummaryScene.render(character);
         break;
     }
@@ -725,6 +730,7 @@
     character.clim = 3000;
     character.exp = 1000;
     character.ip = 3;
+    character.btExpToggleEnabled = true;
     character.mirane = true;
     character.oldArmorCalc = false;
     character.spiritCore = 0;
