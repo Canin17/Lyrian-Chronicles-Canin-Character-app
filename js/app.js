@@ -541,6 +541,8 @@
         character.statBonusChoices = btData.statBonusChoices || {};
         character.breakthroughStatBonuses = BreakthroughScene.getStatBonuses();
         character.breakthroughProficiencies = BreakthroughScene.getBreakthroughProficiencies();
+        // Hybrid subrace choices
+        character.hybridSubraceChoices = BreakthroughScene.getHybridSubraceChoices ? BreakthroughScene.getHybridSubraceChoices() : {};
         // Hybrid breakthroughs remove Human's +100 EXP
         const HYBRID_IDS = new Set(['69ea4f7a6be32fced492fb56', '69ea4f7a6be32fced492fb57']); // Human-Chimera, Faerie-Chimera
         if (character.breakthroughs.some(b => HYBRID_IDS.has(b?.id))) {

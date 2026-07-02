@@ -173,7 +173,9 @@ const ClassSelectScene = (function() {
       race: charData.race,
       ancestry: charData.ancestry?.name,
       ancestryId: charData.ancestry?.ancestryId,
-      btCount: (charData.breakthroughs || []).length
+      btCount: (charData.breakthroughs || []).length,
+      // ponytail: equippedClasses drives mastery checks — must bust cache on level change
+      equipped: equippedClasses.map(ec => `${ec.class.name}:${ec.level}`)
     });
     if (fp !== charDataFingerprint) {
       eligibilityCache.clear();

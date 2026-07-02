@@ -33,7 +33,7 @@ const RACE_DATA = [
     "id": "69ea4f7b6be32fced492ff91",
     "name": "Human",
     "description": "The origin of humans is not quite clear-- a race of generally homogenous characteristics in comparison to the other races.&nbsp; Despite their similarity, humans are varied in nature and have adapted to many different environments.&nbsp; Humans are quick learners and quick to adapt, a haste that is unseen in some of the other races, a byproduct of their generally shorter lifespans.For a reason still unknown, the humans are blessed by providence-- the great power of divine light and are born with a special attunement for it regardless of their religion.Size: Medium",
-    "attributes": "You gain +1 in the main stat of your choice and +1 in the substat of your choice.",
+    "attributes": "You gain +1 in the main stat of your choice and +1 in the substat of your choice., Human Adaptability, Divine Providence",
     "proficiencies": ["Common", "Language (1 choice)", "Common Weapon (1)"],
     "image": "https://cdn.angelssword.com/ttrpg/assets/aa638108-9b8e-48ad-9e58-c7451e054c42-Sword_Saint_New_raw.sm.webp"
   },

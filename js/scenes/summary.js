@@ -7,6 +7,26 @@
 
 /* exported SummaryScene */
 const SummaryScene = (function() {
+  // ponytail: hybrid subrace row — returns '' when no hybrid active
+  function renderHybridSubrace(characterData) {
+    const choices = characterData.hybridSubraceChoices || {};
+    const entries = Object.entries(choices);
+    if (entries.length === 0) return '';
+
+    let rows = '';
+    for (const [key, anc] of entries) {
+      const [btId] = key.split(':');
+      const bt = (characterData.breakthroughs || []).find(b => b.id === btId);
+      const btName = bt ? window.escapeHtml(bt.name) : 'Hybrid';
+      const traits = anc.attributes ? window.escapeHtml(anc.attributes) : '';
+      rows += `<div class="summary-row">
+        <span class="summary-label">${btName}</span>
+        <span class="summary-value">${window.escapeHtml(anc.name)}${traits ? ` <span style="color:var(--text-muted);font-size:.8em;">(${traits})</span>` : ''}</span>
+      </div>`;
+    }
+    return rows;
+  }
+
   function render(characterData) {
     const container = document.getElementById('summary-content');
     if (!container || !characterData) return;
@@ -50,6 +70,7 @@ const SummaryScene = (function() {
         <span class="summary-label">Class</span>
         <span class="summary-value">${cls && cls.all && cls.all.length > 0 ? cls.all.map(c => `${window.escapeHtml(c.class.name)} (T${c.class.tier}, ${window.escapeHtml(c.class.role)})`).join(', ') : (cls && cls.primary ? `${window.escapeHtml(cls.primary.class.name)} (Tier ${cls.primary.class.tier}, ${window.escapeHtml(cls.primary.class.role)})` : 'None')}</span>
       </div>
+      ${renderHybridSubrace(characterData)}
     </div>`;
 
     // Main Stats
@@ -149,10 +170,18 @@ const SummaryScene = (function() {
     if (characterData.breakthroughs && characterData.breakthroughs.length > 0) {
       html += `<div class="summary-section">
         <h3>Breakthroughs</h3>`;
-      characterData.breakthroughs.forEach(bt => {
+      characterData.breakthroughs.forEach((bt, idx) => {
+        // Check for hybrid subrace
+        const hybridChoices = characterData.hybridSubraceChoices || {};
+        const hybridKey = `${bt.id}:${idx}`;
+        const hybridAnc = hybridChoices[hybridKey];
+        const hybridNote = hybridAnc ? ` → <strong>${window.escapeHtml(hybridAnc.name)}</strong>` : '';
+        // Show effect description from bt.effects[0]
+        const effectText = (Array.isArray(bt.effects) && bt.effects[0]?.description)
+          ? `<div style="padding-left:1rem;font-size:.8rem;color:var(--text-muted);margin-top:2px;">${window.escapeHtml(bt.effects[0].description)}</div>` : '';
         html += `<div style="padding-left: 1rem; font-size: 0.85rem; color: var(--text-primary);">
-          ${window.escapeHtml(bt.name)} <span style="color: var(--text-muted);">(${bt.cost || 0} EXP)</span>
-        </div>`;
+          ${window.escapeHtml(bt.name)} <span style="color: var(--text-muted);">(${bt.cost || 0} EXP)</span>${hybridNote}
+        </div>${effectText}`;
       });
       html += `</div>`;
     }
@@ -225,10 +254,21 @@ const SummaryScene = (function() {
     // Race & Ancestry Traits + Proficiencies
     {
       const descDb = typeof TRAIT_DESCRIPTIONS !== 'object' ? {} : TRAIT_DESCRIPTIONS;
-      // Race traits
+
+      // ponytail: check for active hybrid breakthroughs
+      const HYBRID_IDS = new Set(['69ea4f7a6be32fced492fb56', '69ea4f7a6be32fced492fb57']);
+      const hasHumanChimera = (characterData.breakthroughs || []).some(b => b?.id === '69ea4f7a6be32fced492fb56');
+      const hasFaerieChimera = (characterData.breakthroughs || []).some(b => b?.id === '69ea4f7a6be32fced492fb57');
+
+      // Race traits (Human-Chimera removes Human Adaptability)
       if (race?.attributes) {
+        let raceAttrs = race.attributes;
+        if (hasHumanChimera) {
+          // Human-Chimera: "You do not get... human adaptability"
+          raceAttrs += ' <span style="color:var(--accent-red,#ff6b6b);font-size:.8em;">(Human Adaptability removed by Hybrid)</span>';
+        }
         html += `<div class="summary-section"><h3>Race Traits</h3>`;
-        html += `<div style="padding-left:1rem;font-size:0.85rem;color:var(--text-primary);">${window.escapeHtml(race.attributes)}</div>`;
+        html += `<div style="padding-left:1rem;font-size:0.85rem;color:var(--text-primary);">${window.escapeHtml(raceAttrs)}</div>`;
         html += `</div>`;
       }
       // Ancestry traits
@@ -243,10 +283,18 @@ const SummaryScene = (function() {
           html += `</div>`;
         }
       }
-      // Race + Ancestry proficiencies
+      // Race + Ancestry proficiencies (Faerie-Chimera adds language from other race)
       const allRaceProfs = new Set();
       (race?.proficiencies || []).forEach(p => allRaceProfs.add(p));
       (ancestry?.proficiencies || []).forEach(p => allRaceProfs.add(p));
+      // Faerie-Chimera: "you do get the language from the other race"
+      if (hasFaerieChimera) {
+        if (race?.name === 'Chimera') {
+          allRaceProfs.add('Fae Tongue');
+        } else if (race?.name === 'Fae') {
+          allRaceProfs.add('Chimera Dialect');
+        }
+      }
       if (allRaceProfs.size) {
         html += `<div class="summary-section"><h3>Race Proficiencies</h3><div style="display:flex;flex-wrap:wrap;gap:0.5rem;">`;
         allRaceProfs.forEach(p => {
@@ -397,6 +445,37 @@ const SummaryScene = (function() {
     const allAbilities = [];
     const writtenAbilities = new Set();
 
+    // ponytail: check for active hybrid breakthroughs
+    const HYBRID_IDS_SUMMARY = new Set(['69ea4f7a6be32fced492fb56', '69ea4f7a6be32fced492fb57']);
+    const hasHumanChimeraSummary = (characterData.breakthroughs || []).some(b => b?.id === '69ea4f7a6be32fced492fb56');
+
+    // Race traits (from race attributes string)
+    if (characterData.race && characterData.race.attributes) {
+      const descDb = typeof TRAIT_DESCRIPTIONS !== 'undefined' ? TRAIT_DESCRIPTIONS : {};
+      const traits = typeof characterData.race.attributes === 'string'
+        ? characterData.race.attributes.split(',').map(t => t.trim()).filter(Boolean)
+        : [];
+      traits.forEach(trait => {
+        // Human-Chimera: "You do not get... human adaptability"
+        if (hasHumanChimeraSummary && trait === 'Human Adaptability') return;
+        if (writtenAbilities.has(trait)) return;
+        writtenAbilities.add(trait);
+        allAbilities.push({
+          name: trait,
+          level: 0,
+          class: 'Race',
+          cost: '',
+          keywords: [],
+          range: '',
+          requirement: '',
+          type: 'passive',
+          description: descDb[trait] || '',
+          keyBenefits: [],
+          proficiencies: []
+        });
+      });
+    }
+
     // Ancestry traits (from ancestry attributes string)
     if (characterData.ancestry && characterData.ancestry.attributes) {
       const descDb = typeof TRAIT_DESCRIPTIONS !== 'undefined' ? TRAIT_DESCRIPTIONS : {};
@@ -421,6 +500,53 @@ const SummaryScene = (function() {
         });
       });
     }
+
+    // Hybrid subrace traits (with High Fae special case)
+    const hybridChoices = characterData.hybridSubraceChoices || {};
+    Object.values(hybridChoices).forEach(anc => {
+      if (!anc || !anc.attributes) return;
+      const descDb = typeof TRAIT_DESCRIPTIONS !== 'undefined' ? TRAIT_DESCRIPTIONS : {};
+      const traits = typeof anc.attributes === 'string'
+        ? anc.attributes.split(',').map(t => t.trim()).filter(Boolean)
+        : [];
+      traits.forEach(trait => {
+        // Faerie-Chimera: "If you pick High Fae as your subrace, you gain Fae Flash instead of Fae Flash II"
+        if (anc.name === 'High Fae' && trait === 'Faerie Flash II') {
+          // Replace with lower-tier Faerie Flash
+          if (writtenAbilities.has('Faerie Flash')) return;
+          writtenAbilities.add('Faerie Flash');
+          allAbilities.push({
+            name: 'Faerie Flash',
+            level: 0,
+            class: `Hybrid (${anc.name})`,
+            cost: '',
+            keywords: [],
+            range: '',
+            requirement: '',
+            type: 'passive',
+            description: descDb['Faerie Flash'] || '',
+            keyBenefits: [],
+            proficiencies: []
+          });
+          return;
+        }
+        if (writtenAbilities.has(trait)) return;
+        writtenAbilities.add(trait);
+        allAbilities.push({
+          name: trait,
+          level: 0,
+          class: `Hybrid (${anc.name})`,
+          cost: '',
+          keywords: [],
+          range: '',
+          requirement: '',
+          type: 'passive',
+          description: descDb[trait] || '',
+          keyBenefits: [],
+          proficiencies: []
+        });
+      });
+    });
 
     classes.forEach(clsEntry => {
       const classObj = clsEntry.class || {};

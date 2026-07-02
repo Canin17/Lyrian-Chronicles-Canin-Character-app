@@ -438,9 +438,17 @@ const BreakthroughScene = (function() {
         }
       }
 
+      // Hybrid subrace: show chosen subrace
+      let hybridHtml = '';
+      const hybridAnc = hybridSubraceChoices[key];
+      if (hybridAnc) {
+        hybridHtml = `<span class="bt-element-badge" style="background:rgba(212,160,23,.15);border-color:var(--accent-gold,#d4a017)">🐾 ${hybridAnc.name}</span>`;
+      }
+
       item.innerHTML = `
         <span class="bt-selected-name">${window.escapeHtml(bt.name)}</span>
         ${elementHtml}
+        ${hybridHtml}
         <span class="bt-selected-cost">${effectiveCost} EXP</span>
         ${statPickerHtml}
         <button class="bt-remove-btn" title="Remove">✕</button>
@@ -470,9 +478,12 @@ const BreakthroughScene = (function() {
       // Also remove the stat choice if it had one
       const key = btInstanceKey(bt, idx);
       delete statBonusChoices[key];
+      // Also remove hybrid subrace choice
+      delete hybridSubraceChoices[key];
       selectedBreakthroughs.splice(idx, 1);
       // Re-key choices after splice (indices shifted)
       rekeyStatBonusChoices();
+      rekeyHybridChoices();
       renderSelectedList();
       updateOverviewStats();
       applyFilters();
@@ -533,6 +544,24 @@ const BreakthroughScene = (function() {
         const [oldId] = oldKey.split(':');
         if (oldId === bt.id && !statBonusChoices[key]) {
           statBonusChoices[key] = val;
+          break;
+        }
+      }
+    });
+  }
+
+  /**
+   * Rebuild hybridSubraceChoices keys after array mutations (splice).
+   */
+  function rekeyHybridChoices() {
+    const oldChoices = { ...hybridSubraceChoices };
+    hybridSubraceChoices = {};
+    selectedBreakthroughs.forEach((bt, i) => {
+      const key = btInstanceKey(bt, i);
+      for (const [oldKey, val] of Object.entries(oldChoices)) {
+        const [oldId] = oldKey.split(':');
+        if (oldId === bt.id && !hybridSubraceChoices[key]) {
+          hybridSubraceChoices[key] = val;
           break;
         }
       }
@@ -885,6 +914,58 @@ const BreakthroughScene = (function() {
   // ponytail: Hybrid IDs — removing Human +100 EXP bonus
   const HYBRID_IDS = new Set(['69ea4f7a6be32fced492fb56', '69ea4f7a6be32fced492fb57']);
 
+  // Hybrid subrace choices: btInstanceKey → ancestry object
+  let hybridSubraceChoices = {};
+
+  /**
+   * Check if a breakthrough is a hybrid race type requiring subrace selection.
+   */
+  function isHybridBreakthrough(bt) {
+    return HYBRID_IDS.has(bt.id);
+  }
+
+  /**
+   * Get the list of subraces available for a hybrid breakthrough.
+   * Human-Chimera: Chimera subraces
+   * Faerie-Chimera: if main race is Chimera → Fae subraces; if Fae → Chimera subraces
+   */
+  function getHybridSubraces(bt) {
+    const charData = window.getCharacterData ? window.getCharacterData() : {};
+    const raceName = charData.race?.name;
+
+    if (bt.id === '69ea4f7a6be32fced492fb56') {
+      // Human-Chimera Hybrid: pick Chimera subrace
+      return ANCESTRY_MAP['Chimera'] || [];
+    }
+    if (bt.id === '69ea4f7a6be32fced492fb57') {
+      // Faerie-Chimera Hybrid
+      if (raceName === 'Chimera') return ANCESTRY_MAP['Fae'] || [];
+      if (raceName === 'Fae') return ANCESTRY_MAP['Chimera'] || [];
+    }
+    return [];
+  }
+
+  /**
+   * Get the modal title/description for a hybrid breakthrough.
+   */
+  function getHybridModalText(bt) {
+    const charData = window.getCharacterData ? window.getCharacterData() : {};
+    const raceName = charData.race?.name || '';
+
+    if (bt.id === '69ea4f7a6be32fced492fb56') {
+      return { title: 'Human-Chimera Hybrid', desc: 'Choose a Chimera subrace to gain its features:' };
+    }
+    if (bt.id === '69ea4f7a6be32fced492fb57') {
+      if (raceName === 'Chimera') {
+        return { title: 'Faerie-Chimera Hybrid', desc: 'Choose a Fae subrace (you keep Chimera base traits):' };
+      }
+      if (raceName === 'Fae') {
+        return { title: 'Faerie-Chimera Hybrid', desc: 'Choose a Chimera subrace (you keep Fae base traits):' };
+      }
+    }
+    return { title: bt.name, desc: 'Choose a subrace:' };
+  }
+
   // Elemental Affinity — element choices
   const ELEMENTAL_AFFINITY_ID = '69ea4f7a6be32fced492fb76';
   const ELEMENTS = [
@@ -923,6 +1004,11 @@ const BreakthroughScene = (function() {
       // Elemental Affinity: show modal for element choice
       if (isElementalAffinity(bt)) {
         showElementalModal(bt);
+        return;
+      }
+      // Hybrid race: show modal for subrace choice
+      if (isHybridBreakthrough(bt)) {
+        showHybridModal(bt);
         return;
       }
       // Select
@@ -992,6 +1078,109 @@ const BreakthroughScene = (function() {
     if (overlay) {
       overlay.addEventListener('click', (e) => {
         if (e.target === overlay) hideElementalModal();
+      });
+    }
+  }
+
+  // ===========================================================================
+  // HYBRID SUBRACE MODAL
+  // ===========================================================================
+  let pendingHybridBt = null; // BT waiting for subrace selection
+
+  function showHybridModal(bt) {
+    const modal = document.getElementById('hybrid-modal');
+    const grid = document.getElementById('hybrid-subrace-grid');
+    const titleEl = document.getElementById('hybrid-modal-title');
+    const descEl = document.getElementById('hybrid-modal-desc');
+    if (!modal || !grid) return;
+
+    pendingHybridBt = bt;
+    const text = getHybridModalText(bt);
+    titleEl.textContent = text.title;
+    descEl.textContent = text.desc;
+
+    grid.innerHTML = '';
+    const subraces = getHybridSubraces(bt);
+    if (subraces.length === 0) {
+      grid.innerHTML = '<p class="hint-text">No subraces available for this hybrid.</p>';
+    } else {
+      subraces.forEach(anc => {
+        const card = document.createElement('div');
+        card.className = 'hybrid-subrace-card';
+        card.dataset.ancestry = anc.ancestryId;
+
+        // Image or fallback
+        if (anc.image) {
+          const img = document.createElement('img');
+          img.className = 'hybrid-subrace-img';
+          img.alt = anc.name;
+          img.src = anc.image;
+          img.onerror = () => {
+            img.className = 'hybrid-subrace-img no-image';
+            img.removeAttribute('src');
+            img.textContent = anc.name.charAt(0);
+          };
+          card.appendChild(img);
+        } else {
+          const fallback = document.createElement('div');
+          fallback.className = 'hybrid-subrace-img no-image';
+          fallback.textContent = anc.name.charAt(0);
+          card.appendChild(fallback);
+        }
+
+        // Overlay with name
+        const overlay = document.createElement('div');
+        overlay.className = 'hybrid-subrace-overlay';
+        const name = document.createElement('h4');
+        name.className = 'hybrid-subrace-name';
+        name.textContent = anc.name;
+        overlay.appendChild(name);
+        card.appendChild(overlay);
+
+        card.addEventListener('click', () => {
+          selectHybridSubrace(anc);
+        });
+
+        grid.appendChild(card);
+      });
+    }
+
+    modal.style.display = 'flex';
+  }
+
+  function hideHybridModal() {
+    const modal = document.getElementById('hybrid-modal');
+    if (modal) modal.style.display = 'none';
+    pendingHybridBt = null;
+  }
+
+  function selectHybridSubrace(anc) {
+    if (!pendingHybridBt) return;
+    const bt = pendingHybridBt;
+
+    // Add breakthrough to selection
+    selectedBreakthroughs.push(bt);
+    const newIdx = selectedBreakthroughs.length - 1;
+    const newKey = btInstanceKey(bt, newIdx);
+
+    // Store the chosen subrace
+    hybridSubraceChoices[newKey] = anc;
+
+    hideHybridModal();
+    renderSelectedList();
+    updateOverviewStats();
+    applyFilters();
+  }
+
+  function initHybridModal() {
+    const closeBtn = document.getElementById('hybrid-modal-close');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', hideHybridModal);
+    }
+    const overlay = document.getElementById('hybrid-modal');
+    if (overlay) {
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) hideHybridModal();
       });
     }
   }
@@ -1130,6 +1319,7 @@ const BreakthroughScene = (function() {
     applyFilters();
     initExpToggle();
     initElementalModal();
+    initHybridModal();
   }
 
   // Refresh the grid when returning to this step after changing class/race
@@ -1158,7 +1348,8 @@ const BreakthroughScene = (function() {
   function getSelection() {
     return {
       breakthroughs: structuredClone(selectedBreakthroughs),
-      statBonusChoices: getStatBonusChoices()
+      statBonusChoices: getStatBonusChoices(),
+      hybridSubraceChoices: structuredClone(hybridSubraceChoices)
     };
   }
 
@@ -1169,9 +1360,10 @@ const BreakthroughScene = (function() {
   function restoreState(savedData) {
     if (!savedData) return;
 
-    // Support both new shape { breakthroughs, statBonusChoices } and old shape []
+    // Support both new shape { breakthroughs, statBonusChoices, hybridSubraceChoices } and old shape []
     const savedBreakthroughs = Array.isArray(savedData) ? savedData : (savedData.breakthroughs || []);
     const savedChoices = savedData.statBonusChoices || {};
+    const savedHybrid = savedData.hybridSubraceChoices || {};
 
     selectedBreakthroughs = [];
     savedBreakthroughs.forEach(btData => {
@@ -1187,6 +1379,12 @@ const BreakthroughScene = (function() {
     // Restore stat bonus choices
     restoreStatBonusChoices(savedChoices);
 
+    // Restore hybrid subrace choices
+    hybridSubraceChoices = {};
+    Object.keys(savedHybrid).forEach(key => {
+      hybridSubraceChoices[key] = savedHybrid[key];
+    });
+
     renderSelectedList();
     applyFilters();
   }
@@ -1194,6 +1392,7 @@ const BreakthroughScene = (function() {
   function reset() {
     selectedBreakthroughs = [];
     statBonusChoices = {};
+    hybridSubraceChoices = {};
     renderSelectedList();
     hideBreakthroughPreview();
     // Reset filter button guards so re-init can re-bind
@@ -1259,5 +1458,13 @@ const BreakthroughScene = (function() {
     return elements;
   }
 
-  return { init, getSelection, reset, toggleBreakthrough, refresh, restoreState, setMainExpPool, getExpFromMainPool, getCurrentSpiritCore, getStatBonuses, getBreakthroughProficiencies, handleStatChoiceChange, computeBreakthroughEffects, getStatTrainingItems, getSelectedElements };
+  /**
+   * Get hybrid subrace choices for display/effects.
+   * Returns { [btInstanceKey]: ancestry_object }
+   */
+  function getHybridSubraceChoices() {
+    return structuredClone(hybridSubraceChoices);
+  }
+
+  return { init, getSelection, reset, toggleBreakthrough, refresh, restoreState, setMainExpPool, getExpFromMainPool, getCurrentSpiritCore, getStatBonuses, getBreakthroughProficiencies, handleStatChoiceChange, computeBreakthroughEffects, getStatTrainingItems, getSelectedElements, getHybridSubraceChoices };
 })();
