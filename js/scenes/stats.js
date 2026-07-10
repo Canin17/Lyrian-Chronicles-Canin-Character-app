@@ -350,7 +350,7 @@ const StatsScene = (function() {
       finalStats[k] = (subAssignments[k] != null ? subAssignments[k] : 0) + (bonuses[k] || 0) + (breakthroughBonuses[k] || 0) + (classBonuses[k] || 0);
     });
 
-    const derived = calculateDerivedStats(finalStats);
+    const derived = calculateDerivedStats(finalStats, null);
 
     const map = {
       'derived-hp': derived.hp,

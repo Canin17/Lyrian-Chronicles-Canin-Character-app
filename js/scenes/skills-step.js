@@ -9,7 +9,8 @@
 /* exported SkillsStepScene */
 const SkillsStepScene = (function() {
   let skillGroups = [];
-  let availablePoints = { base: 10, race: 0, class: 0, breakthrough: 0, total: 10, eligibleSkills: {} };
+  let artisanSkillGroups = [];
+  let availablePoints = { base: 10, race: 0, class: 0, breakthrough: 0, artisan: 0, total: 10, artisanTotal: 0, eligibleSkills: {} };
   let characterData = null;
   let activeSource = null; // Currently selected source for spending
 
@@ -19,7 +20,8 @@ const SkillsStepScene = (function() {
     base: {},
     race: {},
     class: {},
-    breakthrough: {}
+    breakthrough: {},
+    artisan: {}
   };
 
   // Per-source expertise spending: how many skill points were spent on expertise
@@ -28,22 +30,31 @@ const SkillsStepScene = (function() {
     base: {},
     race: {},
     class: {},
-    breakthrough: {}
+    breakthrough: {},
+    artisan: {}
   };
+
+  // All sources (normal + artisan)
+  const ALL_SOURCES = ['base', 'race', 'class', 'breakthrough'];
+  const ALL_SOURCES_WITH_ARTISAN = [...ALL_SOURCES, 'artisan'];
 
   function init() {
     skillGroups = deepCloneSkillGroups();
+    artisanSkillGroups = deepCloneArtisanSkillGroups();
     availablePoints = {
       base: BASE_SKILL_POINTS,
       race: 0,
       class: 0,
       breakthrough: 0,
+      artisan: 0,
       total: BASE_SKILL_POINTS,
+      artisanTotal: 0,
       eligibleSkills: {}
     };
     clearSourceSpent();
     activeSource = 'base'; // Default to base source
     renderSkills();
+    renderArtisanSkills();
     updatePointsDisplay();
     renderPointsBreakdown();
   }
@@ -52,8 +63,8 @@ const SkillsStepScene = (function() {
    * Clear all source spending tracking
    */
   function clearSourceSpent() {
-    sourceSpent = { base: {}, race: {}, class: {}, breakthrough: {} };
-    sourceExpertiseSpent = { base: {}, race: {}, class: {}, breakthrough: {} };
+    sourceSpent = { base: {}, race: {}, class: {}, breakthrough: {}, artisan: {} };
+    sourceExpertiseSpent = { base: {}, race: {}, class: {}, breakthrough: {}, artisan: {} };
   }
 
   /**
@@ -86,7 +97,7 @@ const SkillsStepScene = (function() {
    */
   function getSkillTotalPoints(skillName) {
     let total = 0;
-    for (const source of ['base', 'race', 'class', 'breakthrough']) {
+    for (const source of ALL_SOURCES_WITH_ARTISAN) {
       total += getSourceSkillPoints(source, skillName);
     }
     return total;
@@ -113,6 +124,7 @@ const SkillsStepScene = (function() {
     // Don't reset activeSource here — keep user's selection
     renderPointsBreakdown();
     renderSkills();
+    renderArtisanSkills();
     updatePointsDisplay();
   }
 
@@ -128,6 +140,7 @@ const SkillsStepScene = (function() {
     }
     renderPointsBreakdown();
     renderSkills();
+    renderArtisanSkills();
     updatePointsDisplay();
   }
 
@@ -176,6 +189,19 @@ const SkillsStepScene = (function() {
       });
     }
 
+    if (availablePoints.artisan > 0) {
+      const artisanClassNames = (availablePoints.perClassArtisan || [])
+        .filter(pc => pc.unlocked)
+        .map(pc => pc.className)
+        .join(', ');
+      sources.push({
+        key: 'artisan',
+        label: `Artisan: ${artisanClassNames || 'Crafting'}`,
+        total: availablePoints.artisan,
+        hint: `${availablePoints.eligibleSkills?.artisan?.length || 0} artisan skill(s)`
+      });
+    }
+
     breakdown.innerHTML = sources.map(src => {
       const remaining = getSourceRemaining(src.key);
       const isActive = activeSource === src.key;
@@ -207,6 +233,268 @@ const SkillsStepScene = (function() {
     });
 
   }
+
+  /**
+   * Render the Artisan Skills section — separate group with its own
+   * point pool (artisan source). Only visible when artisan points > 0.
+   */
+  function renderArtisanSkills() {
+    const container = document.getElementById('artisan-skills-container');
+    if (!container) return;
+
+    // Hide if no artisan points available and no artisan skills allocated
+    const hasArtisanPoints = availablePoints.artisan > 0;
+    const hasArtisanAllocated = getSourceTotalSpent('artisan') > 0;
+    const showSection = hasArtisanPoints || hasArtisanAllocated;
+
+    container.style.display = showSection ? 'block' : 'none';
+    if (!showSection) {
+      container.innerHTML = '';
+      return;
+    }
+
+    container.innerHTML = '';
+
+    // Section header
+    const header = document.createElement('div');
+    header.className = 'artisan-section-header';
+    header.innerHTML = `
+      <div class="artisan-section-title">
+        <span>🔨 Artisan Skills</span>
+        <span class="artisan-section-note">(Cap: ${ARTISAN_SKILL_CAP} pts · Crafting class granted)</span>
+      </div>
+    `;
+    container.appendChild(header);
+
+    // Get eligible artisan skills for the active source
+    const eligibleSkills = activeSource === 'artisan'
+      ? (availablePoints.eligibleSkills?.artisan || [])
+      : [];
+    const activeRemaining = activeSource === 'artisan' ? getSourceRemaining('artisan') : 0;
+
+    artisanSkillGroups.forEach((group, groupIdx) => {
+      const groupEl = document.createElement('div');
+      groupEl.className = 'skill-group artisan-group';
+
+      groupEl.innerHTML = `
+        <div class="skill-group-header">
+          <span class="skill-group-name">${window.escapeHtml(group.name)}</span>
+          <span class="skill-group-substat">(${window.escapeHtml(group.subStat)})</span>
+        </div>
+      `;
+
+      group.skills.forEach((skill, skillIdx) => {
+        const skillItem = document.createElement('div');
+        skillItem.className = 'skill-item';
+
+        const totalPts = getSkillTotalPoints(skill.name);
+        const isEligible = eligibleSkills.includes(skill.name);
+        const effectiveCap = getEffectiveSkillCap(skill.name);
+        const currentExpPts = calculateExpertisePoints(skill.expertise || '');
+
+        // + button: enabled when artisan source is active and can spend
+        const canSpend = activeSource === 'artisan'
+          ? (totalPts < effectiveCap && activeRemaining > 0 && isEligible)
+          : false;
+        const canFlash = !canSpend && activeSource === 'artisan' && isEligible && totalPts < effectiveCap
+          ? (getSourceRemaining('artisan') <= 0)
+          : false;
+        const canIncrease = canSpend || canFlash;
+
+        // - button: enabled when skill has any points
+        const canDecrease = totalPts > 0;
+
+        // Build per-source breakdown tooltip
+        const sourceBreakdown = [];
+        for (const src of ALL_SOURCES_WITH_ARTISAN) {
+          const srcPts = getSourceSkillPoints(src, skill.name);
+          if (srcPts > 0) {
+            const srcLabel = { base: 'Base', race: 'Race', class: 'Class', bt: 'BT', artisan: 'Artisan' }[src] || src;
+            sourceBreakdown.push(`${srcLabel}: ${srcPts}`);
+          }
+        }
+        const tooltip = sourceBreakdown.length > 0 ? `title="${sourceBreakdown.join(', ')}"` : '';
+
+        // Expertise: parse into structured array (SAME as normal skills)
+        const expertises = parseExpertiseString(skill.expertise || '');
+        const suggestions = SKILL_EXPERTISE_EXAMPLES[skill.name] || [];
+        const canSpendExp = activeSource === 'artisan' && isEligible && activeRemaining > 0 && (currentExpPts + 2 <= effectiveCap);
+        const canFlashExp = !canSpendExp && activeSource === 'artisan' && isEligible && (currentExpPts + 2 <= effectiveCap)
+          ? (getSourceRemaining('artisan') <= 0)
+          : false;
+        const canAddExp = canSpendExp || canFlashExp;
+
+        skillItem.innerHTML = `
+          <div class="skill-row ${isEligible ? 'eligible' : ''} ${!isEligible && activeSource === 'artisan' ? 'ineligible' : ''}">
+            <span class="skill-name" ${tooltip}>${window.escapeHtml(skill.name)}</span>
+            <button class="skill-btn skill-decrease" ${canDecrease ? '' : 'disabled'}>-</button>
+            <span class="skill-points-display" ${tooltip}>${totalPts}</span>
+            <button class="skill-btn skill-increase" ${canIncrease ? '' : 'disabled'}>+</button>
+          </div>
+          <div class="skill-expertise-section">
+            <div class="skill-expertise-list">
+              ${expertises.map(exp => `
+                <div class="expertise-item" data-expertise-name="${window.escapeHtml(exp.name)}">
+                  <span class="expertise-item-name" title="${window.escapeHtml(exp.name)}">${window.escapeHtml(exp.name)}</span>
+                  <button class="expertise-btn expertise-decrease" data-group="${groupIdx}" data-skill="${skillIdx}" data-name="${window.escapeHtml(exp.name)}" ${exp.pts > 0 ? '' : 'disabled'}>-</button>
+                  <span class="expertise-item-value">+${exp.pts}</span>
+                  <button class="expertise-btn expertise-increase" data-group="${groupIdx}" data-skill="${skillIdx}" data-name="${window.escapeHtml(exp.name)}" ${(exp.pts + 2 > effectiveCap || !canAddExp) ? 'disabled' : ''}>+</button>
+                </div>
+              `).join('')}
+              <button class="btn-add-expertise" data-group="${groupIdx}" data-skill="${skillIdx}" ${canAddExp ? '' : 'disabled'}>+ Add Expertise</button>
+            </div>
+            <div class="add-expertise-form hidden" id="expertise-form-${groupIdx}-${skillIdx}">
+              <div class="add-expertise-input-row">
+                <input type="text" class="add-expertise-input" placeholder="Expertise name..." autocomplete="off" data-group="${groupIdx}" data-skill="${skillIdx}">
+                <button class="btn-confirm-expertise" data-group="${groupIdx}" data-skill="${skillIdx}">Add</button>
+                <button class="btn-cancel-expertise" aria-label="Cancel">&times;</button>
+              </div>
+              ${suggestions.length > 0 ? `
+                <div class="expertise-suggestions">
+                  ${suggestions.map(s => `<span class="suggestion-chip" data-group="${groupIdx}" data-skill="${skillIdx}" data-suggestion="${window.escapeHtml(s)}">${window.escapeHtml(s)}</span>`).join('')}
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        `;
+
+        // Bind main skill buttons
+        const decBtn = skillItem.querySelector('.skill-decrease');
+        const incBtn = skillItem.querySelector('.skill-increase');
+        decBtn.addEventListener('click', () => changeArtisanSkillPoints(groupIdx, skillIdx, -1));
+        incBtn.addEventListener('click', () => changeArtisanSkillPoints(groupIdx, skillIdx, 1));
+
+        // Bind expertise +/- buttons (SAME handlers as normal skills)
+        skillItem.querySelectorAll('.expertise-increase').forEach(btn => {
+          btn.addEventListener('click', () => {
+            changeExpertisePoints(parseInt(btn.dataset.group), parseInt(btn.dataset.skill), btn.dataset.name, 2, true);
+          });
+        });
+        skillItem.querySelectorAll('.expertise-decrease').forEach(btn => {
+          btn.addEventListener('click', () => {
+            changeExpertisePoints(parseInt(btn.dataset.group), parseInt(btn.dataset.skill), btn.dataset.name, -2, true);
+          });
+        });
+
+        // Bind "Add Expertise" button (SAME handler as normal skills)
+        skillItem.querySelectorAll('.btn-add-expertise').forEach(btn => {
+          btn.addEventListener('click', () => {
+            toggleAddExpertiseForm(parseInt(btn.dataset.group), parseInt(btn.dataset.skill));
+          });
+        });
+
+        // Bind suggestion chips (SAME handler as normal skills)
+        skillItem.querySelectorAll('.suggestion-chip').forEach(chip => {
+          chip.addEventListener('click', () => {
+            const form = document.getElementById(`expertise-form-${chip.dataset.group}-${chip.dataset.skill}`);
+            const input = form?.querySelector('.add-expertise-input');
+            if (input) {
+              input.value = chip.dataset.suggestion;
+              confirmAddExpertise(parseInt(chip.dataset.group), parseInt(chip.dataset.skill));
+            }
+          });
+        });
+
+        // Bind confirm/cancel buttons (SAME handlers as normal skills)
+        skillItem.querySelectorAll('.btn-confirm-expertise').forEach(btn => {
+          btn.addEventListener('click', () => {
+            confirmAddExpertise(parseInt(btn.dataset.group), parseInt(btn.dataset.skill));
+          });
+        });
+        skillItem.querySelectorAll('.btn-cancel-expertise').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const form = btn.closest('.add-expertise-form');
+            if (form) form.classList.add('hidden');
+          });
+        });
+
+        // Bind Enter key on input (SAME handler as normal skills)
+        const inputEl = skillItem.querySelector('.add-expertise-input');
+        if (inputEl) {
+          inputEl.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+              confirmAddExpertise(parseInt(e.target.dataset.group), parseInt(e.target.dataset.skill));
+            }
+          });
+        }
+
+        groupEl.appendChild(skillItem);
+      });
+
+      container.appendChild(groupEl);
+    });
+  }
+
+  /**
+   * Change artisan skill points (artisan source only).
+   */
+  function changeArtisanSkillPoints(groupIdx, skillIdx, delta) {
+    const skill = artisanSkillGroups[groupIdx].skills[skillIdx];
+    const effectiveCap = getEffectiveSkillCap(skill.name);
+    const currentTotal = getSkillTotalPoints(skill.name);
+
+    if (delta > 0) {
+      // Spending: must have artisan as active source
+      if (activeSource !== 'artisan') {
+        // Flash to guide user to select artisan source
+        flashAvailableSources();
+        return;
+      }
+
+      // Check skill is eligible for artisan source
+      const eligible = availablePoints.eligibleSkills?.artisan || [];
+      if (!eligible.includes(skill.name)) return;
+
+      // Check source has remaining points
+      if (getSourceRemaining('artisan') <= 0) {
+        flashAvailableSources();
+        return;
+      }
+
+      // Check cap
+      if (currentTotal >= effectiveCap) return;
+
+      // Allocate one point from artisan source
+      sourceSpent.artisan[skill.name] = (sourceSpent.artisan[skill.name] || 0) + 1;
+
+    } else if (delta < 0) {
+      // Removing: take from artisan source first, then other sources
+      const sources = ['artisan', ...ALL_SOURCES.reverse()];
+      let removed = false;
+      for (const src of sources) {
+        if (getSourceSkillPoints(src, skill.name) > 0) {
+          sourceSpent[src][skill.name]--;
+          if (sourceSpent[src][skill.name] === 0) {
+            delete sourceSpent[src][skill.name];
+          }
+          removed = true;
+          break;
+        }
+      }
+      if (!removed) return;
+    }
+
+    // Sync display values
+    syncArtisanSkillGroupsFromSources();
+
+    // Re-render artisan section
+    renderArtisanSkills();
+    updatePointsDisplay();
+    renderPointsBreakdown();
+  }
+
+  /**
+   * Sync artisan skill groups from source spending.
+   */
+  function syncArtisanSkillGroupsFromSources() {
+    artisanSkillGroups.forEach(group => {
+      group.skills.forEach(skill => {
+        skill.pts = getSkillTotalPoints(skill.name);
+      });
+    });
+  }
+
+
 
   function renderSkills() {
     const container = document.getElementById('skills-container');
@@ -473,7 +761,7 @@ const SkillsStepScene = (function() {
     const breakdown = document.getElementById('skill-points-breakdown');
     if (!breakdown) return;
 
-    const allSources = ['base', 'race', 'class', 'breakthrough'];
+    const allSources = ['base', 'race', 'class', 'breakthrough', 'artisan'];
     const availableRows = [];
 
     allSources.forEach(src => {
@@ -586,8 +874,11 @@ const SkillsStepScene = (function() {
 
   /**
    * Toggle the "Add Expertise" form for a specific skill.
+   * @param {number} groupIdx - Index of the skill group
+   * @param {number} skillIdx - Index of the skill in the group
+   * @param {boolean} isArtisan - Whether this is an artisan skill
    */
-  function toggleAddExpertiseForm(groupIdx, skillIdx) {
+  function toggleAddExpertiseForm(groupIdx, skillIdx, isArtisan = false) {
     // Close any open form first
     const existingForm = document.querySelector('.add-expertise-form:not(.hidden)');
     if (existingForm) {
@@ -607,8 +898,11 @@ const SkillsStepScene = (function() {
   /**
    * Confirm adding a new expertise from the form.
    * Spends 1 skill point from active source for 2 expertise points.
+   * @param {number} groupIdx - Index of the skill group
+   * @param {number} skillIdx - Index of the skill in the group
+   * @param {boolean} isArtisan - Whether this is an artisan skill
    */
-  function confirmAddExpertise(groupIdx, skillIdx) {
+  function confirmAddExpertise(groupIdx, skillIdx, isArtisan = false) {
     const form = document.getElementById(`expertise-form-${groupIdx}-${skillIdx}`);
     if (!form) return;
     const input = form.querySelector('.add-expertise-input');
@@ -617,7 +911,9 @@ const SkillsStepScene = (function() {
     const expName = input.value.trim();
     if (!expName) return;
 
-    const skill = skillGroups[groupIdx].skills[skillIdx];
+    // Get skill from correct group
+    const groups = isArtisan ? artisanSkillGroups : skillGroups;
+    const skill = groups[groupIdx].skills[skillIdx];
     const effectiveCap = getEffectiveSkillCap(skill.name);
 
     // Check: must have active source
@@ -663,8 +959,13 @@ const SkillsStepScene = (function() {
     skill.expertise = serializeExpertiseArray(expertises);
 
     // Re-render
-    syncSkillGroupsFromSources();
-    renderSkills();
+    if (isArtisan) {
+      syncArtisanSkillGroupsFromSources();
+      renderArtisanSkills();
+    } else {
+      syncSkillGroupsFromSources();
+      renderSkills();
+    }
     updatePointsDisplay();
     renderPointsBreakdown();
   }
@@ -672,9 +973,16 @@ const SkillsStepScene = (function() {
   /**
    * Change expertise points for a specific expertise entry.
    * delta: +2 or -2 expertise points (costs/refunds 1 skill point).
+   * @param {number} groupIdx - Index of the skill group
+   * @param {number} skillIdx - Index of the skill in the group
+   * @param {string} expName - Name of the expertise
+   * @param {number} delta - +2 or -2
+   * @param {boolean} isArtisan - Whether this is an artisan skill
    */
-  function changeExpertisePoints(groupIdx, skillIdx, expName, delta) {
-    const skill = skillGroups[groupIdx].skills[skillIdx];
+  function changeExpertisePoints(groupIdx, skillIdx, expName, delta, isArtisan = false) {
+    // Get skill from correct group
+    const groups = isArtisan ? artisanSkillGroups : skillGroups;
+    const skill = groups[groupIdx].skills[skillIdx];
     const effectiveCap = getEffectiveSkillCap(skill.name);
 
     // Parse current expertise list
@@ -700,7 +1008,7 @@ const SkillsStepScene = (function() {
       if (!expObj || expObj.pts <= 0) return;
 
       // Reclaim 1 skill point from sourceExpertiseSpent in reverse priority
-      const sources = ['breakthrough', 'class', 'race', 'base'];
+      const sources = isArtisan ? ['artisan', 'breakthrough', 'class', 'race', 'base'] : ['breakthrough', 'class', 'race', 'base'];
       let removed = false;
       for (const src of sources) {
         if ((sourceExpertiseSpent[src]?.[skill.name] || 0) > 0) {
@@ -725,8 +1033,13 @@ const SkillsStepScene = (function() {
     skill.expertise = serializeExpertiseArray(expertises);
 
     // Re-render
-    syncSkillGroupsFromSources();
-    renderSkills();
+    if (isArtisan) {
+      syncArtisanSkillGroupsFromSources();
+      renderArtisanSkills();
+    } else {
+      syncSkillGroupsFromSources();
+      renderSkills();
+    }
     updatePointsDisplay();
     renderPointsBreakdown();
   }
@@ -746,11 +1059,12 @@ const SkillsStepScene = (function() {
     // Show per-source breakdown if active source is set
     if (activeSource) {
       const srcRemaining = getSourceRemaining(activeSource);
-      const srcLabel = { base: 'Base', race: 'Race', class: 'Class', breakthrough: 'Breakthrough' }[activeSource];
+      const srcLabel = { base: 'Base', race: 'Race', class: 'Class', breakthrough: 'Breakthrough', artisan: 'Artisan' }[activeSource];
       bar.innerHTML = `
         <span class="skill-points-label">Spending from ${srcLabel}:</span>
         <span class="skill-points-value ${srcRemaining <= 0 ? 'empty' : ''}">${srcRemaining} remaining</span>
         <span class="skill-points-label">(Total: ${totalRemaining}/${totalAvailable})</span>
+        ${activeSource === 'artisan' ? `<span class="skill-points-label artisan-tag">[Artisan pool: ${availablePoints.artisan} pts]</span>` : ''}
       `;
     } else {
       bar.innerHTML = `
@@ -763,7 +1077,11 @@ const SkillsStepScene = (function() {
   function getSkills() {
     // Sync before returning
     syncSkillGroupsFromSources();
-    return structuredClone(skillGroups);
+    syncArtisanSkillGroupsFromSources();
+    return {
+      normal: structuredClone(skillGroups),
+      artisan: structuredClone(artisanSkillGroups)
+    };
   }
 
   /**
@@ -802,7 +1120,7 @@ const SkillsStepScene = (function() {
     // ponytail: use stored source allocations directly instead of heuristic rebuild
     if (savedSourceAllocations && savedSourceAllocations.main) {
       sourceSpent = structuredClone(savedSourceAllocations.main);
-      sourceExpertiseSpent = structuredClone(savedSourceAllocations.expertise) || { base: {}, race: {}, class: {}, breakthrough: {} };
+      sourceExpertiseSpent = structuredClone(savedSourceAllocations.expertise) || { base: {}, race: {}, class: {}, breakthrough: {}, artisan: {} };
     } else {
       // Legacy fallback: no source data — attribute everything to base
       clearSourceSpent();
@@ -824,24 +1142,29 @@ const SkillsStepScene = (function() {
     activeSource = 'base';
 
     renderSkills();
+    renderArtisanSkills();
     updatePointsDisplay();
     renderPointsBreakdown();
   }
 
   function reset() {
     skillGroups = deepCloneSkillGroups();
+    artisanSkillGroups = deepCloneArtisanSkillGroups();
     availablePoints = {
       base: BASE_SKILL_POINTS,
       race: 0,
       class: 0,
       breakthrough: 0,
+      artisan: 0,
       total: BASE_SKILL_POINTS,
+      artisanTotal: 0,
       eligibleSkills: {}
     };
     characterData = null;
     activeSource = 'base';
     clearSourceSpent();
     renderSkills();
+    renderArtisanSkills();
     updatePointsDisplay();
     renderPointsBreakdown();
   }

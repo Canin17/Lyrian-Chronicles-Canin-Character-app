@@ -669,8 +669,12 @@
           breakthroughs: character.breakthroughs
         });
         // Restore skill allocations
-        if (character.skills && character.skills.length > 0) {
-          SkillsStepScene.restoreState(character.skills, character.skillSourceAllocations);
+        if (character.skills) {
+          // Handle both old shape (array) and new shape ({ normal, artisan })
+          const skillsData = character.skills.normal || character.skills;
+          if (Array.isArray(skillsData) && skillsData.length > 0) {
+            SkillsStepScene.restoreState(skillsData, character.skillSourceAllocations);
+          }
         }
         break;
       case 6: // Equipment

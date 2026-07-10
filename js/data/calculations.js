@@ -2,7 +2,7 @@
 // Formulas from Lyrian Chronicles rulebook
 // Stats are assigned via fixed arrays, NOT point-buy
 
-/* exported MAIN_STATS, SUB_STATS, MAIN_STATS_ARRAY, SUB_STATS_ARRAY, calculateDerivedStats, calculateBaseSpeed, getTotalStatPoints, isAssignmentComplete, getAvailableValues */
+/* exported MAIN_STATS, SUB_STATS, MAIN_STATS_ARRAY, SUB_STATS_ARRAY, calculateDerivedStats, calculateEquipmentGuard, calculateBaseSpeed, getTotalStatPoints, isAssignmentComplete, getAvailableValues */
 const MAIN_STATS = [
   { id: 'pow', name: 'Power', short: 'POW' },
   { id: 'foc', name: 'Focus', short: 'FOC' },
@@ -24,12 +24,15 @@ const SUB_STATS = [
 const MAIN_STATS_ARRAY = [5, 4, 4, 3];
 const SUB_STATS_ARRAY = [5, 4, 3, 2, 1];
 
-function calculateDerivedStats(stats) {
+function calculateDerivedStats(stats, equipmentData) {
   if (!stats) return {};
   const pow = Number(stats.pow) || 0;
   const foc = Number(stats.foc) || 0;
   const agi = Number(stats.agi) || 0;
   const tou = Number(stats.tou) || 0;
+
+  // Equipment Guard: parse from equipped armor/shield items
+  const equipmentGuard = equipmentData ? calculateEquipmentGuard(equipmentData.inventory) : 0;
 
   return {
     hp: 20 + (tou * 10),
@@ -42,8 +45,32 @@ function calculateDerivedStats(stats) {
     accuracy: foc,
     initiative: agi,
     saveBonus: tou,
-    guard: tou
+    guard: tou + equipmentGuard,
+    guardBase: tou,
+    guardEquip: equipmentGuard
   };
+}
+
+/**
+ * Calculate total Guard bonus from equipped armor/shield items.
+ * Parses "Guard by N" from item descriptions.
+ * @param {Array} inventory - Array of { item, quantity } from character data
+ * @returns {number} Total equipment Guard
+ */
+function calculateEquipmentGuard(inventory) {
+  if (!inventory || !Array.isArray(inventory)) return 0;
+  let total = 0;
+  inventory.forEach(entry => {
+    const item = entry.item;
+    if (item && (item.type === 'Armor' || item.type === 'Shield')) {
+      const desc = item.description || '';
+      const match = desc.match(/Guard\s+by\s+(\d+)/i);
+      if (match) {
+        total += parseInt(match[1], 10) * (entry.quantity || 1);
+      }
+    }
+  });
+  return total;
 }
 
 /**

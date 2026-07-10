@@ -3,7 +3,7 @@
 // Source: Lyrian Chronicles system rulebook
 // Per-source allocation tracking with restricted skill lists
 
-/* exported SKILL_GROUPS, SKILL_GRANTING_BREAKTHROUGHS, EXPERTISE_MULTIPLIER, BASE_SKILL_POINTS, calculateAvailableSkillPoints, getRemainingPoints, deepCloneSkillGroups, canAddExpertise, isCraftingGatheringSkill, getEffectiveSkillCap, getRaceSkillPoints, SKILL_EXPERTISE_EXAMPLES, parseExpertiseString, serializeExpertiseArray, calculateExpertisePoints, BREAKTHROUGH_SKILL_BONUSES, getBreakthroughSkillBonuses, getBreakthroughBonusForSkill, getBreakthroughBonusesForSkill, computeBreakthroughEffects */
+/* exported SKILL_GROUPS, ARTISAN_SKILL_GROUPS, ARTISAN_SKILLS, ARTISAN_SKILL_CAP, ARTISAN_SKILL_EXPERTISE_OPTIONS, CLASS_TO_ARTISAN_SKILL, SKILL_GRANTING_BREAKTHROUGHS, EXPERTISE_MULTIPLIER, BASE_SKILL_POINTS, calculateAvailableSkillPoints, getRemainingPoints, deepCloneSkillGroups, deepCloneArtisanSkillGroups, canAddExpertise, isCraftingGatheringSkill, getEffectiveSkillCap, getRaceSkillPoints, SKILL_EXPERTISE_EXAMPLES, parseExpertiseString, serializeExpertiseArray, calculateExpertisePoints, BREAKTHROUGH_SKILL_BONUSES, getBreakthroughSkillBonuses, getBreakthroughBonusForSkill, getBreakthroughBonusesForSkill, computeBreakthroughEffects, getClassArtisanSkillPoints */
 const SKILL_GROUPS = [
   {
     name: 'Fitness',
@@ -68,10 +68,67 @@ const EXPERTISE_MULTIPLIER = 2;
 
 // Artisan skills — cannot be selected by normal skill-granting features
 // unless explicitly mentioned. Cap is 10 pts (not 15).
-const ARTISAN_SKILLS = ['Blacksmith', 'Alchemist', 'Farmer'];
+// Source: https://rpg.angelssword.com/game/latest/rulebook
+const ARTISAN_SKILLS = ['Blacksmith', 'Alchemist', 'Farmer', 'Carpenter', 'Armorsmithing', 'Artificer', 'Culinary'];
+
+// Artisan skill cap (lower than normal skill cap of 15)
+const ARTISAN_SKILL_CAP = 10;
 
 // Crafting/gathering skills excluded from "any non-crafting" grants
 const CRAFTING_GATHERING_SKILLS = ['Artifice', 'Appraise'];
+
+// ===========================================================================
+// ARTISAN SKILL EXPERTISE OPTIONS — Rulebook-defined expertise per artisan skill
+// Artisan skills have stricter expertise restrictions than normal skills.
+// ===========================================================================
+const ARTISAN_SKILL_EXPERTISE_OPTIONS = {
+  'Blacksmith': ['Swords', 'Axes', 'Maces', 'Daggers', 'Spears', 'Flails', 'Tools', 'Artisan Weapon'],
+  'Alchemist': ['Flasks', 'Elixirs', 'Potions', 'Poisons', 'Salves'],
+  'Farmer': ['Food', 'Alchemy Units', 'Herbs'],
+  'Carpenter': ['Bows', 'Crossbows', 'Staves', 'Wands', 'Slings', 'Whips', 'Buildings'],
+  'Armorsmithing': ['Clothing', 'Light Armor', 'Medium Armor', 'Heavy Armor', 'Shields'],
+  'Artificer': ['Pistol', 'Shotgun', 'Musket', 'Sniper Rifle', 'Airships', 'Weapon Artifice', 'Assist Artifice', 'Basic Artifice'],
+  'Culinary': ['Baking', 'Grilling', 'Sous Vide', 'Fermentation', 'Culinary Tools']
+};
+
+// ===========================================================================
+// ARTISAN SKILL GROUPS — Separate skill group with its own rules
+// Cap: 10 pts (not 15). Expertise: rulebook-defined options only.
+// Point pool: granted by crafting classes at L3 (5 pts per class).
+// ===========================================================================
+const ARTISAN_SKILL_GROUPS = [
+  {
+    name: 'Artisan Skills',
+    subStat: '—',
+    skills: ARTISAN_SKILLS.map(name => ({
+      name,
+      pts: 0,
+      expertise: '',
+      suggestions: ARTISAN_SKILL_EXPERTISE_OPTIONS[name] || []
+    }))
+  }
+];
+
+// ===========================================================================
+// CLASS → ARTISAN SKILL MAPPING
+// Each crafting class grants 5 artisan skill points at L3, spendable only
+// on their specific artisan skill.
+// ===========================================================================
+const CLASS_TO_ARTISAN_SKILL = {
+  'Blacksmith': 'Blacksmith',
+  'Alchemist': 'Alchemist',
+  'Alchemeister': 'Alchemist',
+  'Armorsmith': 'Armorsmithing',
+  'Master Armorer': 'Armorsmithing',
+  'Artificer': 'Artificer',
+  'Magitechnician': 'Artificer',
+  'Carpenter': 'Carpenter',
+  'Agrarian': 'Farmer',
+  'Farmer': 'Farmer',
+  'Timberwright': 'Carpenter',
+  'Forgemaster': 'Blacksmith',
+  'Culinarian': 'Culinary'
+};
 
 // ===========================================================================
 // EXPERTISE EXAMPLES — Rulebook-compliant suggestions per skill
@@ -433,21 +490,29 @@ function calculateAvailableSkillPoints(characterData) {
   // 4. Breakthroughs — Skill Training / Universal Training
   const btResult = getBreakthroughSkillPoints(characterData?.breakthroughs);
 
+  // 5. Artisan skills — crafting classes grant +5 at L3
+  const artisanResult = getClassArtisanSkillPoints(characterData?.cls);
+
   return {
     base: BASE_SKILL_POINTS,
     race: raceResult.points,
     class: classResult.points,
     breakthrough: btResult.points,
+    artisan: artisanResult.points,
     total: BASE_SKILL_POINTS + raceResult.points + classResult.points + btResult.points,
+    artisanTotal: artisanResult.points,
     eligibleSkills: {
       base: baseEligible,
       race: raceResult.eligibleSkills,
       class: classResult.eligibleSkills,
-      breakthrough: btResult.eligibleSkills
+      breakthrough: btResult.eligibleSkills,
+      artisan: artisanResult.eligibleSkills
     },
     // Detailed per-source breakdown
     perClass: classResult.perClass || [],
-    perBreakthrough: btResult.perBreakthrough || []
+    perBreakthrough: btResult.perBreakthrough || [],
+    perClassArtisan: artisanResult.perClass || [],
+    artisanEligibleMap: artisanResult.eligibleMap || {}
   };
 }
 
@@ -469,6 +534,10 @@ function getRemainingPoints(groups, availablePoints) {
 
 function deepCloneSkillGroups() {
   return structuredClone(SKILL_GROUPS);
+}
+
+function deepCloneArtisanSkillGroups() {
+  return structuredClone(ARTISAN_SKILL_GROUPS);
 }
 
 // ===========================================================================
@@ -521,8 +590,75 @@ function isCraftingGatheringSkill(skillName) {
  * Get the effective cap for a skill (artisan skills cap at 10).
  */
 function getEffectiveSkillCap(skillName) {
-  if (isArtisanSkill(skillName)) return 10;
+  if (isArtisanSkill(skillName)) return ARTISAN_SKILL_CAP;
   return SKILL_CAP;
+}
+
+// ===========================================================================
+// ARTISAN SKILL POINTS — Crafting classes grant +5 at Level 3
+// ===========================================================================
+/**
+ * Calculate artisan skill points granted by equipped classes.
+ * Each crafting class grants +5 artisan skill points at Level 3,
+ * spendable ONLY on their specific artisan skill.
+ *
+ * Returns { points, eligibleSkills, perClass: [...] }
+ */
+function getClassArtisanSkillPoints(cls) {
+  if (!cls) return { points: 0, eligibleSkills: [], perClass: [] };
+
+  // Normalize to array of { class, level }
+  let classes;
+  if (cls.all && Array.isArray(cls.all)) {
+    classes = cls.all;
+  } else if (cls.primary) {
+    classes = [cls.primary];
+  } else {
+    classes = [{ class: cls, level: 1 }];
+  }
+
+  let totalPoints = 0;
+  const eligibleMap = new Map(); // artisanSkill -> count of classes granting it
+  const perClass = [];
+
+  classes.forEach(entry => {
+    const classObj = entry.class || entry;
+    const level = entry.level || 1;
+    const className = classObj.name || classObj;
+
+    // Check if this class grants an artisan skill
+    const artisanSkill = CLASS_TO_ARTISAN_SKILL[className];
+    if (!artisanSkill) {
+      perClass.push({ className, points: 0, artisanSkill: null, unlocked: false });
+      return;
+    }
+
+    // Check Level 3 requirement (same as normal class skill grant)
+    const abilitiesBought = entry.abilitiesBought || 0;
+    const effectiveLevel = Math.max(level, 1 + abilitiesBought);
+
+    if (effectiveLevel < 3) {
+      perClass.push({ className, points: 0, artisanSkill, unlocked: false });
+      return;
+    }
+
+    // Grant 5 artisan skill points
+    totalPoints += 5;
+    eligibleMap.set(artisanSkill, (eligibleMap.get(artisanSkill) || 0) + 5);
+
+    perClass.push({ className, points: 5, artisanSkill, unlocked: true });
+  });
+
+  // Build eligible skills array: each artisan skill is eligible
+  const eligibleSkills = [...eligibleMap.keys()];
+
+  return {
+    points: totalPoints,
+    eligibleSkills,
+    perClass,
+    // Map of artisanSkill -> total points available for it
+    eligibleMap: Object.fromEntries(eligibleMap)
+  };
 }
 
 // ===========================================================================

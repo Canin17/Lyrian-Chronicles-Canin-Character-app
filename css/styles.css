@@ -2337,12 +2337,56 @@ body {
 }
 
 .skill-source-flash {
-  animation: skillSourceFlash 1.8s ease-in-out;
+  animation: skill-source-flash-anim 0.6s ease 3;
 }
 
-@keyframes affordFlash {
-  0%, 100% { background-color: transparent; }
-  50% { background-color: rgba(220, 53, 69, 0.3); }
+@keyframes skill-source-flash-anim {
+  0%, 100% { background: transparent; }
+  50% { background: rgba(212, 175, 55, 0.2); }
+}
+
+/* ===========================================================================
+   ARTISAN SKILLS SECTION
+   =========================================================================== */
+.artisan-section-header {
+  margin: 1.5rem 0 1rem;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, rgba(196, 163, 90, 0.1), rgba(139, 105, 20, 0.05));
+  border: 1px solid var(--accent-gold-dark);
+  border-radius: var(--border-radius-md);
+}
+
+.artisan-section-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-sc);
+  color: var(--accent-gold-light);
+  font-size: 1.1rem;
+}
+
+.artisan-section-note {
+  font-family: var(--font-serif);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.artisan-group {
+  border-left: 3px solid var(--accent-gold);
+  padding-left: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.artisan-group .skill-group-header {
+  color: var(--accent-gold-light);
+}
+
+/* Artisan tag in points display */
+.artisan-tag {
+  color: var(--accent-gold-light) !important;
+  font-style: italic;
+  margin-left: 0.5rem;
 }
 
 .afford-flash {

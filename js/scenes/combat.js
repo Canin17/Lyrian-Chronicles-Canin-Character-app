@@ -68,7 +68,7 @@ const CombatScene = (function() {
       if (el) el.textContent = 'No character — open the Creator first';
       return;
     }
-    derived = calculateDerivedStats(character.stats);
+    derived = calculateDerivedStats(character.stats, character);
     startEncounter();          // initialize all resources to encounter-start values
     buildAbilityList();
     renderAll();

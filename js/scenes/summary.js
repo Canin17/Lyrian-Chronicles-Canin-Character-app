@@ -32,7 +32,7 @@ const SummaryScene = (function() {
     if (!container || !characterData) return;
 
     const { race, ancestry, cls, stats, skills } = characterData;
-    const derived = stats ? calculateDerivedStats(stats) : {};
+    const derived = stats ? calculateDerivedStats(stats, characterData) : {};
 
     let html = '';
 
@@ -162,6 +162,11 @@ const SummaryScene = (function() {
         <div style="text-align: center; padding: 0.5rem; background: var(--bg-primary); border-radius: 4px;">
           <div style="font-size: 0.75rem; color: var(--accent-gold); text-transform: uppercase;">Speed</div>
           <div style="font-size: 1.3rem; font-weight: bold;">${speed}ft</div>
+        </div>
+        <div style="text-align: center; padding: 0.5rem; background: var(--bg-primary); border-radius: 4px;">
+          <div style="font-size: 0.75rem; color: var(--accent-gold); text-transform: uppercase;">Guard</div>
+          <div style="font-size: 1.3rem; font-weight: bold;">${derived.guard ?? '-'}</div>
+          ${derived.guardEquip > 0 ? `<div style="font-size: 0.6rem; color: var(--text-muted);">Base ${derived.guardBase} + ${derived.guardEquip} Equip</div>` : ''}
         </div>
       </div>
     </div>`;
@@ -328,7 +333,11 @@ const SummaryScene = (function() {
     // Skills
     html += `<div class="summary-section"><h3>Skills</h3>`;
 
-    if (skills && Array.isArray(skills)) {
+    if (skills) {
+      // Handle both old shape (array) and new shape ({ normal, artisan })
+      const normalSkills = Array.isArray(skills) ? skills : (skills.normal || []);
+      const artisanSkills = skills && skills.artisan ? skills.artisan : [];
+
       // Collect all breakthrough bonuses for display
       const allBtBonuses = getBreakthroughSkillBonuses(characterData.breakthroughs || []);
       const btSkillMap = {};
@@ -337,8 +346,8 @@ const SummaryScene = (function() {
         btSkillMap[b.skill].push(b);
       });
 
-      skills.forEach(group => {
-        // Show group if it has invested skills OR breakthrough bonuses
+      // Normal skills
+      normalSkills.forEach(group => {
         const groupSkills = group.skills;
         const hasInvested = groupSkills.some(s => s.pts > 0);
         const hasBtBonus = groupSkills.some(s => btSkillMap[s.name]);
@@ -348,7 +357,7 @@ const SummaryScene = (function() {
           <div style="color: var(--accent-gold); font-size: 0.9rem; margin-bottom: 0.25rem;">${group.name} (${group.subStat})</div>`;
 
         groupSkills.forEach(skill => {
-          if (skill.pts <= 0 && !btSkillMap[skill.name]) return; // skip empty skills with no bonus
+          if (skill.pts <= 0 && !btSkillMap[skill.name]) return;
 
           const expertise = skill.expertise ? ` [${window.escapeHtml(skill.expertise)}]` : '';
           const bonuses = btSkillMap[skill.name] || [];
@@ -362,6 +371,29 @@ const SummaryScene = (function() {
 
         html += `</div>`;
       });
+
+      // Artisan skills
+      if (artisanSkills.length > 0) {
+        artisanSkills.forEach(group => {
+          const groupSkills = group.skills;
+          const hasInvested = groupSkills.some(s => s.pts > 0);
+          if (!hasInvested) return;
+
+          html += `<div style="margin-bottom: 0.5rem; border-left: 3px solid var(--accent-gold); padding-left: 0.5rem;">
+            <div style="color: var(--accent-gold-light); font-size: 0.9rem; margin-bottom: 0.25rem;">🔨 ${group.name || 'Artisan Skills'} (Cap: ${ARTISAN_SKILL_CAP})</div>`;
+
+          groupSkills.forEach(skill => {
+            if (skill.pts <= 0) return;
+
+            const expertise = skill.expertise ? ` [${window.escapeHtml(skill.expertise)}]` : '';
+            html += `<div style="padding-left: 1rem; font-size: 0.85rem; color: var(--text-primary);">
+              ${window.escapeHtml(skill.name)}: <strong style="color: var(--accent-gold-light);">${skill.pts}</strong>${expertise}
+            </div>`;
+          });
+
+          html += `</div>`;
+        });
+      }
     }
 
     // Equipment & Inventory
@@ -637,7 +669,7 @@ const SummaryScene = (function() {
           })) : []
         } : null,
         stats: characterData.stats,
-        derivedStats: calculateDerivedStats(characterData.stats),
+        derivedStats: calculateDerivedStats(characterData.stats, characterData),
         baseStats: characterData.baseStats,
         raceBonuses: characterData.raceBonuses,
         humanChoices: characterData.humanChoices,
