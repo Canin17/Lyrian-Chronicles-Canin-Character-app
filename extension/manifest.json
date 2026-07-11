@@ -1,0 +1,41 @@
+{
+  "manifest_version": 2,
+  "name": "Lyrian Chronicles Canin Dice Bridge",
+  "version": "1.0.0",
+  "description": "Send dice rolls from Lyrian Chronicles StandAlone to Foundry VTT / Roll20 / Beyond20",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "lyrian-dice-bridge@canin",
+      "strict_min_version": "115.0"
+    }
+  },
+  "permissions": [
+    "https://app.roll20.net/*",
+    "http://localhost/*",
+    "http://127.0.0.1/*",
+    "https://canin17.github.io/*",
+    "file:///*",
+    "<all_urls>"
+  ],
+  "background": {
+    "scripts": ["src/background.js"],
+    "persistent": false
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>", "file:///*"],
+      "js": ["src/standalone-bridge.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["<all_urls>"],
+      "js": ["src/foundry-content.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://app.roll20.net/*"],
+      "js": ["src/roll20-content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

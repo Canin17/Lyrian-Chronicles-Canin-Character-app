@@ -3,7 +3,7 @@
 // Source: Lyrian Chronicles system rulebook
 // Per-source allocation tracking with restricted skill lists
 
-/* exported SKILL_GROUPS, ARTISAN_SKILL_GROUPS, ARTISAN_SKILLS, ARTISAN_SKILL_CAP, ARTISAN_SKILL_EXPERTISE_OPTIONS, CLASS_TO_ARTISAN_SKILL, SKILL_GRANTING_BREAKTHROUGHS, EXPERTISE_MULTIPLIER, BASE_SKILL_POINTS, calculateAvailableSkillPoints, getRemainingPoints, deepCloneSkillGroups, deepCloneArtisanSkillGroups, canAddExpertise, isCraftingGatheringSkill, getEffectiveSkillCap, getRaceSkillPoints, SKILL_EXPERTISE_EXAMPLES, parseExpertiseString, serializeExpertiseArray, calculateExpertisePoints, BREAKTHROUGH_SKILL_BONUSES, getBreakthroughSkillBonuses, getBreakthroughBonusForSkill, getBreakthroughBonusesForSkill, computeBreakthroughEffects, getClassArtisanSkillPoints */
+/* exported SKILL_GROUPS, ARTISAN_SKILL_GROUPS, ARTISAN_SKILLS, ARTISAN_SKILL_CAP, ARTISAN_SKILL_EXPERTISE_OPTIONS, CLASS_TO_ARTISAN_SKILL, SKILL_GRANTING_BREAKTHROUGHS, EXPERTISE_MULTIPLIER, BASE_SKILL_POINTS, calculateAvailableSkillPoints, getRemainingPoints, deepCloneSkillGroups, deepCloneArtisanSkillGroups, canAddExpertise, isCraftingGatheringSkill, getEffectiveSkillCap, getRaceSkillPoints, SKILL_EXPERTISE_EXAMPLES, parseExpertiseString, serializeExpertiseArray, calculateExpertisePoints, BREAKTHROUGH_SKILL_BONUSES, getBreakthroughSkillBonuses, getBreakthroughBonusForSkill, getBreakthroughBonusesForSkill, computeBreakthroughEffects, getClassArtisanSkillPoints, TRANSMUTER_CLASSES, calculateTransmuterPoints */
 const SKILL_GROUPS = [
   {
     name: 'Fitness',
@@ -659,6 +659,52 @@ function getClassArtisanSkillPoints(cls) {
     // Map of artisanSkill -> total points available for it
     eligibleMap: Object.fromEntries(eligibleMap)
   };
+}
+
+// ===========================================================================
+// TRANSMUTER — Universal crafting bonus pool (not a dedicated artisan skill)
+// Transmuter/Alkahest grant "Transmuter points" at L3 that apply as a flat
+// bonus to one crafting discipline of the player's choice.
+// ===========================================================================
+const TRANSMUTER_CLASSES = ['Transmuter', 'Alkahest'];
+
+/**
+ * Calculate Transmuter points granted by Transmuter/Alkahest classes.
+ * Transmuter: 5 pts at L3. Alkahest: 10 pts at L3.
+ * Returns { points, hasTransmuter }.
+ */
+function calculateTransmuterPoints(cls) {
+  if (!cls) return { points: 0, hasTransmuter: false };
+
+  let classes;
+  if (cls.all && Array.isArray(cls.all)) {
+    classes = cls.all;
+  } else if (cls.primary) {
+    classes = [cls.primary];
+  } else {
+    classes = [{ class: cls, level: 1 }];
+  }
+
+  let totalPoints = 0;
+  let hasTransmuter = false;
+
+  classes.forEach(entry => {
+    const classObj = entry.class || entry;
+    const level = entry.level || 1;
+    const className = classObj.name || classObj;
+
+    if (!TRANSMUTER_CLASSES.includes(className)) return;
+
+    const abilitiesBought = entry.abilitiesBought || 0;
+    const effectiveLevel = Math.max(level, 1 + abilitiesBought);
+
+    if (effectiveLevel < 3) return;
+
+    hasTransmuter = true;
+    totalPoints += className === 'Alkahest' ? 10 : 5;
+  });
+
+  return { points: totalPoints, hasTransmuter };
 }
 
 // ===========================================================================

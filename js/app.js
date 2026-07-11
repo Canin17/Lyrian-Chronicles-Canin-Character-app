@@ -246,7 +246,7 @@
             const data = raw.character || raw;
             Object.keys(character).forEach(k => { if (data[k] !== undefined) character[k] = data[k]; });
             // ponytail: fields added at runtime but not in skeleton — restore on import
-            const extra = ['inventory', 'climSpent', 'remainingClim', 'statBonusChoices', 'breakthroughStatBonuses', 'breakthroughProficiencies', 'skillSourceAllocations'];
+            const extra = ['inventory', 'climSpent', 'remainingClim', 'statBonusChoices', 'breakthroughStatBonuses', 'breakthroughProficiencies', 'skillSourceAllocations', 'classStatBonusChoices', 'hybridSubraceChoices', 'btExpToggleEnabled'];
             extra.forEach(k => { if (data[k] !== undefined) character[k] = data[k]; });
             saveToLocalStorage();
             goToStep(7);
@@ -668,12 +668,11 @@
           cls: character.cls,
           breakthroughs: character.breakthroughs
         });
-        // Restore skill allocations
+        // Restore skill allocations — ponytail: pass full object; restoreState handles both shapes
         if (character.skills) {
-          // Handle both old shape (array) and new shape ({ normal, artisan })
           const skillsData = character.skills.normal || character.skills;
           if (Array.isArray(skillsData) && skillsData.length > 0) {
-            SkillsStepScene.restoreState(skillsData, character.skillSourceAllocations);
+            SkillsStepScene.restoreState(character.skills, character.skillSourceAllocations);
           }
         }
         break;
@@ -898,7 +897,8 @@
     });
     // Runtime fields not in skeleton
     const extra = ['inventory', 'climSpent', 'remainingClim', 'statBonusChoices',
-      'breakthroughStatBonuses', 'breakthroughProficiencies', 'skillSourceAllocations'];
+      'breakthroughStatBonuses', 'breakthroughProficiencies', 'skillSourceAllocations',
+      'classStatBonusChoices', 'hybridSubraceChoices', 'btExpToggleEnabled'];
     extra.forEach(k => {
       if (saved[k] !== undefined) character[k] = saved[k];
     });

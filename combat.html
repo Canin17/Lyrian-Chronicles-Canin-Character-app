@@ -35,10 +35,16 @@
     <!-- Conditions strip -->
     <div id="combat-conditions" class="combat-conditions"><!-- JS --></div>
 
-    <!-- Ability library: filters + grid -->
-    <div class="combat-abilities-region">
-      <div id="combat-filters" class="filter-bar"><!-- JS --></div>
-      <div id="combat-ability-grid" class="card-grid combat-ability-grid"><!-- JS --></div>
+    <!-- ponytail: two-column layout — abilities left, combat inventory right -->
+    <div class="combat-main-area">
+      <div class="combat-abilities-region">
+        <div id="combat-filters" class="filter-bar"><!-- JS --></div>
+        <div id="combat-ability-grid" class="card-grid combat-ability-grid"><!-- JS --></div>
+      </div>
+      <div class="combat-inventory-region">
+        <div class="combat-section-label">Combat Loadout</div>
+        <div id="combat-inventory-list" class="combat-inventory-list"><!-- JS --></div>
+      </div>
     </div>
 
     <!-- Encounter conclusion panel (collapsible, shown on demand) -->
@@ -48,6 +54,29 @@
   <!-- Ability detail modal -->
   <div id="combat-modal-overlay" class="modal-overlay hidden">
     <div id="combat-modal-content" class="modal-content"><!-- JS --></div>
+  </div>
+
+  <!-- Macro editor modal -->
+  <div id="macro-modal-overlay" class="modal-overlay hidden">
+    <div class="modal-content macro-modal">
+      <div class="cm-head"><h3 id="macro-modal-title">🎲 Edit Macro</h3><button id="macro-modal-close" class="modal-close-btn">✕</button></div>
+      <div class="cm-body macro-modal-body">
+        <div class="macro-tabs">
+          <button class="macro-tab active" data-macro-tab="foundry">Foundry VTT</button>
+          <button class="macro-tab" data-macro-tab="roll20">Roll20</button>
+        </div>
+        <div class="macro-editor-area">
+          <textarea id="macro-textarea" class="macro-textarea" spellcheck="false"></textarea>
+        </div>
+        <div class="macro-apply-cost">
+          <label><input type="checkbox" id="macro-apply-cost-cb"> Apply cost to resources</label>
+        </div>
+        <div class="macro-actions">
+          <button id="macro-copy-btn" class="btn-secondary">📋 Copy to Clipboard</button>
+          <button id="macro-send-btn" class="btn-primary">🎲 Send to VTT</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Toast -->

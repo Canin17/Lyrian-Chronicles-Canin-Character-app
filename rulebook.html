@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lyrian Chronicles - Rulebook</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/rulebook.css">
+  <script>
+    if (typeof structuredClone === 'undefined') {
+      window.structuredClone = function(obj) { return JSON.parse(JSON.stringify(obj)); };
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC:ital@0;1&display=swap" rel="stylesheet">
+</head>
+<body>
+  <canvas id="bg-canvas"></canvas>
+
+  <div id="app" role="main">
+    <!-- TOC Sidebar (fixed overlay) -->
+    <div id="rb-toc-sidebar" class="rb-toc-sidebar">
+      <div class="rb-toc-header">
+        <h3>Table of Contents</h3>
+        <button id="rb-toc-close" class="rb-toc-close" aria-label="Close table of contents">✕</button>
+      </div>
+      <nav id="rb-toc-list" class="rb-toc-list" aria-label="Rulebook sections"></nav>
+    </div>
+
+    <!-- Page: fixed topbar + scrollable content -->
+    <div class="rb-page">
+      <div class="rb-topbar">
+        <button id="rb-back-btn" class="btn-secondary">← Creator</button>
+        <h1 class="rb-title">Rulebook</h1>
+        <button id="rb-toc-toggle" class="btn-secondary" aria-label="Toggle table of contents">☰ Contents</button>
+      </div>
+      <div id="rb-content" class="rb-content"></div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="eq-toast" class="eq-toast" style="display:none;"></div>
+
+  <!-- CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/8.8.0/pixi.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.7/gsap.min.js"></script>
+
+  <!-- Rulebook data (script tag for file:// compatibility) + app -->
+  <script src="js/data/rulebook_data.js"></script>
+  <script src="js/scenes/rulebook.js"></script>
+</body>
+</html>

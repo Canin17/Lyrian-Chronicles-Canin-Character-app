@@ -14,6 +14,9 @@ const SkillsStepScene = (function() {
   let characterData = null;
   let activeSource = null; // Currently selected source for spending
 
+  // ponytail: transmuter state — flat bonus to one discipline, no allocation
+  let transmuterState = { points: 0, discipline: '' };
+
   // Per-source spending: sourceSpent[source] = { 'SkillName': pts }
   // Total for a skill = sum of all source allocations
   let sourceSpent = {
@@ -121,6 +124,15 @@ const SkillsStepScene = (function() {
   function setCharacterData(data) {
     characterData = data;
     availablePoints = calculateAvailableSkillPoints(data);
+    // ponytail: detect transmuter class and set points
+    const transResult = calculateTransmuterPoints(data?.cls);
+    transmuterState.points = transResult.points;
+    if (!transResult.hasTransmuter) {
+      transmuterState.discipline = '';
+    } else if (!transmuterState.discipline) {
+      // Default to first artisan skill if not set
+      transmuterState.discipline = ARTISAN_SKILLS[0] || '';
+    }
     // Don't reset activeSource here — keep user's selection
     renderPointsBreakdown();
     renderSkills();
@@ -242,10 +254,11 @@ const SkillsStepScene = (function() {
     const container = document.getElementById('artisan-skills-container');
     if (!container) return;
 
-    // Hide if no artisan points available and no artisan skills allocated
+    // Hide if no artisan points available and no artisan skills allocated and no transmuter
     const hasArtisanPoints = availablePoints.artisan > 0;
     const hasArtisanAllocated = getSourceTotalSpent('artisan') > 0;
-    const showSection = hasArtisanPoints || hasArtisanAllocated;
+    const hasTransmuter = transmuterState.points > 0;
+    const showSection = hasArtisanPoints || hasArtisanAllocated || hasTransmuter;
 
     container.style.display = showSection ? 'block' : 'none';
     if (!showSection) {
@@ -423,6 +436,30 @@ const SkillsStepScene = (function() {
 
       container.appendChild(groupEl);
     });
+
+    // ponytail: transmuter discipline selector — renders after artisan skills
+    if (transmuterState.points > 0) {
+      const transEl = document.createElement('div');
+      transEl.className = 'skill-group transmuter-group';
+      transEl.innerHTML = `
+        <div class="skill-group-header">
+          <span class="skill-group-name">⚗️ Transmuter Bonus</span>
+          <span class="skill-group-substat">(+${transmuterState.points} flat bonus)</span>
+        </div>
+        <div class="transmuter-discipline-row">
+          <label>Crafting discipline:</label>
+          <select id="transmuter-discipline-select">
+            ${ARTISAN_SKILLS.map(s => `<option value="${s}"${s === transmuterState.discipline ? ' selected' : ''}>${s}</option>`).join('')}
+          </select>
+        </div>
+      `;
+      container.appendChild(transEl);
+
+      const select = document.getElementById('transmuter-discipline-select');
+      select.addEventListener('change', () => {
+        transmuterState.discipline = select.value;
+      });
+    }
   }
 
   /**
@@ -1080,7 +1117,8 @@ const SkillsStepScene = (function() {
     syncArtisanSkillGroupsFromSources();
     return {
       normal: structuredClone(skillGroups),
-      artisan: structuredClone(artisanSkillGroups)
+      artisan: structuredClone(artisanSkillGroups),
+      transmuter: { ...transmuterState }
     };
   }
 
@@ -1101,13 +1139,16 @@ const SkillsStepScene = (function() {
    * savedSourceAllocations: optional per-source spending map (eliminates heuristic rebuild)
    */
   function restoreState(savedSkills, savedSourceAllocations) {
-    if (!Array.isArray(savedSkills) || savedSkills.length === 0) return;
+    // ponytail: accept full { normal, artisan, transmuter } object or legacy array
+    const normalSkills = savedSkills.normal || savedSkills;
+    const artisanSkills = savedSkills.artisan;
+    const transmuter = savedSkills.transmuter;
+    if (!Array.isArray(normalSkills) || normalSkills.length === 0) return;
 
-    // Restore skill points and expertise for each group
-    savedSkills.forEach((savedGroup, gi) => {
+    // Restore normal skill points and expertise
+    normalSkills.forEach((savedGroup, gi) => {
       if (gi >= skillGroups.length) return;
       if (!savedGroup.skills) return;
-
       savedGroup.skills.forEach((savedSkill, si) => {
         if (si >= skillGroups[gi].skills.length) return;
         if (skillGroups[gi].skills[si].name === savedSkill.name) {
@@ -1116,6 +1157,27 @@ const SkillsStepScene = (function() {
         }
       });
     });
+
+    // ponytail: restore artisan skills
+    if (Array.isArray(artisanSkills)) {
+      artisanSkills.forEach((savedGroup, gi) => {
+        if (gi >= artisanSkillGroups.length) return;
+        if (!savedGroup.skills) return;
+        savedGroup.skills.forEach((savedSkill, si) => {
+          if (si >= artisanSkillGroups[gi].skills.length) return;
+          if (artisanSkillGroups[gi].skills[si].name === savedSkill.name) {
+            artisanSkillGroups[gi].skills[si].pts = savedSkill.pts || 0;
+            artisanSkillGroups[gi].skills[si].expertise = savedSkill.expertise || '';
+          }
+        });
+      });
+    }
+
+    // ponytail: restore transmuter state
+    if (transmuter && typeof transmuter === 'object') {
+      transmuterState.points = transmuter.points || 0;
+      transmuterState.discipline = transmuter.discipline || '';
+    }
 
     // ponytail: use stored source allocations directly instead of heuristic rebuild
     if (savedSourceAllocations && savedSourceAllocations.main) {
@@ -1162,6 +1224,7 @@ const SkillsStepScene = (function() {
     };
     characterData = null;
     activeSource = 'base';
+    transmuterState = { points: 0, discipline: '' };
     clearSourceSpent();
     renderSkills();
     renderArtisanSkills();

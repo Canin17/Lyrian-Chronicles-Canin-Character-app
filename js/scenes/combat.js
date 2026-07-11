@@ -30,7 +30,8 @@ const CombatScene = (function() {
     mana: 0, maxMana: 0,         // Mana: never auto-refresh
     round: 1,
     exhausted: {},               // { abilityName: true } — cleared on New Turn
-    conditions: []               // [{ name, icon, duration }]
+    conditions: [],              // [{ name, icon, duration }]
+    secretArtUsed: null,         // name of Secret Art/Esoteric Art used this encounter (or null)
   };
 
   let combatAbilities = [];
@@ -39,13 +40,12 @@ const CombatScene = (function() {
 
   // Basic actions — always available, never exhausted (per rulebook)
   const BASIC_ACTIONS = [
-    { name: 'Light Attack',  ap: 1, desc: 'A quick weapon attack.' },
-    { name: 'Heavy Attack',  ap: 2, desc: 'A powerful weapon attack.' },
-    { name: 'Precise Attack',ap: 2, desc: 'An accurate weapon attack.' },
-    { name: 'Move',          ap: 1, desc: 'Move up to your speed (1 AP per move).' },
-    { name: 'Defend',        ap: 1, desc: 'Take a defensive stance.' },
-    { name: 'Dodge',         rp: 1, desc: 'Reactive evasion (uses RP).' },
-    { name: 'Block',         rp: 1, desc: 'Reactive block (uses RP).' }
+    { name: 'Light Attack',  ap: 1, desc: 'Accuracy: 1d20 + Focus. Damage: 2d4 + Power.' },
+    { name: 'Heavy Attack',  ap: 2, desc: 'Accuracy: 1d20 + Focus. Damage: 4d6 + (Power × 2). Two-handed melee: 5d6 + (Power × 2).' },
+    { name: 'Precise Attack',ap: 2, desc: 'Accuracy: 1d20 + (Focus × 2). Damage: 2d4 + Power.' },
+    { name: 'Move',          ap: 1, desc: 'Spend 1 AP to move up to your movement speed. Must be done in 1 go — cannot save movement for later.' },
+    { name: 'Dodge',         rp: 1, desc: 'Basic reaction. Spend 1 RP. Increases Evasion by 13. The attacker must roll an accuracy check.' },
+    { name: 'Block',         rp: 1, desc: 'Basic reaction. Spend 1 RP. Increases your Guard. Focus on guarding against the damage rather than avoiding it.' }
   ];
 
   const CONDITION_PRESETS = [
@@ -133,6 +133,7 @@ const CombatScene = (function() {
     state.mana = state.maxMana;
     state.round = 1;
     state.exhausted = {};
+    state.secretArtUsed = null;
     // conditions persist across "New Turn" but cleared on a fresh encounter
     state.conditions = [];
   }
@@ -159,28 +160,37 @@ const CombatScene = (function() {
     combatAbilities = raw.map(a => {
       const db = ABILITIES_DB[a.name] || {};
       const keywords = db.keywords || [];
+      const apCost = db.type === 'key' ? 0 : (db.apCost ? parseInt(db.apCost) : 0);
+      const manaCost = db.type === 'key' ? 0 : (db.manaCost ? parseInt(db.manaCost) : 0);
+      const rpCost = db.type === 'key' ? 0 : (db.rpCost ? parseInt(db.rpCost) : 0);
+      // ponytail: key abilities are passive — DB costs belong to associated true ability
       return {
         name: a.name,
         source: a.source, sourceName: a.sourceName,
         description: a.description || db.description || '',
         range: db.range || '',
-        apCost: db.apCost ? parseInt(db.apCost) : 0,
-        manaCost: db.manaCost ? parseInt(db.manaCost) : 0,
-        rpCost: db.rpCost ? parseInt(db.rpCost) : 0,
+        apCost,
+        manaCost,
+        rpCost,
         keywords,
         type: db.type || 'true',
-        isRapid: keywords.some(k => /rapid/i.test(k)) // Rapid = exempt from once-per-round
+        isRapid: keywords.some(k => /rapid/i.test(k)),
+        isSecretArt: keywords.some(k => /secret art|esoteric art/i.test(k)),
       };
     });
     // De-dupe by name (aggregation may repeat)
     const seen = new Set();
-    combatAbilities = combatAbilities.filter(a => seen.has(a.name) ? false : seen.add(a.name));
+    combatAbilities = combatAbilities.filter(a => {
+      // ponytail: 'Skills', 'Heart', 'Soul' are character-creation bookkeeping, not activatable
+      if (a.name === 'Skills' || a.name === 'Heart' || a.name === 'Soul') return false;
+      return seen.has(a.name) ? false : seen.add(a.name);
+    });
   }
 
   function renderAll() {
     renderHeader(); renderDashboard(); renderTurnControls();
     renderBasics(); renderConditions(); renderFilters();
-    renderAbilityGrid(); renderConclusion();
+    renderAbilityGrid(); renderInventory(); renderConclusion();
     // GSAP entrance
     if (window.gsap) {
       gsap.fromTo('.combat-dashboard',{y:-16,autoAlpha:0},{y:0,autoAlpha:1,duration:.4,ease:'power2.out'});
@@ -282,9 +292,14 @@ const CombatScene = (function() {
         ${BASIC_ACTIONS.map(b => {
           const cost = b.ap ? `${b.ap} AP` : `${b.rp} RP`;
           const can = b.ap ? state.ap >= b.ap : state.rp >= b.rp;
-          return `<button class="basic-btn ${can?'':'basic-disabled'}" data-basic="${b.name}" title="${escapeHtml(b.desc)}">
-            <span class="basic-name">${b.name}</span><span class="basic-cost ${b.ap?'cost-ap':'cost-rp'}">${cost}</span>
-          </button>`;
+          // ponytail: only attack actions get macro buttons — Move/Defend/Dodge/Block have no dice
+          const isAttack = /attack/i.test(b.name);
+          return `<div class="basic-action ${can?'':'basic-disabled'}" data-basic="${b.name}" title="${escapeHtml(b.desc)}">
+            <button class="basic-btn" data-basic="${b.name}">
+              <span class="basic-name">${b.name}</span><span class="basic-cost ${b.ap?'cost-ap':'cost-rp'}">${cost}</span>
+            </button>
+            ${isAttack ? `<span class="basic-macros"><button class="ab-macro" data-macro="basic:${b.name}" title="Send dice to VTT">🎲 Send to VTT</button></span>` : ''}
+          </div>`;
         }).join('')}
       </div>`;
   }
@@ -320,8 +335,8 @@ const CombatScene = (function() {
   function passesFilter(a) {
     if (activeFilter==='active'   && a.type!=='true') return false;
     if (activeFilter==='passive'  && a.type!=='key')  return false;
-    if (activeFilter==='spells'   && !a.keywords.some(k=>/spell/i.test(k))) return false;
-    if (activeFilter==='reactions'&& !(a.rpCost>0 || a.keywords.some(k=>/rapid|reaction/i.test(k)))) return false;
+    if (activeFilter==='spells'   && a.manaCost<=0) return false;
+    if (activeFilter==='reactions'&& a.rpCost<=0) return false;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       if (!a.name.toLowerCase().includes(q) && !a.description.toLowerCase().includes(q)) return false;
@@ -331,6 +346,8 @@ const CombatScene = (function() {
 
   function abilityStatus(a) {
     if (a.type === 'key') return 'passive';
+    // Secret Art / Esoteric Art: only 1 per encounter (shared pool)
+    if (a.isSecretArt && state.secretArtUsed && state.secretArtUsed !== a.name) return 'saused';
     const affordable = state.ap>=a.apCost && state.mana>=a.manaCost && state.rp>=a.rpCost;
     // Exhaustion: non-Rapid actives used this round are locked until next turn
     const exhausted = !a.isRapid && state.exhausted[a.name];
@@ -346,25 +363,55 @@ const CombatScene = (function() {
       : '<div class="combat-empty">No abilities match.</div>';
   }
 
+  // ponytail: combat inventory list — reads character.inventory array, filters section==='combat'
+  function renderInventory() {
+    const el = document.getElementById('combat-inventory-list'); if (!el) return;
+    const inv = character.inventory || [];
+    const combatItems = inv.filter(e => e.section === 'combat');
+    if (combatItems.length === 0) {
+      el.innerHTML = '<div class="combat-inventory-empty">No combat loadout</div>';
+      return;
+    }
+    // Calculate total burden
+    let totalBurden = 0;
+    combatItems.forEach(e => { totalBurden += (e.item.burdenCost || 0) * e.quantity; });
+    const burdenClass = totalBurden > 10 ? 'combat-inventory-burden over' : 'combat-inventory-burden';
+    let html = `<div class="${burdenClass}">Burden: ${totalBurden}/10</div>`;
+    combatItems.forEach(e => {
+      const img = e.item.imageSmUrl ? `<img src="${e.item.imageSmUrl}" alt="" loading="lazy">` : '';
+      const burden = e.item.burdenCost || 0;
+      html += `<div class="combat-inventory-item" data-item="${e.item.id}" title="${escapeHtml(e.item.name)}">
+        ${img}
+        <span class="inv-name">${escapeHtml(e.item.name)}</span>
+        ${e.quantity > 1 ? `<span class="inv-qty">×${e.quantity}</span>` : ''}
+        ${burden > 0 ? `<span class="inv-burden">${burden}</span>` : ''}
+      </div>`;
+    });
+    el.innerHTML = html;
+  }
+
   function renderAbilityCard(a) {
     const status = abilityStatus(a);
     const costs = [];
     if (a.apCost)   costs.push(`<span class="cost-ap">${a.apCost} AP</span>`);
     if (a.manaCost) costs.push(`<span class="cost-mp">${a.manaCost} Mana</span>`);
     if (a.rpCost)   costs.push(`<span class="cost-rp">${a.rpCost} RP</span>`);
-    const badge = a.type==='key' ? 'Passive' : a.isRapid ? 'Rapid' : (a.keywords.some(k=>/spell/i.test(k))?'Spell':'Active');
+    const badge = a.isSecretArt ? 'Secret Art' : (a.type==='key' ? 'Passive' : a.isRapid ? 'Rapid' : (a.keywords.some(k=>/spell/i.test(k))?'Spell':'Active'));
     const canUse = status === 'available';
+    const saLock = status === 'saused';
     return `
       <div class="ab-card ab-${status}" data-ability="${escapeHtml(a.name)}" role="button" tabindex="0">
         <div class="ab-card-top">
-          <span class="ab-badge ${a.isRapid?'ab-badge-rapid':''}">${badge}</span>
+          <span class="ab-badge ${a.isSecretArt?'ab-badge-secret':a.isRapid?'ab-badge-rapid':''}">${badge}</span>
           ${status==='exhausted' ? '<span class="ab-lock" title="Used this round">🔒 used</span>' : ''}
+          ${saLock ? '<span class="ab-lock" title="Another Secret Art used this encounter">🔒 SA used</span>' : ''}
         </div>
         <h4 class="ab-name">${renderHtml(a.name)}</h4>
         ${costs.length ? `<div class="ab-cost">${costs.join(' · ')}</div>` : '<div class="ab-cost ab-nocost">No cost</div>'}
         <p class="ab-desc">${renderHtml(a.description.slice(0,90))}${a.description.length>90?'…':''}</p>
         <div class="ab-actions">
           ${canUse ? `<button class="ab-use" data-use="${escapeHtml(a.name)}">Use</button>` : ''}
+          <button class="ab-macro" data-macro="${escapeHtml(a.name)}" title="Send dice to VTT">🎲 Send to VTT</button>
           <button class="ab-info" data-info="${escapeHtml(a.name)}">Details</button>
         </div>
       </div>`;
@@ -375,9 +422,205 @@ const CombatScene = (function() {
     if (abilityStatus(a) !== 'available') return;
     state.ap -= a.apCost; state.mana -= a.manaCost; state.rp -= a.rpCost;
     if (!a.isRapid) state.exhausted[a.name] = true; // once-per-round lock
+    if (a.isSecretArt) state.secretArtUsed = a.name; // 1 per encounter lock
     renderDashboard(); renderBasics(); renderAbilityGrid();
     const costStr = [a.apCost&&`${a.apCost}AP`, a.manaCost&&`${a.manaCost}Mana`, a.rpCost&&`${a.rpCost}RP`].filter(Boolean).join(' ');
     showToast(`Used ${a.name}${costStr?' ('+costStr+')':''}`, 'success');
+  }
+
+  // ponytail: clipboard copy is the only viable "send" — Foundry/Roll20 are separate apps with no web-accessible API from file://.
+  // Generates dice formulas from ability description + character stats.
+  // ponytail: basic attacks — no ability object, just name + stats
+  function buildBasicMacro(name) {
+    const acc = derived.accuracy || 0;
+    const dmg = derived.damage || 5;
+    let accF, dmgF;
+    if (/light/i.test(name))      { accF = `1d20 + ${acc}`;           dmgF = `2d4 + ${dmg}`; }
+    else if (/heavy/i.test(name)) { accF = `1d20 + ${acc}`;           dmgF = `4d6 + ${dmg}`; }
+    else if (/precise/i.test(name)){ accF = `1d20 + ${acc} * 2`;      dmgF = `2d4 + ${dmg}`; }
+    return {
+      foundry: [accF && `/roll ${accF} [Accuracy]`, dmgF && `/roll ${dmgF} [Damage]`].filter(Boolean).join('\n'),
+      roll20:  [accF && `[[${accF}]] : Accuracy`, dmgF && `[[${dmgF}]] : Damage`].filter(Boolean).join('\n'),
+    };
+  }
+
+  function buildMacro(a) {
+    const acc = derived.accuracy || 0;       // FOC
+    const dmg = derived.damage || 5;         // 5 + POW
+    const pot = derived.potency || 11;       // 11 + FOC
+    const desc = a.description || '';
+    const lower = desc.toLowerCase();
+
+    // Detect attack type → accuracy + damage formula
+    let accFormula, dmgFormula;
+    if (/precise\s*attack/i.test(desc)) {
+      accFormula = `1d20 + ${acc} * 2`; // Precise: accuracy x2
+      dmgFormula = `2d4 + ${dmg}`;
+    } else if (/heavy\s*attack/i.test(desc)) {
+      accFormula = `1d20 + ${acc}`;
+      dmgFormula = `4d6 + ${dmg}`;
+    } else if (/light\s*attack/i.test(desc)) {
+      accFormula = `1d20 + ${acc}`;
+      dmgFormula = `2d4 + ${dmg}`;
+    }
+
+    // Extract explicit dice from description (e.g., "2d4 + Focus", "4d6")
+    const diceMatch = desc.match(/(\d+d\d+)/g);
+    if (diceMatch && !dmgFormula) {
+      dmgFormula = diceMatch[0] + ' + ' + dmg;
+    }
+
+    // ponytail: only include save if ability text actually mentions one
+    const hasSave = /save|saving throw|resist|fortitude|reflex|will check/i.test(desc);
+    const saveFormula = hasSave ? `1d20 + ${derived.saveBonus || 0}` : null;
+
+    // Foundry VTT macro format
+    const foundry = [
+      `// ${a.name}`,
+      accFormula ? `/roll ${accFormula} [Accuracy]` : '',
+      dmgFormula ? `/roll ${dmgFormula} [Damage]` : '',
+      saveFormula ? `/roll ${saveFormula} [Save]` : '',
+    ].filter(Boolean).join('\n');
+
+    // Roll20 macro format (inline rolls)
+    const roll20 = [
+      `**${a.name}**`,
+      accFormula ? `[[${accFormula}]] : Accuracy` : '',
+      dmgFormula ? `[[${dmgFormula}]] : Damage` : '',
+      saveFormula ? `[[${saveFormula}]] : Save` : '',
+    ].filter(Boolean).join('\n');
+
+    return { foundry, roll20 };
+  }
+
+  function getMacroForAbility(name) {
+    // ponytail: basic attacks prefixed with "basic:"
+    if (name.startsWith('basic:')) {
+      return buildBasicMacro(name.slice(6));
+    }
+    const a = combatAbilities.find(x => x.name === name); if (!a) return null;
+    return buildMacro(a);
+  }
+
+  // ── Macro editor modal ──
+  let macroModalState = { name: '', macros: null, activeTab: 'foundry', cost: null };
+
+  function openMacroModal(name) {
+    const macros = getMacroForAbility(name);
+    if (!macros) return;
+    const label = name.startsWith('basic:') ? name.slice(6) : name;
+    // ponytail: resolve cost from BASIC_ACTIONS or combatAbilities
+    let cost = null;
+    if (name.startsWith('basic:')) {
+      const b = BASIC_ACTIONS.find(x => x.name === label);
+      if (b) cost = { ap: b.ap || 0, rp: b.rp || 0, mana: 0 };
+    } else {
+      const a = combatAbilities.find(x => x.name === label);
+      if (a) cost = { ap: a.apCost || 0, rp: a.rpCost || 0, mana: a.manaCost || 0 };
+    }
+    macroModalState = { name: label, macros, activeTab: 'foundry', cost };
+
+    const overlay = document.getElementById('macro-modal-overlay');
+    const title = document.getElementById('macro-modal-title');
+    const textarea = document.getElementById('macro-textarea');
+    const cb = document.getElementById('macro-apply-cost-cb');
+    if (!overlay || !title || !textarea) return;
+
+    title.textContent = `🎲 ${label}`;
+    textarea.value = macros.foundry;
+    // show checkbox only if there's a cost to apply
+    if (cb) cb.closest('.macro-apply-cost').style.display = cost && (cost.ap||cost.rp||cost.mana) ? '' : 'none';
+
+    // Reset tabs to Foundry
+    overlay.querySelectorAll('.macro-tab').forEach(t => {
+      t.classList.toggle('active', t.dataset.macroTab === 'foundry');
+    });
+
+    overlay.classList.remove('hidden');
+    textarea.focus();
+    textarea.select();
+  }
+
+  function closeMacroModal() {
+    const overlay = document.getElementById('macro-modal-overlay');
+    if (overlay) overlay.classList.add('hidden');
+  }
+
+  function copyMacroFromModal() {
+    const textarea = document.getElementById('macro-textarea');
+    if (!textarea) return;
+    const text = textarea.value;
+    const name = macroModalState.name;
+    navigator.clipboard.writeText(text).then(() => {
+      showToast(`Macro copied for ${name}`, 'success');
+    }).catch(() => {
+      textarea.select();
+      document.execCommand('copy');
+      showToast(`Macro copied for ${name}`, 'success');
+    });
+  }
+
+  function sendMacroToExtension() {
+    const textarea = document.getElementById('macro-textarea');
+    if (!textarea) return;
+    const text = textarea.value;
+    const name = macroModalState.name;
+    const tab = macroModalState.activeTab;
+    const applyCost = document.getElementById('macro-apply-cost-cb')?.checked;
+
+    // ponytail: deduct costs if checkbox checked — reuse same logic as useAbility
+    if (applyCost && macroModalState.cost) {
+      const c = macroModalState.cost;
+      if (c.ap && state.ap < c.ap) return showToast('Not enough AP', 'error');
+      if (c.rp && state.rp < c.rp) return showToast('Not enough RP', 'error');
+      if (c.mana && state.mana < c.mana) return showToast('Not enough Mana', 'error');
+      state.ap -= c.ap; state.rp -= c.rp; state.mana -= c.mana;
+      renderDashboard(); renderBasics(); renderAbilityGrid();
+    }
+
+    window.postMessage({
+      source: 'lyrian-dice',
+      action: 'send-roll',
+      foundry: macroModalState.macros?.foundry || text,
+      roll20: macroModalState.macros?.roll20 || '',
+      ability: name,
+      edited: text,
+      platform: tab
+    }, '*');
+    showToast(`Sent ${name} macro to extension (${tab})`, 'success');
+    closeMacroModal();
+  }
+
+  function switchMacroTab(tab) {
+    macroModalState.activeTab = tab;
+    const textarea = document.getElementById('macro-textarea');
+    if (!textarea) return;
+    textarea.value = tab === 'foundry' ? (macroModalState.macros?.foundry || '') : (macroModalState.macros?.roll20 || '');
+    document.querySelectorAll('.macro-tab').forEach(t => {
+      t.classList.toggle('active', t.dataset.macroTab === tab);
+    });
+    textarea.focus();
+  }
+
+  // ponytail: item detail — reuses ability modal overlay
+  function showItemDetail(itemId) {
+    const item = ITEMS_DATA.find(x => x.id === itemId); if (!item) return;
+    const overlay = document.getElementById('combat-modal-overlay');
+    const box = document.getElementById('combat-modal-content'); if (!overlay||!box) return;
+    box.innerHTML = `
+      <div class="cm-head"><h3>${renderHtml(item.name)}</h3><button id="cm-close" class="modal-close-btn">✕</button></div>
+      <div class="cm-body">
+        ${item.imageSmUrl ? `<div style="text-align:center;margin-bottom:8px"><img src="${item.imageSmUrl}" style="max-width:120px;border-radius:var(--border-radius)" loading="lazy"></div>` : ''}
+        <div class="cm-row"><span class="cm-l">Type</span>${renderHtml(item.type||'—')}${item.subType ? ` · ${renderHtml(item.subType)}` : ''}</div>
+        <div class="cm-row"><span class="cm-l">Cost</span>${renderHtml(item.cost||'—')}</div>
+        <div class="cm-row"><span class="cm-l">Burden</span>${item.burdenCost||0}</div>
+        ${item.shellSize ? `<div class="cm-row"><span class="cm-l">Shell</span>${renderHtml(item.shellSize)}</div>` : ''}
+        ${item.fuelUsage ? `<div class="cm-row"><span class="cm-l">Fuel</span>${renderHtml(item.fuelUsage)}</div>` : ''}
+        <div class="cm-section"><span class="cm-l">Description</span><p class="cm-desc">${renderHtml(item.description||'—')}</p></div>
+      </div>`;
+    overlay.classList.remove('hidden');
+    document.getElementById('cm-close')?.addEventListener('click', ()=>overlay.classList.add('hidden'));
+    overlay.addEventListener('click', ev=>{ if(ev.target===overlay) overlay.classList.add('hidden'); }, {once:true});
   }
 
   function showAbilityDetail(name) {
@@ -385,13 +628,24 @@ const CombatScene = (function() {
     const overlay = document.getElementById('combat-modal-overlay');
     const box = document.getElementById('combat-modal-content'); if (!overlay||!box) return;
     const costs = [a.apCost&&`${a.apCost} AP`, a.manaCost&&`${a.manaCost} Mana`, a.rpCost&&`${a.rpCost} RP`].filter(Boolean).join(', ');
+    // ponytail: link to Angel's Sword source page — slug = lowercase sourceName with spaces→hyphens
+    const slug = (a.sourceName || '').toLowerCase().replace(/\s+/g, '-');
+    let sourceLink = '';
+    if (a.source === 'race' && slug) sourceLink = `https://rpg.angelssword.com/game/0.13.0/races/primary/${slug}`;
+    else if (a.source === 'class' && slug) sourceLink = `https://rpg.angelssword.com/game/0.13.0/classes/${slug}`;
+    else if (a.source === 'breakthrough') sourceLink = 'https://rpg.angelssword.com/game/0.13.0/breakthroughs';
+    const sourceHtml = a.sourceName
+      ? sourceLink
+        ? `<div class="cm-row"><span class="cm-l">Source</span><a href="${sourceLink}" target="_blank" rel="noopener" style="color: var(--accent-gold-light)">${renderHtml(a.sourceName)} ↗</a></div>`
+        : `<div class="cm-row"><span class="cm-l">Source</span>${renderHtml(a.sourceName)}</div>`
+      : '';
     box.innerHTML = `
       <div class="cm-head"><h3>${renderHtml(a.name)}</h3><button id="cm-close" class="modal-close-btn">✕</button></div>
       <div class="cm-body">
         <div class="cm-row"><span class="cm-l">Type</span>${a.type==='key'?'Passive':'Active'}${a.isRapid?' · Rapid (not once-per-round)':''}</div>
         ${a.range?`<div class="cm-row"><span class="cm-l">Range</span>${renderHtml(a.range)}</div>`:''}
         ${costs?`<div class="cm-row"><span class="cm-l">Cost</span>${costs}</div>`:''}
-        ${a.sourceName?`<div class="cm-row"><span class="cm-l">Source</span>${renderHtml(a.sourceName)}</div>`:''}
+        ${sourceHtml}
         ${a.keywords.length?`<div class="cm-row"><span class="cm-l">Keywords</span>${a.keywords.map(k=>`<span class="kw-tag">${renderHtml(k)}</span>`).join(' ')}</div>`:''}
         <div class="cm-section"><span class="cm-l">Description</span><p class="cm-desc">${renderHtml(a.description||'—')}</p></div>
       </div>`;
@@ -469,16 +723,24 @@ const CombatScene = (function() {
     tc?.addEventListener('click', e => {
       if (e.target.id === 'btn-new-turn') newTurn();
       else if (e.target.id === 'btn-new-encounter') {
+        // ponytail: native confirm — no extra UI needed
+        if (!confirm('Start a new encounter? All resources will be restored.')) return;
         startEncounter(); renderAll(); pulseAp();
         showToast('New encounter — AP, RP, and Mana restored', 'success');
       }
       else if (e.target.id === 'btn-conclusion') {
         const p = document.getElementById('combat-conclusion');
+        if (p?.classList.contains('hidden')) {
+          // ponytail: confirm before showing conclusion — prevents accidental end-of-encounter actions
+          if (!confirm('End this encounter? You can Draw Mana, use Second Wind, or Treat Conditions.')) return;
+        }
         p?.classList.toggle('hidden');
       }
     });
 
     document.getElementById('combat-basics')?.addEventListener('click', (e) => {
+      // macro buttons on basic attacks — check before data-basic so they don't fall through
+      const mm = e.target.closest('[data-macro]'); if (mm) return openMacroModal(mm.dataset.macro);
       const btn = e.target.closest('[data-basic]'); if (!btn) return;
       const b = BASIC_ACTIONS.find(x => x.name === btn.dataset.basic); if (!b) return;
       if (b.ap) { if (state.ap < b.ap) return showToast('Not enough AP', 'error'); state.ap -= b.ap; }
@@ -510,9 +772,17 @@ const CombatScene = (function() {
     const grid = document.getElementById('combat-ability-grid');
     grid?.addEventListener('click', e => {
       const use=e.target.closest('[data-use]'); if(use) return useAbility(use.dataset.use);
+      const mm=e.target.closest('[data-macro]'); if(mm) return openMacroModal(mm.dataset.macro);
       const info=e.target.closest('[data-info]'); const card=e.target.closest('[data-ability]');
       if(info) return showAbilityDetail(info.dataset.info);
       if(card) return showAbilityDetail(card.dataset.ability);
+    });
+
+    // ponytail: inventory item click → detail modal
+    const invList = document.getElementById('combat-inventory-list');
+    invList?.addEventListener('click', e => {
+      const item = e.target.closest('[data-item]');
+      if (item) return showItemDetail(item.dataset.item);
     });
 
     document.getElementById('combat-conclusion')?.addEventListener('click', e => {
@@ -527,9 +797,26 @@ const CombatScene = (function() {
         else showToast('No conditions to treat','info');
       }
     });
+
+    // ── Macro editor modal bindings ──
+    const macroOverlay = document.getElementById('macro-modal-overlay');
+    document.getElementById('macro-modal-close')?.addEventListener('click', closeMacroModal);
+    macroOverlay?.addEventListener('click', e => { if (e.target === macroOverlay) closeMacroModal(); });
+    document.getElementById('macro-copy-btn')?.addEventListener('click', copyMacroFromModal);
+    document.getElementById('macro-send-btn')?.addEventListener('click', sendMacroToExtension);
+    macroOverlay?.addEventListener('click', e => {
+      const tab = e.target.closest('[data-macro-tab]');
+      if (tab) return switchMacroTab(tab.dataset.macroTab);
+    });
+    // Close on Escape
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && macroOverlay && !macroOverlay.classList.contains('hidden')) {
+        closeMacroModal();
+      }
+    });
   }
 
-  return { init };
+  return { init, getMacroForAbility };
 })();
 
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', CombatScene.init);

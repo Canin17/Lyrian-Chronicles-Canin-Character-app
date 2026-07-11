@@ -28,12 +28,16 @@ function getAllCharacterAbilities(characterData) {
   
   // 2. Class abilities (based on level)
   // cls shape: { primary: { class, level }, all: [{ class, level }], spiritCore: number }
+  // ponytail: serialized characters (from summary.js export) flatten cls.all to { name, level, ... }
+  // so we handle both { class: { name }, level } and { name, level } shapes
   const classList = (characterData.cls && Array.isArray(characterData.cls.all))
     ? characterData.cls.all
     : (Array.isArray(characterData.cls) ? characterData.cls : []);
   classList.forEach(clsData => {
-    if (clsData.class && clsData.level) {
-      const classAbilities = getClassAbilities(clsData.class, clsData.level);
+    const className = clsData.class?.name || clsData.class || clsData.name;
+    const classLevel = clsData.level;
+    if (className && classLevel) {
+      const classAbilities = getClassAbilities(className, classLevel);
       abilities.push(...classAbilities);
     }
   });

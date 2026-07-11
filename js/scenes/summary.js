@@ -107,7 +107,7 @@ const SummaryScene = (function() {
 
     html += `</div>`;
 
-    // Sub Stats
+    // Sub Stats — ponytail: raw ability check macros (1d20 + subStat)
     html += `<div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.5rem; margin-top: 0.5rem;">`;
 
     SUB_STATS.forEach(def => {
@@ -115,16 +115,22 @@ const SummaryScene = (function() {
       const rBonus = raceBonuses[def.id] || 0;
       const bBonus = btBonuses[def.id] || 0;
       const cBonus = classBonuses[def.id] || 0;
-      const total = stats[def.id] ?? '-';
+      const total = Number(stats[def.id]) || 0;
       let bonusDetail = '';
       if (rBonus > 0) bonusDetail += `<span style="color: var(--accent-gold);">+${rBonus} Race</span> `;
       if (bBonus > 0) bonusDetail += `<span style="color: var(--meter-mana);">+${bBonus} BT</span> `;
       if (cBonus > 0) bonusDetail += `<span style="color: var(--accent-green);">+${cBonus} Class</span>`;
 
+      // Raw ability check: 1d20 + subStat
+      const abilityFormula = `1d20 + ${total}`;
+      const foundryAbility = `/roll ${abilityFormula} [${def.name} Check]`;
+      const roll20Ability = `[[${abilityFormula}]] : ${def.name} Check`;
+
       html += `<div style="text-align: center; padding: 0.4rem; background: var(--bg-primary); border-radius: 4px;">
         <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">${def.name}</div>
         <div style="font-size: 1.2rem; color: var(--accent-gold); font-weight: bold;">${total}</div>
         <div style="font-size: 0.6rem; color: var(--text-muted); margin-top: 2px;">Base ${base}${bonusDetail ? ' · ' + bonusDetail : ''}</div>
+        <button class="ab-macro" data-macro="ability:${def.id}" data-foundry="${foundryAbility}" data-roll20="${roll20Ability}" title="Send ${def.name} ability check to VTT" style="margin-top: 4px; flex-shrink:0;">🎲</button>
       </div>`;
     });
 
@@ -346,6 +352,13 @@ const SummaryScene = (function() {
         btSkillMap[b.skill].push(b);
       });
 
+      // ponytail: skill dice macros — rulebook formula: 1d20 + subStat + skill + expertise
+      // subStat values from character stats
+      const subStatVals = {};
+      if (stats) {
+        SUB_STATS.forEach(s => { subStatVals[s.id] = Number(stats[s.id]) || 0; });
+      }
+
       // Normal skills
       normalSkills.forEach(group => {
         const groupSkills = group.skills;
@@ -364,15 +377,26 @@ const SummaryScene = (function() {
           const btText = bonuses.length > 0
             ? ` <span style="color: var(--accent-gold-light); opacity: 0.7; font-size: 0.8rem;">(${bonuses.map(b => `${b.bonus > 0 ? '+' : ''}${b.bonus} ${b.breakthroughName}${b.condition ? ' (' + b.condition + ')' : ''}`).join(', ')})</span>`
             : '';
-          html += `<div style="padding-left: 1rem; font-size: 0.85rem; color: var(--text-primary);">
-            ${window.escapeHtml(skill.name)}: <strong style="color: var(--accent-gold-light);">${skill.pts}</strong>${expertise}${btText}
+
+          // Build dice macro: 1d20 + subStat + skill + expertise
+          const subStat = subStatVals[group.subStat] || 0;
+          const skillPts = Number(skill.pts) || 0;
+          const expPts = calculateExpertisePoints(skill.expertise || '');
+          const totalBonus = subStat + skillPts + expPts;
+          const formula = `1d20 + ${totalBonus}`;
+          const foundryMacro = `/roll ${formula} [${skill.name} Check]`;
+          const roll20Macro = `[[${formula}]] : ${skill.name} Check`;
+
+          html += `<div style="padding-left: 1rem; font-size: 0.85rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">
+            <span>${window.escapeHtml(skill.name)}: <strong style="color: var(--accent-gold-light);">${skill.pts}</strong>${expertise}${btText}</span>
+            <button class="ab-macro" data-macro="skill:${skill.name}" data-foundry="${foundryMacro}" data-roll20="${roll20Macro}" title="Send ${skill.name} check to VTT" style="flex-shrink:0;">🎲</button>
           </div>`;
         });
 
         html += `</div>`;
       });
 
-      // Artisan skills
+      // Artisan skills — crafting check: 1d10 + skill + expertise (rulebook)
       if (artisanSkills.length > 0) {
         artisanSkills.forEach(group => {
           const groupSkills = group.skills;
@@ -386,13 +410,34 @@ const SummaryScene = (function() {
             if (skill.pts <= 0) return;
 
             const expertise = skill.expertise ? ` [${window.escapeHtml(skill.expertise)}]` : '';
-            html += `<div style="padding-left: 1rem; font-size: 0.85rem; color: var(--text-primary);">
-              ${window.escapeHtml(skill.name)}: <strong style="color: var(--accent-gold-light);">${skill.pts}</strong>${expertise}
+
+            // Crafting check: 1d10 + skill + expertise
+            const skillPts = Number(skill.pts) || 0;
+            const expPts = calculateExpertisePoints(skill.expertise || '');
+            const craftTotal = skillPts + expPts;
+            const craftFormula = `1d10 + ${craftTotal}`;
+            const foundryMacro = `/roll ${craftFormula} [${skill.name} Crafting]`;
+            const roll20Macro = `[[${craftFormula}]] : ${skill.name} Crafting`;
+
+            html += `<div style="padding-left: 1rem; font-size: 0.85rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">
+              <span>${window.escapeHtml(skill.name)}: <strong style="color: var(--accent-gold-light);">${skill.pts}</strong>${expertise}</span>
+              <button class="ab-macro" data-macro="craft:${skill.name}" data-foundry="${foundryMacro}" data-roll20="${roll20Macro}" title="Send ${skill.name} crafting check to VTT" style="flex-shrink:0;">🎲</button>
             </div>`;
           });
 
           html += `</div>`;
         });
+      }
+
+      // ponytail: transmuter bonus display
+      const trans = skills && skills.transmuter;
+      if (trans && trans.points > 0 && trans.discipline) {
+        html += `<div style="margin-bottom: 0.5rem; border-left: 3px solid #9c27b0; padding-left: 0.5rem;">
+          <div style="color: #ce93d8; font-size: 0.9rem; margin-bottom: 0.25rem;">⚗️ Transmuter Bonus</div>
+          <div style="padding-left: 1rem; font-size: 0.85rem; color: var(--text-primary);">
+            +${trans.points} flat bonus to <strong style="color: #ce93d8;">${window.escapeHtml(trans.discipline)}</strong>
+          </div>
+        </div>`;
       }
     }
 
@@ -442,6 +487,30 @@ const SummaryScene = (function() {
     if (window.gsap) {
       gsap.fromTo(container, { autoAlpha: 0, y: 20 }, { autoAlpha: 1, y: 0, duration: 0.5 });
     }
+
+    // ponytail: skill macro buttons — read formula from data-* attributes, copy to clipboard
+    container.querySelectorAll('.ab-macro[data-foundry]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const foundry = btn.dataset.foundry;
+        const roll20 = btn.dataset.roll20;
+        const name = btn.dataset.macro;
+        const label = name.replace(/^skill:|^craft:|^ability:/, '');
+        // Send postMessage for extension bridge
+        window.postMessage({ source: 'lyrian-dice', action: 'send-roll', foundry, roll20, ability: label }, '*');
+        // Fallback: clipboard copy
+        const text = foundry + '\n---\n' + roll20;
+        navigator.clipboard.writeText(text).then(() => {
+          showToast(`Macro copied for ${label} (Foundry + Roll20)`, 'success');
+        }).catch(() => {
+          const ta = document.createElement('textarea');
+          ta.value = text; document.body.appendChild(ta);
+          ta.select(); document.execCommand('copy');
+          document.body.removeChild(ta);
+          showToast(`Macro copied for ${label} (Foundry + Roll20)`, 'success');
+        });
+      });
+    });
   }
 
   function exportJSON(characterData) {
@@ -679,6 +748,10 @@ const SummaryScene = (function() {
         breakthroughStatBonuses: characterData.breakthroughStatBonuses || {},
         breakthroughProficiencies: characterData.breakthroughProficiencies || [],
         statBonusChoices: characterData.statBonusChoices || {},
+        classStatBonusChoices: characterData.classStatBonusChoices || {},
+        hybridSubraceChoices: characterData.hybridSubraceChoices || {},
+        skillSourceAllocations: characterData.skillSourceAllocations,
+        btExpToggleEnabled: characterData.btExpToggleEnabled ?? true,
         inventory: characterData.inventory || [],
         climSpent: characterData.climSpent || 0,
         remainingClim: characterData.remainingClim ?? characterData.clim,
