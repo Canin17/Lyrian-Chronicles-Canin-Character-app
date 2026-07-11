@@ -11,6 +11,7 @@
   },
   "permissions": [
     "https://app.roll20.net/*",
+    "https://rpg.angelssword.com/*",
     "http://localhost/*",
     "http://127.0.0.1/*",
     "https://canin17.github.io/*",
@@ -35,6 +36,11 @@
     {
       "matches": ["https://app.roll20.net/*"],
       "js": ["src/roll20-content.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://rpg.angelssword.com/*"],
+      "js": ["src/angelssword-rulebook.js"],
       "run_at": "document_idle"
     }
   ]
