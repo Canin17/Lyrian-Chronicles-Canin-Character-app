@@ -40,7 +40,7 @@
     },
     {
       "matches": ["https://rpg.angelssword.com/*"],
-      "js": ["src/angelssword-rulebook.js"],
+      "js": ["src/angelssword-rulebook.js", "src/angelssword-abilities.js"],
       "run_at": "document_idle"
     }
   ]

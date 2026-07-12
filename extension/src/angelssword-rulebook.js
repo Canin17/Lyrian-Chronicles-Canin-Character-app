@@ -6,7 +6,6 @@
   var reinjecting = false;
   var sidebarEl = null;
   var reopenBtn = null;
-  var mainContent = null;
   var tocList = null;
   var styleEl = null;
   var articleObserver = null;
@@ -39,10 +38,11 @@
       '.as-rb-send:hover{background:#343a40!important;}' +
       '.as-rb-send.fail{color:#f00!important;border-color:#f00!important;}' +
       '#as-rb-sidebar{position:fixed;top:0;left:0;width:300px;height:100vh;background:#212529;border-right:1px solid #495057;z-index:9999;display:flex;flex-direction:column;font-family:"Roboto Slab",serif;}' +
-      '.as-rb-toc{display:block;cursor:pointer;padding:6px 16px;font-family:"Roboto Slab",serif;}' +
-      '#as-rb-reopen{position:fixed;top:12px;left:312px;z-index:9998;cursor:pointer;background:#212529;border:1px solid #495057;border-radius:6px;color:#dee2e6;padding:6px 10px;font-size:.85rem;font-family:"Roboto Slab",serif;}' +
-      '#as-rb-close{cursor:pointer;color:#adb5bd;font-size:1.2rem;background:none;border:none;}' +
-      '#as-rb-reopen.hidden{display:none;}';
+      '.as-rb-toc{display:block;cursor:pointer;padding:6px 16px;font-family:"Roboto Slab",serif;transition:color .15s,border-left-color .15s;border-left:3px solid transparent;}' +
+      '.as-rb-toc:hover{color:#ffd700!important;border-left-color:#ffd700!important;}' +
+      '.as-rb-toc.active{color:#ffd700!important;border-left-color:#ffd700!important;}' +
+      '#as-rb-reopen{position:fixed;top:12px;right:16px;z-index:9998;cursor:pointer;background:#212529;border:1px solid #495057;border-radius:6px;color:#dee2e6;padding:6px 10px;font-size:1rem;font-family:"Roboto Slab",serif;}' +
+      '#as-rb-close{cursor:pointer;color:#adb5bd;font-size:1.2rem;background:none;border:none;}';
     document.head.appendChild(styleEl);
   }
 
@@ -70,25 +70,18 @@
 
     reopenBtn = document.createElement('span');
     reopenBtn.id = 'as-rb-reopen';
-    reopenBtn.className = 'hidden';
     reopenBtn.textContent = '\uD83D\uDCD6';
-    reopenBtn.title = 'Show TOC';
-    reopenBtn.addEventListener('click', function () { toggleToc(true); });
+    reopenBtn.title = 'Toggle TOC';
+    reopenBtn.addEventListener('click', function () { toggleToc(sidebarEl.style.display === 'none'); });
     document.body.appendChild(reopenBtn);
 
-    // ponytail: push article's parent, not Angular's drawer
-    var article = document.querySelector('article');
-    if (article) {
-      mainContent = article.parentElement;
-      mainContent.style.marginLeft = '300px';
-    }
+    // ponytail: don't push content — native sidebar already accounts for layout
+    // our sidebar is fixed-position overlay, no margin needed
   }
 
   function toggleToc(show) {
     if (!sidebarEl || !reopenBtn) return;
     sidebarEl.style.display = show ? 'flex' : 'none';
-    reopenBtn.className = show ? '' : 'hidden';
-    if (mainContent) mainContent.style.marginLeft = show ? '300px' : '0';
   }
 
   // ponytail: live lookup — elements in article get destroyed by Angular,
@@ -196,7 +189,7 @@
 
         var temp = document.createElement('div');
         bodyEls.forEach(function (el) { temp.innerHTML += el.outerHTML; });
-        var lines = ['**' + title + '**', ''];
+        var lines = [''];
         var nodes = temp.children.length ? temp.children : [temp];
         for (var i = 0; i < nodes.length; i++) {
           var n = nodes[i];
@@ -222,7 +215,7 @@
           else if (n.tagName === 'HR') lines.push('---');
         }
         var text = lines.filter(function (l) { return l !== ''; }).join('\n');
-        window.postMessage({ source: 'lyrian-dice', action: 'send-roll', foundry: text, roll20: text, ability: title }, '*');
+        window.postMessage({ source: 'lyrian-dice', action: 'send-roll', foundry: text, roll20: text }, '*');
         navigator.clipboard.writeText(text).then(function () {
           btn.textContent = '\u2713';
         }).catch(function () {
@@ -238,6 +231,21 @@
     });
   }
 
+  // ponytail: scroll spy — highlight current TOC entry
+  var currentSlug = null;
+  function updateActiveToc(slug) {
+    if (slug === currentSlug) return;
+    if (currentSlug) {
+      var prev = tocList.querySelector('[data-slug="' + currentSlug + '"]');
+      if (prev) prev.classList.remove('active');
+    }
+    var curr = tocList.querySelector('[data-slug="' + slug + '"]');
+    if (curr) {
+      currentSlug = slug;
+      curr.classList.add('active');
+    }
+  }
+
   function inject() {
     if (injected) return;
     var article = document.querySelector('article');
@@ -251,8 +259,6 @@
 
     // ponytail: disconnect observer before re-injecting to prevent feedback loop
     if (articleObserver) articleObserver.disconnect();
-    injectSendButtons();
-    populateToc();
     // ponytail: reconnect
     function onArticleChange(mutations) {
       var childrenChanged = mutations.some(function (m) { return m.addedNodes.length || m.removedNodes.length; });
@@ -267,6 +273,26 @@
     }
     articleObserver = new MutationObserver(onArticleChange);
     articleObserver.observe(article, { childList: true, subtree: false });
+
+    // ponytail: scroll spy — find nearest tracked section on scroll
+    var scrollContainer = document.getElementById('content');
+    if (scrollContainer) {
+      // ponytail: only track slugs that actually exist in TOC
+      var trackedSlugs = {};
+      tocList.querySelectorAll('[data-slug]').forEach(function (el) { trackedSlugs[el.getAttribute('data-slug')] = true; });
+
+      scrollContainer.addEventListener('scroll', function () {
+        var sections = document.querySelectorAll('[id^="as-section-"]');
+        var best = null;
+        for (var i = 0; i < sections.length; i++) {
+          var slug = sections[i].id.replace('as-section-', '');
+          if (!trackedSlugs[slug]) continue; // ponytail: skip H4-H6
+          var rect = sections[i].getBoundingClientRect();
+          if (rect.top <= 100) best = slug;
+        }
+        if (best) updateActiveToc(best);
+      }, { passive: true });
+    }
   }
 
   // ponytail: Angular Material doesn't fire childList mutations reliably — poll instead
@@ -286,7 +312,6 @@
       cleanupInjected();
       sidebarEl = null;
       reopenBtn = null;
-      mainContent = null;
       tocList = null;
       styleEl = null;
       // ponytail: remove sidebar/reopen from DOM on nav away
